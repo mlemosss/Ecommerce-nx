@@ -2,5 +2,5 @@
   "framework": null,
   "installCommand": "npm install --production=false",
   "buildCommand": "npx nx build storefront",
-  "outputDirectory": "apps/storefront/.next"
+  "outputDirectory": "apps/storefront/out"
 }
