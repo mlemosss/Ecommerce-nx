@@ -1,6 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+const ADMIN_EMAIL = 'admin@noexcuse.com.br';
+const ADMIN_PASSWORD = 'NoExcuse@2026';
 
 function slugify(text: string): string {
   return text
@@ -216,6 +220,16 @@ async function main() {
   await prisma.customer.deleteMany();
   await prisma.expense.deleteMany();
 
+  await prisma.adminUser.upsert({
+    where: { email: ADMIN_EMAIL },
+    update: {},
+    create: {
+      email: ADMIN_EMAIL,
+      passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 10),
+      name: 'Administrador',
+    },
+  });
+
   for (const p of products) {
     await prisma.product.create({
       data: {
@@ -288,6 +302,7 @@ async function main() {
   console.log(
     `Seed concluído: ${products.length} produtos, ${customers.length} clientes, ${expenses.length} despesas, 3 vendas de demonstração.`
   );
+  console.log(`Login do admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
 }
 
 main()

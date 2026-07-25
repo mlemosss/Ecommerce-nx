@@ -1,4 +1,6 @@
-# NO EXCUSES — Loja de Roupas de Academia
+# NO EXCUSE — Loja de Roupas de Academia
+
+> Login do painel admin (seed): `admin@noexcuse.com.br` / `NoExcuse@2026`
 
 Monorepo [Nx](https://nx.dev) com três aplicações:
 
@@ -29,8 +31,9 @@ Painel mobile-first inspirado em apps de gestão de loja, com:
 - **Seu financeiro** (aba Gerencial): fluxo de caixa (entradas/saídas do dia, caixa atual), receitas/despesas do mês e lucro bruto — tudo calculado em tempo real a partir das vendas e despesas reais, não valores fixos.
 - **Despesas**: lista e cadastro de despesas por categoria.
 - **Área Fiscal**: **módulo simulado** — cada venda concluída aparece como uma "nota simulada". Emissão fiscal real (NFC-e/NF-e) exige certificado digital e integração com a SEFAZ, fora do escopo desta demonstração.
+- **Integração Meta** (`/meta`): sincroniza os produtos ativos com um catálogo do Meta Commerce Manager via Graph API (`items_batch`), para uso em anúncios e Instagram/Facebook Shop.
 
-Não há autenticação/login — é um protótipo de uso interno.
+**Autenticação**: login com e-mail/senha (JWT), protegendo tanto as páginas do admin quanto a API. Usuário seedado acima.
 
 O catálogo de tops, leggings e shorts já reflete os valores reais informados (custo, preço e estoque); as demais categorias (camisetas, jaquetas, acessórios) seguem como estimativa até os dados reais serem enviados.
 
@@ -43,6 +46,8 @@ API REST em NestJS com Prisma (SQLite local, sem dependências externas):
 - `GET/POST /api/sales` (abate estoque em transação; aceita `status: conta_aberta` e `installments`), `PATCH /api/sales/:id/status` (quitar conta)
 - `GET/POST/PATCH/DELETE /api/expenses`
 - `GET /api/dashboard/summary` (caixa atual, receitas/despesas do mês, lucro bruto, contas abertas, parceladas)
+- `POST /api/auth/login`, `GET /api/auth/me` — todas as demais rotas exigem `Authorization: Bearer <token>`
+- `GET /api/meta/status`, `POST /api/meta/sync`, `GET /api/meta/batch-status/:handle` — exige `META_ACCESS_TOKEN` e `META_CATALOG_ID` configurados
 
 ## Rodando o projeto
 

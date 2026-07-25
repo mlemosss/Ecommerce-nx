@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LogoutButton } from '../components/logout-button';
 
 const tools = [
   { href: '/produtos', label: 'Produtos', icon: 'M20 7 12 3 4 7m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'text-ink' },
@@ -7,6 +8,7 @@ const tools = [
   { href: '/vendas', label: 'Vendas rápidas', icon: 'M3 3h2l.4 2M7 13h10l3-8H5.4M7 13 5.4 5M7 13l-1.2 4.6A1 1 0 0 0 6.76 19H18M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm9 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z', color: 'text-ink' },
   { href: '/despesas', label: 'Despesas', icon: 'M12 1v22m5-18H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6', color: 'text-orange-500' },
   { href: '/fiscal', label: 'Área Fiscal', icon: 'M9 12h6m-6 4h6M9 8h6M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z', color: 'text-purple-600' },
+  { href: '/meta', label: 'Integração Meta', icon: 'M18 8a3 3 0 1 0-2.83-4H8.83A3 3 0 1 0 6 8c0 .35.06.69.17 1L4.5 12.6a3 3 0 1 0 1.6 2.2l3.5-2a3 3 0 0 0 4.8 0l3.5 2a3 3 0 1 0 1.6-2.2L18.83 9c.11-.31.17-.65.17-1Z', color: 'text-blue-700' },
 ];
 
 export default function HomePage() {
@@ -17,9 +19,12 @@ export default function HomePage() {
           <p className="text-sm text-black/60">Oi, Administrador 💪</p>
           <h1 className="page-title">Seu painel</h1>
         </div>
-        <span className="rounded-full bg-ink px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
-          No Excuses
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-ink px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
+            No Excuse
+          </span>
+          <LogoutButton />
+        </div>
       </div>
 
       <a

@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { OrderConfirmationClient } from './order-confirmation-client';
 
 export const metadata = {
-  title: 'Pedido confirmado — NO EXCUSES',
+  title: 'Pedido confirmado — NO EXCUSE',
 };
 
 export default function OrderConfirmationPage() {

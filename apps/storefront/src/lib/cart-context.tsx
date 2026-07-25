@@ -11,7 +11,7 @@ import {
 import type { CartItem } from './types';
 import { products } from './products';
 
-const STORAGE_KEY = 'no-excuses:cart';
+const STORAGE_KEY = 'no-excuse:cart';
 
 interface CartContextValue {
   items: CartItem[];

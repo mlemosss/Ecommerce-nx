@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { ProductsPageClient } from './products-page-client';
 
 export const metadata = {
-  title: 'Produtos — NO EXCUSES',
+  title: 'Produtos — NO EXCUSE',
 };
 
 export default function ProductsPage() {

@@ -1,3 +1,5 @@
+import { clearToken, getToken } from './auth';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 
 export class ApiError extends Error {
@@ -7,11 +9,24 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options?.headers,
+    },
     cache: 'no-store',
   });
+
+  if (res.status === 401) {
+    clearToken();
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login';
+    }
+    throw new ApiError('Sessão expirada, faça login novamente', 401);
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

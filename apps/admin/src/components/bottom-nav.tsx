@@ -12,6 +12,8 @@ const tabs = [
 export function BottomNav() {
   const pathname = usePathname();
 
+  if (pathname === '/login') return null;
+
   return (
     <nav className="sticky bottom-0 z-40 flex border-t border-black/10 bg-white">
       {tabs.map((tab) => {
