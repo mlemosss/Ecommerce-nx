@@ -2,5 +2,6 @@
   "framework": null,
   "installCommand": "sh \"$(git rev-parse --show-toplevel)/scripts/vercel-install.sh\"",
   "buildCommand": "npx nx run api:build-serverless",
+  "outputDirectory": "dist-serverless",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
 }
