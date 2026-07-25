@@ -4,7 +4,7 @@ import { Header } from '../components/header';
 import { Footer } from '../components/footer';
 
 export const metadata = {
-  title: 'GRITWEAR — Roupas de Academia',
+  title: 'NO EXCUSES — Roupas de Academia',
   description:
     'Loja de roupas e acessórios para academia: leggings, tops, shorts, camisetas, jaquetas e acessórios.',
 };

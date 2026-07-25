@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { ProductsPageClient } from './products-page-client';
 
 export const metadata = {
-  title: 'Produtos — GRITWEAR',
+  title: 'Produtos — NO EXCUSES',
 };
 
 export default function ProductsPage() {

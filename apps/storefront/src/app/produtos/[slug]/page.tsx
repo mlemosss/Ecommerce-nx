@@ -12,7 +12,7 @@ export function generateStaticParams() {
 
 export function generateMetadata({ params }: { params: { slug: string } }) {
   const product = getProductBySlug(params.slug);
-  return { title: product ? `${product.name} — GRITWEAR` : 'Produto — GRITWEAR' };
+  return { title: product ? `${product.name} — NO EXCUSES` : 'Produto — NO EXCUSES' };
 }
 
 export default function ProductDetailPage({ params }: { params: { slug: string } }) {

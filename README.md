@@ -1,24 +1,60 @@
-# GRITWEAR — Loja de Roupas de Academia
+# NO EXCUSES — Loja de Roupas de Academia
 
-Monorepo [Nx](https://nx.dev) com uma loja virtual (storefront) de roupas e acessórios para academia, construída em Next.js (App Router) + Tailwind CSS.
+Monorepo [Nx](https://nx.dev) com três aplicações:
 
-## O que tem na loja
+| App | O que é | Stack |
+|---|---|---|
+| `apps/storefront` | Loja virtual (frontend do cliente) | Next.js + Tailwind CSS, dados mockados |
+| `apps/admin` | Painel de gestão (produtos, estoque, clientes, vendas, despesas, fiscal) | Next.js + Tailwind CSS |
+| `apps/api` | Backend REST usado pelo painel admin | NestJS + Prisma + SQLite |
+
+## apps/storefront — Loja virtual
 
 - **Home** com hero, categorias em destaque, produtos mais vendidos/novidades e newsletter.
 - **Catálogo** (`/produtos`) com filtro por categoria e ordenação por preço.
 - **Página de produto** (`/produtos/[slug]`) com seleção de tamanho/cor, quantidade e produtos relacionados.
 - **Carrinho** (`/carrinho`) persistido em `localStorage`.
-- **Checkout simulado** (`/checkout`) com formulário de entrega/pagamento (Pix, cartão, boleto) e página de confirmação de pedido.
+- **Checkout simulado** (`/checkout`) com formulário de entrega/pagamento (Pix, cartão, boleto) e confirmação de pedido.
 
-Todos os dados de produto são mockados em `apps/storefront/src/lib/products.ts` — não há backend nem processamento de pagamento real.
+Os dados de produto são mockados em `apps/storefront/src/lib/products.ts` (não consome a API ainda — é uma evolução natural para uma próxima etapa).
+
+## apps/admin — Painel de gestão
+
+Painel mobile-first inspirado em apps de gestão de loja, com:
+
+- **Produtos + Estoque**: cadastro com custo, preço, variações de cor/tamanho e quantidade; tela de estoque com edição rápida e filtro de estoque baixo.
+- **Clientes (CRM)**: lista com busca, cadastro completo (PF/PJ, CPF/CNPJ, endereço, tags), ações rápidas (venda, WhatsApp).
+- **Vendas rápidas (PDV)**: seleciona produtos/variação, cliente opcional e forma de pagamento; registra a venda e abate o estoque automaticamente.
+- **Despesas**: lista e cadastro de despesas por categoria.
+- **Área Fiscal**: **módulo simulado** — cada venda concluída aparece como uma "nota simulada". Emissão fiscal real (NFC-e/NF-e) exige certificado digital e integração com a SEFAZ, fora do escopo desta demonstração.
+
+Não há autenticação/login — é um protótipo de uso interno.
+
+## apps/api — Backend
+
+API REST em NestJS com Prisma (SQLite local, sem dependências externas):
+
+- `GET/POST/PATCH/DELETE /api/products`, `PATCH /api/products/variants/:id/stock`, `GET /api/products/low-stock`
+- `GET/POST/PATCH/DELETE /api/customers`
+- `GET/POST /api/sales` (abate estoque em transação)
+- `GET/POST/PATCH/DELETE /api/expenses`
 
 ## Rodando o projeto
 
 ```sh
 npm install
-npx nx dev storefront      # ambiente de desenvolvimento
-npx nx build storefront    # build de produção
-npx nx lint storefront     # lint
+
+# 1. Banco de dados (uma vez, ou após mudar o schema)
+cp apps/api/.env.example apps/api/.env
+npx nx run api:prisma-migrate
+npx nx run api:seed        # popula com produtos/clientes/despesas de exemplo
+
+# 2. Subir tudo (em terminais separados)
+npx nx serve api           # http://localhost:3333/api
+npx nx dev admin           # http://localhost:4200
+npx nx dev storefront      # http://localhost:3000
 ```
 
-Para ver todos os targets disponíveis: `npx nx show project storefront`.
+Outros comandos úteis: `npx nx build <app>`, `npx nx lint <app>`, `npx nx show project <app>`.
+
+O admin lê a URL da API de `apps/admin/.env.local` (`NEXT_PUBLIC_API_URL`, padrão `http://localhost:3333/api`).

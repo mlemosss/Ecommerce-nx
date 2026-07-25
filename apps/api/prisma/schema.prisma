@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id              String            @id @default(cuid())
+  name            String
+  slug            String            @unique
+  category        String
+  description     String            @default("")
+  costPrice       Float
+  price           Float
+  compareAtPrice  Float?
+  active          Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  variants        ProductVariant[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id         String      @id @default(cuid())
+  productId  String
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color      String
+  size       String
+  stock      Int         @default(0)
+  saleItems  SaleItem[]
+
+  @@unique([productId, color, size])
+  @@map("product_variants")
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  name           String
+  personType     String   @default("PF")
+  documentNumber String?
+  birthDate      DateTime?
+  phone          String?
+  email          String?
+  description    String?
+  tags           String   @default("")
+  zipCode        String?
+  street         String?
+  number         String?
+  complement     String?
+  neighborhood   String?
+  city           String?
+  state          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  sales          Sale[]
+
+  @@map("customers")
+}
+
+model Sale {
+  id            String     @id @default(cuid())
+  customerId    String?
+  customer      Customer?  @relation(fields: [customerId], references: [id])
+  paymentMethod String
+  status        String     @default("concluida")
+  total         Float
+  createdAt     DateTime   @default(now())
+  items         SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id               String         @id @default(cuid())
+  saleId           String
+  sale             Sale           @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  quantity         Int
+  unitPrice        Float
+
+  @@map("sale_items")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  category    String
+  amount      Float
+  date        DateTime
+  createdAt   DateTime @default(now())
+
+  @@map("expenses")
+}

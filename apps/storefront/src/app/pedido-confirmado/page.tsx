@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { OrderConfirmationClient } from './order-confirmation-client';
 
 export const metadata = {
-  title: 'Pedido confirmado — GRITWEAR',
+  title: 'Pedido confirmado — NO EXCUSES',
 };
 
 export default function OrderConfirmationPage() {

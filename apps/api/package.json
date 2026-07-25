@@ -1,0 +1,71 @@
+{
+  "name": "@app/api",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "webpack-cli build",
+          "args": [
+            "node-env=production"
+          ]
+        },
+        "configurations": {
+          "development": {
+            "args": [
+              "node-env=development"
+            ]
+          }
+        }
+      },
+      "serve": {
+        "executor": "@nx/js:node",
+        "defaultConfiguration": "development",
+        "dependsOn": [
+          "build"
+        ],
+        "options": {
+          "buildTarget": "@app/api:build",
+          "runBuildTargetDependencies": false
+        },
+        "configurations": {
+          "development": {
+            "buildTarget": "@app/api:build:development"
+          },
+          "production": {
+            "buildTarget": "@app/api:build:production"
+          }
+        }
+      },
+      "prisma-migrate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "prisma migrate dev",
+          "cwd": "apps/api"
+        }
+      },
+      "prisma-generate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "prisma generate",
+          "cwd": "apps/api"
+        }
+      },
+      "seed": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "ts-node --transpile-only prisma/seed.ts",
+          "cwd": "apps/api",
+          "env": {
+            "TS_NODE_PROJECT": "tsconfig.seed.json"
+          }
+        }
+      }
+    }
+  },
+  "prisma": {
+    "seed": "TS_NODE_PROJECT=tsconfig.seed.json ts-node --transpile-only prisma/seed.ts"
+  }
+}

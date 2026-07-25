@@ -1,0 +1,127 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { TopBar } from '../../components/top-bar';
+import { api } from '../../lib/api';
+import { colorSwatch } from '../../lib/colors';
+import { formatPrice } from '../../lib/format';
+import type { Product } from '../../lib/types';
+
+export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api
+      .get<Product[]>('/products')
+      .then(setProducts)
+      .catch((err) => setError(err.message ?? 'Erro ao carregar produtos'));
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!products) return [];
+    const term = search.trim().toLowerCase();
+    return term ? products.filter((p) => p.name.toLowerCase().includes(term)) : products;
+  }, [products, search]);
+
+  const grouped = useMemo(() => {
+    const groups: Record<string, Product[]> = {};
+    for (const product of filtered) {
+      const letter = product.name[0]?.toUpperCase() ?? '#';
+      groups[letter] = groups[letter] ?? [];
+      groups[letter].push(product);
+    }
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filtered]);
+
+  return (
+    <div>
+      <TopBar
+        title="Produtos"
+        rightAction={
+          <Link href="/produtos/novo" className="btn-primary !px-4 !py-2 text-xs">
+            + Novo
+          </Link>
+        }
+      />
+
+      <div className="px-4 pt-4">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Pesquisar produto"
+          className="input-field"
+        />
+
+        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+
+        {products === null && !error && (
+          <p className="mt-8 text-center text-sm text-black/50">Carregando produtos...</p>
+        )}
+
+        {products && products.length === 0 && (
+          <p className="mt-8 text-center text-sm text-black/50">
+            Nenhum produto cadastrado ainda. Crie o primeiro!
+          </p>
+        )}
+
+        {grouped.map(([letter, items]) => (
+          <div key={letter} className="mt-4">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-black/5 text-sm font-semibold">
+              {letter}
+            </span>
+            <div className="mt-2 space-y-2">
+              {items.map((product) => {
+                const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+                const colors = Array.from(new Set(product.variants.map((v) => v.color)));
+                const sizes = Array.from(new Set(product.variants.map((v) => v.size)));
+                return (
+                  <Link
+                    key={product.id}
+                    href={`/produtos/${product.id}`}
+                    className="flex items-center gap-3 rounded-2xl bg-neutral-100 p-3"
+                  >
+                    <div
+                      className="h-14 w-14 shrink-0 rounded-xl"
+                      style={{ backgroundColor: colorSwatch(colors[0] ?? '') }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{product.name}</p>
+                      <p className="text-sm">{formatPrice(product.price)}</p>
+                      <p className="text-xs text-black/50">Custo: {formatPrice(product.costPrice)}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 text-xs font-semibold shadow-sm">
+                        📦 {totalStock}
+                      </span>
+                      <div className="flex gap-1">
+                        {colors.slice(0, 3).map((c) => (
+                          <span
+                            key={c}
+                            title={c}
+                            className="h-4 w-4 rounded-sm border border-black/10"
+                            style={{ backgroundColor: colorSwatch(c) }}
+                          />
+                        ))}
+                        {colors.length > 3 && <span className="text-xs text-black/40">…</span>}
+                      </div>
+                      <div className="flex gap-1">
+                        {sizes.slice(0, 3).map((s) => (
+                          <span key={s} className="rounded bg-black/5 px-1 text-[10px] font-medium">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

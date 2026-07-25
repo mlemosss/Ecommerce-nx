@@ -41,8 +41,14 @@ Thumbs.db
 .nx/cache
 .nx/workspace-data
 
+# Prisma / SQLite
+apps/api/.env
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
 # Next.js
 .next
 out
+.env*.local
 
 test-output

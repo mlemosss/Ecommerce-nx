@@ -5,6 +5,15 @@
   "references": [
     {
       "path": "./apps/storefront"
+    },
+    {
+      "path": "./apps/api-e2e"
+    },
+    {
+      "path": "./apps/api"
+    },
+    {
+      "path": "./apps/admin"
     }
   ]
 }

@@ -7,7 +7,7 @@ export function Footer() {
       <div className="container-page grid grid-cols-2 gap-8 py-12 sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
           <p className="text-xl font-black tracking-tighter">
-            GRIT<span className="text-volt2">WEAR</span>
+            NO <span className="text-volt2">EXCUSES</span>
           </p>
           <p className="mt-3 text-sm text-white/60">
             Roupas e acessórios de academia feitos para quem não pula treino.
@@ -32,7 +32,7 @@ export function Footer() {
           <ul className="mt-3 space-y-2 text-sm text-white/60">
             <li><Link href="/produtos" className="hover:text-white">Todos os produtos</Link></li>
             <li><Link href="/carrinho" className="hover:text-white">Meu carrinho</Link></li>
-            <li><a href="mailto:contato@gritwear.com.br" className="hover:text-white">contato@gritwear.com.br</a></li>
+            <li><a href="mailto:contato@noexcuses.com.br" className="hover:text-white">contato@noexcuses.com.br</a></li>
           </ul>
         </div>
 
@@ -45,7 +45,7 @@ export function Footer() {
       </div>
       <div className="border-t border-white/10 py-4">
         <p className="container-page text-xs text-white/40">
-          © {new Date().getFullYear()} GRITWEAR. Todos os direitos reservados.
+          © {new Date().getFullYear()} NO EXCUSES. Todos os direitos reservados.
         </p>
       </div>
     </footer>

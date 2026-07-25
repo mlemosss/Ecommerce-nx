@@ -1,0 +1,78 @@
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  color: string;
+  size: string;
+  stock: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  costPrice: number;
+  price: number;
+  compareAtPrice: number | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  variants: ProductVariant[];
+}
+
+export type PersonType = 'PF' | 'PJ';
+
+export interface Customer {
+  id: string;
+  name: string;
+  personType: PersonType;
+  documentNumber: string | null;
+  birthDate: string | null;
+  phone: string | null;
+  email: string | null;
+  description: string | null;
+  tags: string;
+  zipCode: string | null;
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  createdAt: string;
+  updatedAt: string;
+  sales?: Sale[];
+}
+
+export type PaymentMethod = 'pix' | 'cartao' | 'boleto' | 'dinheiro';
+export type SaleStatus = 'concluida' | 'conta_aberta';
+
+export interface SaleItem {
+  id: string;
+  saleId: string;
+  productVariantId: string;
+  quantity: number;
+  unitPrice: number;
+  productVariant: ProductVariant & { product: Product };
+}
+
+export interface Sale {
+  id: string;
+  customerId: string | null;
+  customer: Customer | null;
+  paymentMethod: PaymentMethod;
+  status: SaleStatus;
+  total: number;
+  createdAt: string;
+  items: SaleItem[];
+}
+
+export interface Expense {
+  id: string;
+  description: string;
+  category: string;
+  amount: number;
+  date: string;
+  createdAt: string;
+}
