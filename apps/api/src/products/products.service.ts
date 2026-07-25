@@ -41,7 +41,7 @@ export class ProductsService {
       where: {
         ...(params.category ? { category: params.category } : {}),
         ...(params.search
-          ? { name: { contains: params.search } }
+          ? { name: { contains: params.search, mode: 'insensitive' } }
           : {}),
       },
       include: { variants: true },

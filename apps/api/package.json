@@ -39,6 +39,13 @@
           }
         }
       },
+      "build-serverless": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "webpack-cli build --config webpack.serverless.config.js",
+          "cwd": "apps/api"
+        }
+      },
       "prisma-migrate": {
         "executor": "nx:run-commands",
         "options": {

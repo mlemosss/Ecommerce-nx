@@ -1,0 +1,5 @@
+{
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "npx nx run api:build-serverless"
+}

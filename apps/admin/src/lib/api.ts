@@ -4,7 +4,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 
 export function resolveMediaUrl(path: string): string {
-  return path.startsWith('http') ? path : `${API_ORIGIN}${path}`;
+  return path.startsWith('http') || path.startsWith('data:') ? path : `${API_ORIGIN}${path}`;
 }
 
 export function fileToDataUrl(file: File): Promise<string> {

@@ -8,6 +8,6 @@ export class UploadsController {
 
   @Post('products')
   uploadProductImage(@Body() dto: UploadImageDto) {
-    return this.uploadsService.saveProductImage(dto.dataUrl);
+    return this.uploadsService.validateProductImage(dto.dataUrl);
   }
 }
