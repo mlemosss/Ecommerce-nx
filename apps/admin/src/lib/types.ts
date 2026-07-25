@@ -63,6 +63,7 @@ export interface Sale {
   customer: Customer | null;
   paymentMethod: PaymentMethod;
   status: SaleStatus;
+  installments: number;
   total: number;
   createdAt: string;
   items: SaleItem[];
@@ -75,4 +76,15 @@ export interface Expense {
   amount: number;
   date: string;
   createdAt: string;
+}
+
+export interface DashboardSummary {
+  cashBalance: number;
+  todayIn: number;
+  todayOut: number;
+  monthRevenue: number;
+  monthExpenses: number;
+  grossProfit: number;
+  openAccounts: { count: number; total: number };
+  installmentSales: { count: number; total: number };
 }

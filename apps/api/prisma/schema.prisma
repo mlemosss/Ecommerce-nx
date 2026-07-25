@@ -67,6 +67,7 @@ model Sale {
   customer      Customer?  @relation(fields: [customerId], references: [id])
   paymentMethod String
   status        String     @default("concluida")
+  installments  Int        @default(1)
   total         Float
   createdAt     DateTime   @default(now())
   items         SaleItem[]

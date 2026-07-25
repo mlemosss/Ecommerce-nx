@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateSaleDto } from './dto/sale.dto';
+import { CreateSaleDto, UpdateSaleStatusDto } from './dto/sale.dto';
 
 @Injectable()
 export class SalesService {
@@ -66,6 +66,7 @@ export class SalesService {
           customerId: dto.customerId,
           paymentMethod: dto.paymentMethod,
           status: dto.status ?? 'concluida',
+          installments: dto.installments ?? 1,
           total,
           items: { create: itemsData },
         },
@@ -74,6 +75,18 @@ export class SalesService {
           items: { include: { productVariant: { include: { product: true } } } },
         },
       });
+    });
+  }
+
+  async updateStatus(id: string, dto: UpdateSaleStatusDto) {
+    await this.findOne(id);
+    return this.prisma.sale.update({
+      where: { id },
+      data: { status: dto.status },
+      include: {
+        customer: true,
+        items: { include: { productVariant: { include: { product: true } } } },
+      },
     });
   }
 }

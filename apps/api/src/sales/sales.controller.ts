@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { SalesService } from './sales.service';
-import { CreateSaleDto } from './dto/sale.dto';
+import { CreateSaleDto, UpdateSaleStatusDto } from './dto/sale.dto';
 
 @Controller('sales')
 export class SalesController {
@@ -19,5 +19,10 @@ export class SalesController {
   @Post()
   create(@Body() dto: CreateSaleDto) {
     return this.salesService.create(dto);
+  }
+
+  @Patch(':id/status')
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateSaleStatusDto) {
+    return this.salesService.updateStatus(id, dto);
   }
 }

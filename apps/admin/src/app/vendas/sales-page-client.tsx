@@ -34,9 +34,13 @@ export function SalesPageClient() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [customerId, setCustomerId] = useState(preselectedCustomerId);
   const [payment, setPayment] = useState<PaymentMethod>('pix');
+  const [openAccount, setOpenAccount] = useState(false);
+  const [installments, setInstallments] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [receipt, setReceipt] = useState<{ id: string; total: number } | null>(null);
+  const [receipt, setReceipt] = useState<{ id: string; total: number; status: string } | null>(
+    null
+  );
 
   useEffect(() => {
     api.get<Product[]>('/products').then(setProducts);
@@ -87,12 +91,18 @@ export function SalesPageClient() {
 
   async function handleConfirm() {
     if (cart.length === 0) return;
+    if (openAccount && !customerId) {
+      setError('Selecione um cliente para deixar a conta em aberto.');
+      return;
+    }
     setSubmitting(true);
     setError('');
     try {
-      const sale = await api.post<{ id: string; total: number }>('/sales', {
+      const sale = await api.post<{ id: string; total: number; status: string }>('/sales', {
         customerId: customerId || undefined,
         paymentMethod: payment,
+        status: openAccount ? 'conta_aberta' : 'concluida',
+        installments: payment === 'cartao' ? installments : 1,
         items: cart.map((l) => ({ productVariantId: l.variantId, quantity: l.quantity })),
       });
       setReceipt(sale);
@@ -114,7 +124,9 @@ export function SalesPageClient() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p className="page-title">Venda concluída!</p>
+          <p className="page-title">
+            {receipt.status === 'conta_aberta' ? 'Conta aberta!' : 'Venda concluída!'}
+          </p>
           <p className="text-black/60">Total: {formatPrice(receipt.total)}</p>
           <button type="button" onClick={() => setReceipt(null)} className="btn-primary mt-4">
             Nova venda
@@ -223,7 +235,33 @@ export function SalesPageClient() {
               </button>
             ))}
           </div>
+          {payment === 'cartao' && (
+            <div className="mt-3">
+              <label className="mb-1 block text-sm font-semibold">Parcelas</label>
+              <select
+                value={installments}
+                onChange={(e) => setInstallments(Number(e.target.value))}
+                className="input-field"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n}x{n > 1 ? ` de ${formatPrice(total / n)}` : ' à vista'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
+
+        <label className="mt-4 flex items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            checked={openAccount}
+            onChange={(e) => setOpenAccount(e.target.checked)}
+            className="h-4 w-4 accent-accent"
+          />
+          Deixar conta em aberto (fiado)
+        </label>
 
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
@@ -238,7 +276,7 @@ export function SalesPageClient() {
           onClick={handleConfirm}
           className="btn-primary mt-4 w-full"
         >
-          {submitting ? 'Registrando...' : 'Confirmar venda'}
+          {submitting ? 'Registrando...' : openAccount ? 'Abrir conta' : 'Confirmar venda'}
         </button>
       </div>
     </div>
