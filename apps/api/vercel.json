@@ -1,5 +1,6 @@
 {
   "framework": null,
   "installCommand": "npm install",
-  "buildCommand": "npx nx run api:build-serverless"
+  "buildCommand": "npx nx run api:build-serverless",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
 }
