@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "postinstall": "if [ -f apps/api/prisma/schema.prisma ]; then npx prisma generate --schema apps/api/prisma/schema.prisma; fi"
+    "postinstall": "if [ -f apps/api/prisma/schema.prisma ]; then npx --yes prisma@5.22.0 generate --schema apps/api/prisma/schema.prisma; fi"
   },
   "private": true,
   "dependencies": {
