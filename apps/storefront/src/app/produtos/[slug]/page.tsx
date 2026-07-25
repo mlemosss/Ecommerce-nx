@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getProductBySlug, getRelatedProducts, products } from '../../../lib/products';
 import { formatInstallments, formatPrice } from '../../../lib/format';
-import { ProductImage } from '../../../components/product-image';
+import { ProductGallery } from '../../../components/product-gallery';
 import { ProductCard } from '../../../components/product-card';
 import { AddToCart } from '../../../components/add-to-cart';
 
@@ -38,9 +38,10 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-2">
-        <ProductImage
+        <ProductGallery
           category={product.category}
           gradient={product.gradient}
+          images={product.images}
           className="aspect-square w-full rounded-3xl"
           label={product.isBestSeller ? 'Mais vendido' : product.isNew ? 'Novidade' : undefined}
         />

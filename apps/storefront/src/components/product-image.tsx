@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { ReactElement } from 'react';
 import type { Category } from '../lib/types';
 
@@ -19,34 +20,42 @@ interface ProductImageProps {
   gradient: [string, string];
   className?: string;
   label?: string;
+  photo?: string;
 }
 
-export function ProductImage({ category, gradient, className = '', label }: ProductImageProps) {
+export function ProductImage({ category, gradient, className = '', label, photo }: ProductImageProps) {
   return (
-    <div
-      className={`relative flex items-center justify-center overflow-hidden ${className}`}
-      style={{
-        backgroundImage: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
-      }}
-    >
-      <div className="absolute inset-0 opacity-10 mix-blend-overlay" aria-hidden>
-        <svg width="100%" height="100%">
-          <pattern id="grain" width="6" height="6" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="1" fill="white" />
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#grain)" />
-        </svg>
-      </div>
-      <svg
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="relative h-16 w-16 text-white/25 sm:h-24 sm:w-24"
-        aria-hidden
-      >
-        {categoryIcons[category]}
-      </svg>
+    <div className={`relative flex items-center justify-center overflow-hidden ${className}`}>
+      {photo ? (
+        <Image src={photo} alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+      ) : (
+        <>
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
+            }}
+          />
+          <div className="absolute inset-0 opacity-10 mix-blend-overlay" aria-hidden>
+            <svg width="100%" height="100%">
+              <pattern id="grain" width="6" height="6" patternUnits="userSpaceOnUse">
+                <circle cx="1" cy="1" r="1" fill="white" />
+              </pattern>
+              <rect width="100%" height="100%" fill="url(#grain)" />
+            </svg>
+          </div>
+          <svg
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="relative h-16 w-16 text-white/25 sm:h-24 sm:w-24"
+            aria-hidden
+          >
+            {categoryIcons[category]}
+          </svg>
+        </>
+      )}
       {label && (
-        <span className="absolute left-3 top-3 rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur">
+        <span className="absolute left-3 top-3 z-10 rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur">
           {label}
         </span>
       )}

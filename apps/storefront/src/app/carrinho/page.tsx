@@ -48,6 +48,7 @@ export default function CartPage() {
                   <ProductImage
                     category={product.category}
                     gradient={product.gradient}
+                    photo={product.images?.[0]}
                     className="h-24 w-24 rounded-xl"
                   />
                 </Link>

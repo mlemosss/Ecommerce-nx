@@ -14,6 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
       <ProductImage
         category={product.category}
         gradient={product.gradient}
+        photo={product.images?.[0]}
         className="aspect-[4/5] w-full"
         label={badge}
       />

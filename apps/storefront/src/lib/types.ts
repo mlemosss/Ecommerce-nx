@@ -22,6 +22,7 @@ export interface Product {
   isNew?: boolean;
   isBestSeller?: boolean;
   gradient: [string, string];
+  images?: string[];
 }
 
 export interface CartItem {
