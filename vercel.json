@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "installCommand": "npm install --production=false",
+  "installCommand": "npm install",
   "buildCommand": "npx nx build storefront",
   "outputDirectory": "apps/storefront/out"
 }
