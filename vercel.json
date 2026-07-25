@@ -1,7 +1,7 @@
 {
   "framework": "nextjs",
   "installCommand": "npm install",
-  "buildCommand": "npx nx build storefront",
+  "buildCommand": "sh \"$(git rev-parse --show-toplevel)/scripts/vercel-build.sh\"",
   "outputDirectory": "apps/storefront/.next",
   "rewrites": [
     { "source": "/admin", "destination": "https://ecommerce-nx-admin-marcolemosjr-hotmailcoms-projects.vercel.app/admin" },
