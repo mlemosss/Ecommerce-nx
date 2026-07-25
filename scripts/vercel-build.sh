@@ -24,6 +24,13 @@ if [ "$VERCEL_PROJECT_ID" = "$ADMIN_PROJECT_ID" ]; then
   mkdir -p apps/admin/apps/storefront
   rm -rf apps/admin/apps/storefront/.next
   ln -s ../../.next apps/admin/apps/storefront/.next
+
+  # Vercel resolves each traced file's node_modules relative to this
+  # project's Root Directory (apps/admin), not the app's real nesting
+  # depth, so also symlink node_modules there (npm workspaces hoist the
+  # real one to the repo root).
+  rm -rf apps/admin/node_modules
+  ln -s ../../node_modules apps/admin/node_modules
 else
   npx nx build storefront
 fi
