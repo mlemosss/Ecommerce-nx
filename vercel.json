@@ -1,0 +1,6 @@
+{
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "npx nx build storefront",
+  "outputDirectory": "apps/storefront/.next"
+}
