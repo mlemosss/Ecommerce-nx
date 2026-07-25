@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useCart } from '../../lib/cart-context';
 import { products } from '../../lib/products';
 import { formatPrice } from '../../lib/format';
-import { DEFAULT_SETTINGS, getSettings, validateCoupon } from '../../lib/api';
+import { createOrder, DEFAULT_SETTINGS, getSettings, OrderError, validateCoupon } from '../../lib/api';
 
 type PaymentMethod = 'pix' | 'cartao' | 'boleto';
 
@@ -16,16 +16,23 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; enabledKey: 'pixEn
   { value: 'boleto', label: 'Boleto', enabledKey: 'boletoEnabled' },
 ];
 
-function generateOrderNumber(): string {
-  return `GW${Math.floor(100000 + Math.random() * 900000)}`;
-}
-
 export default function CheckoutPage() {
   const { items, subtotal, isLoaded, clearCart } = useCart();
   const router = useRouter();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [payment, setPayment] = useState<PaymentMethod>('pix');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [document, setDocument] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [city, setCity] = useState('');
+  const [street, setStreet] = useState('');
+  const [number, setNumber] = useState('');
+  const [complement, setComplement] = useState('');
 
   const [couponCode, setCouponCode] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
@@ -69,14 +76,53 @@ export default function CheckoutPage() {
     setCouponMessage('');
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setError('');
     setSubmitting(true);
-    const orderNumber = generateOrderNumber();
-    window.setTimeout(() => {
+    try {
+      const result = await createOrder({
+        customerName: name,
+        customerEmail: email,
+        customerPhone: phone,
+        customerDocument: document,
+        zipCode,
+        city,
+        street,
+        number,
+        complement: complement || undefined,
+        items: items.map((item) => {
+          const product = products.find((p) => p.id === item.productId);
+          return {
+            productId: item.productId,
+            productName: product?.name ?? item.productId,
+            size: item.size,
+            color: item.color,
+            quantity: item.quantity,
+            unitPrice: product?.price ?? 0,
+          };
+        }),
+        subtotal,
+        shipping,
+        discount: appliedDiscount,
+        couponCode: appliedCode ?? undefined,
+        total,
+        paymentMethod: payment,
+      });
+
       clearCart();
-      router.push(`/pedido-confirmado?pedido=${orderNumber}&total=${total.toFixed(2)}`);
-    }, 600);
+      const params = new URLSearchParams({
+        pedido: result.order.orderNumber,
+        total: total.toFixed(2),
+      });
+      if (result.paymentUrl) params.set('pagamento', result.paymentUrl);
+      if (result.paymentWarning) params.set('aviso', result.paymentWarning);
+      router.push(`/pedido-confirmado?${params.toString()}`);
+    } catch (err) {
+      setError(err instanceof OrderError ? err.message : 'Não foi possível finalizar o pedido. Tente novamente.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!isLoaded) {
@@ -98,7 +144,7 @@ export default function CheckoutPage() {
     <div className="container-page py-10">
       <h1 className="section-title">Finalizar compra</h1>
       <p className="mt-2 text-sm text-black/50">
-        Ambiente simulado para fins de demonstração — nenhum dado é processado de verdade.
+        Você será redirecionado para uma página segura para concluir o pagamento.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 grid gap-10 lg:grid-cols-3">
@@ -106,20 +152,75 @@ export default function CheckoutPage() {
           <fieldset className="rounded-2xl border border-black/10 p-6">
             <legend className="px-2 text-sm font-bold uppercase tracking-wide">Dados pessoais</legend>
             <div className="grid gap-4 sm:grid-cols-2">
-              <input required placeholder="Nome completo" className="input-field sm:col-span-2" />
-              <input required type="email" placeholder="E-mail" className="input-field" />
-              <input required placeholder="Telefone" className="input-field" />
+              <input
+                required
+                placeholder="Nome completo"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-field sm:col-span-2"
+              />
+              <input
+                required
+                type="email"
+                placeholder="E-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field"
+              />
+              <input
+                required
+                placeholder="Telefone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="input-field"
+              />
+              <input
+                required
+                placeholder="CPF"
+                value={document}
+                onChange={(e) => setDocument(e.target.value)}
+                className="input-field sm:col-span-2"
+              />
             </div>
           </fieldset>
 
           <fieldset className="rounded-2xl border border-black/10 p-6">
             <legend className="px-2 text-sm font-bold uppercase tracking-wide">Endereço de entrega</legend>
             <div className="grid gap-4 sm:grid-cols-2">
-              <input required placeholder="CEP" className="input-field" />
-              <input required placeholder="Cidade" className="input-field" />
-              <input required placeholder="Endereço" className="input-field sm:col-span-2" />
-              <input required placeholder="Número" className="input-field" />
-              <input placeholder="Complemento" className="input-field" />
+              <input
+                required
+                placeholder="CEP"
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value)}
+                className="input-field"
+              />
+              <input
+                required
+                placeholder="Cidade"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="input-field"
+              />
+              <input
+                required
+                placeholder="Endereço"
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
+                className="input-field sm:col-span-2"
+              />
+              <input
+                required
+                placeholder="Número"
+                value={number}
+                onChange={(e) => setNumber(e.target.value)}
+                className="input-field"
+              />
+              <input
+                placeholder="Complemento"
+                value={complement}
+                onChange={(e) => setComplement(e.target.value)}
+                className="input-field"
+              />
             </div>
           </fieldset>
 
@@ -143,12 +244,9 @@ export default function CheckoutPage() {
             </div>
 
             {payment === 'cartao' && (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <input required placeholder="Número do cartão" className="input-field sm:col-span-2" />
-                <input required placeholder="Nome impresso no cartão" className="input-field sm:col-span-2" />
-                <input required placeholder="Validade (MM/AA)" className="input-field" />
-                <input required placeholder="CVV" className="input-field" />
-              </div>
+              <p className="mt-4 text-sm text-black/60">
+                Você vai inserir os dados do cartão numa página segura, depois de confirmar o pedido.
+              </p>
             )}
             {payment === 'pix' && (
               <p className="mt-4 text-sm text-black/60">
@@ -231,6 +329,7 @@ export default function CheckoutPage() {
             <span>Total</span>
             <span>{formatPrice(total)}</span>
           </div>
+          {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
           <button type="submit" disabled={submitting} className="btn-primary mt-6 w-full disabled:opacity-60">
             {submitting ? 'Processando...' : 'Confirmar pedido'}
           </button>

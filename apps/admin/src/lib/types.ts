@@ -107,6 +107,45 @@ export interface Coupon {
   updatedAt: string;
 }
 
+export type OrderPaymentMethod = 'pix' | 'cartao' | 'boleto';
+export type OrderStatus = 'aguardando_pagamento' | 'pago' | 'cancelado';
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  productId: string;
+  productName: string;
+  size: string;
+  color: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerDocument: string;
+  zipCode: string;
+  city: string;
+  street: string;
+  number: string;
+  complement: string | null;
+  subtotal: number;
+  shipping: number;
+  discount: number;
+  couponCode: string | null;
+  total: number;
+  paymentMethod: OrderPaymentMethod;
+  status: OrderStatus;
+  asaasInvoiceUrl: string | null;
+  items: OrderItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface StoreSettings {
   id: string;
   storeName: string;

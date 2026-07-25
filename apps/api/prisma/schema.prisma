@@ -126,6 +126,49 @@ model Coupon {
   @@map("coupons")
 }
 
+model Order {
+  id                String      @id @default(cuid())
+  orderNumber       String      @unique
+  customerName      String
+  customerEmail     String
+  customerPhone     String
+  customerDocument  String
+  zipCode           String
+  city              String
+  street            String
+  number            String
+  complement        String?
+  subtotal          Float
+  shipping          Float
+  discount          Float       @default(0)
+  couponCode        String?
+  total             Float
+  paymentMethod     String
+  status            String      @default("aguardando_pagamento")
+  asaasCustomerId   String?
+  asaasPaymentId    String?
+  asaasInvoiceUrl   String?
+  items             OrderItem[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  productName String
+  size        String
+  color       String
+  quantity    Int
+  unitPrice   Float
+
+  @@map("order_items")
+}
+
 model StoreSettings {
   id                   String  @id @default("singleton")
   storeName            String  @default("No Excuse")

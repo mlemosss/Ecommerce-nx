@@ -60,3 +60,53 @@ export async function validateCoupon(code: string, orderTotal: number): Promise<
     return { valid: false, message: 'Não foi possível validar o cupom agora.' };
   }
 }
+
+export interface CreateOrderItemInput {
+  productId: string;
+  productName: string;
+  size: string;
+  color: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface CreateOrderInput {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerDocument: string;
+  zipCode: string;
+  city: string;
+  street: string;
+  number: string;
+  complement?: string;
+  items: CreateOrderItemInput[];
+  subtotal: number;
+  shipping: number;
+  discount: number;
+  couponCode?: string;
+  total: number;
+  paymentMethod: 'pix' | 'cartao' | 'boleto';
+}
+
+export interface CreateOrderResult {
+  order: { id: string; orderNumber: string };
+  paymentUrl: string | null;
+  paymentWarning: string | null;
+}
+
+export class OrderError extends Error {}
+
+export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
+  const res = await fetch(`${API_URL}/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const message = Array.isArray(body?.message) ? body.message.join(', ') : body?.message;
+    throw new OrderError(message || 'Não foi possível registrar o pedido agora.');
+  }
+  return res.json();
+}

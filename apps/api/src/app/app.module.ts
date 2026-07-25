@@ -10,6 +10,8 @@ import { MetaModule } from '../meta/meta.module';
 import { UploadsModule } from '../uploads/uploads.module';
 import { CouponsModule } from '../coupons/coupons.module';
 import { SettingsModule } from '../settings/settings.module';
+import { OrdersModule } from '../orders/orders.module';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { SettingsModule } from '../settings/settings.module';
     UploadsModule,
     CouponsModule,
     SettingsModule,
+    OrdersModule,
+    WebhooksModule,
   ],
 })
 export class AppModule {}

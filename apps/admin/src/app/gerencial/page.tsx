@@ -117,17 +117,25 @@ export default function FinancialDashboardPage() {
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
         Venda online
       </h2>
-      <a
-        href="http://localhost:3000"
-        target="_blank"
-        rel="noreferrer"
-        className="card mt-3 flex items-center justify-between"
-      >
-        <span className="flex items-center gap-2 text-sm font-medium">🌐 Seu site</span>
-        <span className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">
-          Loja online
-        </span>
-      </a>
+      <div className="mt-3 space-y-2">
+        <Link href="/pedidos" className="card flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-medium">🧾 Pedidos</span>
+          <span className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">
+            Ver pedidos
+          </span>
+        </Link>
+        <a
+          href="http://localhost:3000"
+          target="_blank"
+          rel="noreferrer"
+          className="card flex items-center justify-between"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium">🌐 Seu site</span>
+          <span className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">
+            Loja online
+          </span>
+        </a>
+      </div>
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
         Movimentações
