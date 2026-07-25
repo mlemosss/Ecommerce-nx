@@ -9,6 +9,8 @@ const tools = [
   { href: '/despesas', label: 'Despesas', icon: 'M12 1v22m5-18H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6', color: 'text-orange-500' },
   { href: '/fiscal', label: 'Área Fiscal', icon: 'M9 12h6m-6 4h6M9 8h6M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z', color: 'text-purple-600' },
   { href: '/meta', label: 'Integração Meta', icon: 'M18 8a3 3 0 1 0-2.83-4H8.83A3 3 0 1 0 6 8c0 .35.06.69.17 1L4.5 12.6a3 3 0 1 0 1.6 2.2l3.5-2a3 3 0 0 0 4.8 0l3.5 2a3 3 0 1 0 1.6-2.2L18.83 9c.11-.31.17-.65.17-1Z', color: 'text-blue-700' },
+  { href: '/cupons', label: 'Cupons', icon: 'M9 5H4a1 1 0 0 0-1 1v3a2 2 0 0 1 0 4v3a1 1 0 0 0 1 1h5m0-12h11a1 1 0 0 1 1 1v3a2 2 0 0 0 0 4v3a1 1 0 0 1-1 1H9m0-12v12', color: 'text-pink-600' },
+  { href: '/configuracoes', label: 'Configurações', icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 1-.1 1.2l2.1 1.6-2 3.5-2.5-1a7.5 7.5 0 0 1-2 1.2L14.5 21h-5l-.4-2.5a7.5 7.5 0 0 1-2-1.2l-2.5 1-2-3.5 2.1-1.6a7.4 7.4 0 0 1 0-2.4L2.6 8.2l2-3.5 2.5 1a7.5 7.5 0 0 1 2-1.2L9.5 2h5l.4 2.5a7.5 7.5 0 0 1 2 1.2l2.5-1 2 3.5-2.1 1.6c.07.4.1.79.1 1.2Z', color: 'text-gray-600' },
 ];
 
 export default function HomePage() {

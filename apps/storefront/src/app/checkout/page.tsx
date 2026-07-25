@@ -1,13 +1,20 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '../../lib/cart-context';
 import { products } from '../../lib/products';
 import { formatPrice } from '../../lib/format';
+import { DEFAULT_SETTINGS, getSettings, validateCoupon } from '../../lib/api';
 
 type PaymentMethod = 'pix' | 'cartao' | 'boleto';
+
+const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; enabledKey: 'pixEnabled' | 'cardEnabled' | 'boletoEnabled' }[] = [
+  { value: 'pix', label: 'Pix', enabledKey: 'pixEnabled' },
+  { value: 'cartao', label: 'Cartão de crédito', enabledKey: 'cardEnabled' },
+  { value: 'boleto', label: 'Boleto', enabledKey: 'boletoEnabled' },
+];
 
 function generateOrderNumber(): string {
   return `GW${Math.floor(100000 + Math.random() * 900000)}`;
@@ -16,11 +23,51 @@ function generateOrderNumber(): string {
 export default function CheckoutPage() {
   const { items, subtotal, isLoaded, clearCart } = useCart();
   const router = useRouter();
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [payment, setPayment] = useState<PaymentMethod>('pix');
   const [submitting, setSubmitting] = useState(false);
 
-  const shipping = subtotal >= 199.9 ? 0 : 19.9;
-  const total = subtotal + shipping;
+  const [couponCode, setCouponCode] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [couponMessage, setCouponMessage] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    getSettings().then(setSettings);
+  }, []);
+
+  const availablePayments = PAYMENT_OPTIONS.filter((option) => settings[option.enabledKey]);
+
+  const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
+  const total = Math.max(0, subtotal + shipping - appliedDiscount);
+
+  async function handleApplyCoupon() {
+    if (!couponCode.trim()) return;
+    setApplyingCoupon(true);
+    setCouponMessage('');
+    try {
+      const result = await validateCoupon(couponCode.trim(), subtotal);
+      if (result.valid && result.discountAmount !== undefined) {
+        setAppliedDiscount(result.discountAmount);
+        setAppliedCode(result.code ?? couponCode.trim().toUpperCase());
+        setCouponMessage(`Cupom aplicado! Desconto de ${formatPrice(result.discountAmount)}.`);
+      } else {
+        setAppliedDiscount(0);
+        setAppliedCode(null);
+        setCouponMessage(result.message ?? 'Cupom inválido.');
+      }
+    } finally {
+      setApplyingCoupon(false);
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedDiscount(0);
+    setAppliedCode(null);
+    setCouponCode('');
+    setCouponMessage('');
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -79,13 +126,7 @@ export default function CheckoutPage() {
           <fieldset className="rounded-2xl border border-black/10 p-6">
             <legend className="px-2 text-sm font-bold uppercase tracking-wide">Forma de pagamento</legend>
             <div className="flex flex-wrap gap-3">
-              {(
-                [
-                  { value: 'pix', label: 'Pix' },
-                  { value: 'cartao', label: 'Cartão de crédito' },
-                  { value: 'boleto', label: 'Boleto' },
-                ] as const
-              ).map((option) => (
+              {availablePayments.map((option) => (
                 <button
                   type="button"
                   key={option.value}
@@ -138,6 +179,38 @@ export default function CheckoutPage() {
               );
             })}
           </ul>
+
+          <div className="mt-4 border-t border-black/10 pt-4">
+            {appliedCode ? (
+              <div className="flex items-center justify-between rounded-xl bg-black/5 px-3 py-2 text-sm">
+                <span>
+                  Cupom <span className="font-semibold">{appliedCode}</span> aplicado
+                </span>
+                <button type="button" onClick={handleRemoveCoupon} className="text-black/50 hover:text-red-600">
+                  Remover
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  placeholder="Cupom de desconto"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  className="input-field flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={applyingCoupon || !couponCode.trim()}
+                  className="btn-secondary shrink-0 !px-4 disabled:opacity-60"
+                >
+                  {applyingCoupon ? 'Aplicando...' : 'Aplicar'}
+                </button>
+              </div>
+            )}
+            {couponMessage && !appliedCode && <p className="mt-2 text-xs text-red-600">{couponMessage}</p>}
+          </div>
+
           <dl className="mt-4 space-y-2 border-t border-black/10 pt-4 text-sm">
             <div className="flex justify-between">
               <dt className="text-black/60">Subtotal</dt>
@@ -147,6 +220,12 @@ export default function CheckoutPage() {
               <dt className="text-black/60">Frete</dt>
               <dd>{shipping === 0 ? 'Grátis' : formatPrice(shipping)}</dd>
             </div>
+            {appliedDiscount > 0 && (
+              <div className="flex justify-between text-green-700">
+                <dt>Desconto</dt>
+                <dd>-{formatPrice(appliedDiscount)}</dd>
+              </div>
+            )}
           </dl>
           <div className="mt-4 flex justify-between border-t border-black/10 pt-4 text-lg font-bold">
             <span>Total</span>

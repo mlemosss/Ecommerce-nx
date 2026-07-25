@@ -1,15 +1,20 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../../lib/cart-context';
 import { products } from '../../lib/products';
 import { formatPrice } from '../../lib/format';
 import { ProductImage } from '../../components/product-image';
-
-const FRETE_GRATIS_A_PARTIR_DE = 199.9;
+import { DEFAULT_SETTINGS, getSettings } from '../../lib/api';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal, isLoaded } = useCart();
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    getSettings().then(setSettings);
+  }, []);
 
   if (!isLoaded) {
     return <div className="container-page py-24 text-center text-black/50">Carregando carrinho...</div>;
@@ -27,7 +32,7 @@ export default function CartPage() {
     );
   }
 
-  const shipping = subtotal >= FRETE_GRATIS_A_PARTIR_DE ? 0 : 19.9;
+  const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
   const total = subtotal + shipping;
 
   return (
@@ -117,7 +122,7 @@ export default function CartPage() {
             </div>
             {shipping > 0 && (
               <p className="text-xs text-black/50">
-                Falta {formatPrice(FRETE_GRATIS_A_PARTIR_DE - subtotal)} para frete grátis.
+                Falta {formatPrice(settings.freeShippingThreshold - subtotal)} para frete grátis.
               </p>
             )}
           </dl>

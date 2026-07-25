@@ -15,10 +15,10 @@ Monorepo [Nx](https://nx.dev) com três aplicações:
 - **Home** com hero, categorias em destaque, produtos mais vendidos/novidades e newsletter.
 - **Catálogo** (`/produtos`) com filtro por categoria e ordenação por preço.
 - **Página de produto** (`/produtos/[slug]`) com seleção de tamanho/cor, quantidade e produtos relacionados.
-- **Carrinho** (`/carrinho`) persistido em `localStorage`.
-- **Checkout simulado** (`/checkout`) com formulário de entrega/pagamento (Pix, cartão, boleto) e confirmação de pedido.
+- **Carrinho** (`/carrinho`) persistido em `localStorage`; frete e frete grátis vêm das configurações da loja.
+- **Checkout simulado** (`/checkout`) com formulário de entrega, formas de pagamento habilitadas na loja, campo de cupom de desconto e confirmação de pedido.
 
-Os dados de produto são mockados em `apps/storefront/src/lib/products.ts` (não consome a API ainda — é uma evolução natural para uma próxima etapa).
+Os dados de produto são mockados em `apps/storefront/src/lib/products.ts` (evolução natural para uma próxima etapa). Frete, formas de pagamento e cupons já consomem a API (`GET /api/settings`, `POST /api/coupons/validate`) — se a API estiver fora do ar, a loja usa valores padrão como fallback.
 
 ## apps/admin — Painel de gestão
 
@@ -32,6 +32,8 @@ Painel mobile-first inspirado em apps de gestão de loja, com:
 - **Despesas**: lista e cadastro de despesas por categoria.
 - **Área Fiscal**: **módulo simulado** — cada venda concluída aparece como uma "nota simulada". Emissão fiscal real (NFC-e/NF-e) exige certificado digital e integração com a SEFAZ, fora do escopo desta demonstração.
 - **Integração Meta** (`/meta`): sincroniza os produtos ativos com um catálogo do Meta Commerce Manager via Graph API (`items_batch`), para uso em anúncios e Instagram/Facebook Shop.
+- **Cupons** (`/cupons`): criação de cupons percentuais ou de valor fixo, com pedido mínimo, limite de usos e validade opcionais; a loja virtual valida o cupom no checkout.
+- **Configurações** (`/configuracoes`): nome/contato da loja, valor do frete e frete grátis a partir de quanto, formas de pagamento habilitadas e máximo de parcelas, e links de redes sociais — tudo consumido pela loja virtual.
 
 **Autenticação**: login com e-mail/senha (JWT), protegendo tanto as páginas do admin quanto a API. Usuário seedado acima.
 
@@ -49,6 +51,8 @@ API REST em NestJS com Prisma (PostgreSQL):
 - `GET /api/dashboard/summary` (caixa atual, receitas/despesas do mês, lucro bruto, contas abertas, parceladas)
 - `POST /api/auth/login`, `GET /api/auth/me` — todas as demais rotas exigem `Authorization: Bearer <token>`
 - `GET /api/meta/status`, `POST /api/meta/sync`, `GET /api/meta/batch-status/:handle` — exige `META_ACCESS_TOKEN` e `META_CATALOG_ID` configurados
+- `GET/POST/PATCH/DELETE /api/coupons` — `POST /api/coupons/validate` é pública (`{ code, orderTotal }`), usada pela loja no checkout
+- `GET /api/settings` é pública (lida pela loja); `PATCH /api/settings` exige autenticação
 
 ## Rodando o projeto
 
@@ -71,7 +75,7 @@ npx nx dev storefront      # http://localhost:3000
 
 Outros comandos úteis: `npx nx build <app>`, `npx nx lint <app>`, `npx nx show project <app>`.
 
-O admin lê a URL da API de `apps/admin/.env.local` (`NEXT_PUBLIC_API_URL`, padrão `http://localhost:3333/api`).
+O admin e a loja leem a URL da API de `NEXT_PUBLIC_API_URL` (`.env.local` de cada app), padrão `http://localhost:3333/api`.
 
 ## Deploy
 

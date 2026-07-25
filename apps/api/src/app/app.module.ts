@@ -8,6 +8,8 @@ import { DashboardModule } from '../dashboard/dashboard.module';
 import { AuthModule } from '../auth/auth.module';
 import { MetaModule } from '../meta/meta.module';
 import { UploadsModule } from '../uploads/uploads.module';
+import { CouponsModule } from '../coupons/coupons.module';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { UploadsModule } from '../uploads/uploads.module';
     DashboardModule,
     MetaModule,
     UploadsModule,
+    CouponsModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

@@ -1,0 +1,185 @@
+'use client';
+
+import { useEffect, useState, type FormEvent } from 'react';
+import { TopBar } from '../../components/top-bar';
+import { api, ApiError } from '../../lib/api';
+import type { StoreSettings } from '../../lib/types';
+
+export default function SettingsPage() {
+  const [settings, setSettings] = useState<StoreSettings | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.get<StoreSettings>('/settings').then(setSettings);
+  }, []);
+
+  function update<K extends keyof StoreSettings>(key: K, value: StoreSettings[K]) {
+    setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
+    setSaved(false);
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!settings) return;
+    setError('');
+    setSaving(true);
+    try {
+      const updated = await api.patch<StoreSettings>('/settings', {
+        storeName: settings.storeName,
+        contactEmail: settings.contactEmail || undefined,
+        contactWhatsapp: settings.contactWhatsapp || undefined,
+        shippingFee: settings.shippingFee,
+        freeShippingThreshold: settings.freeShippingThreshold,
+        pixEnabled: settings.pixEnabled,
+        cardEnabled: settings.cardEnabled,
+        boletoEnabled: settings.boletoEnabled,
+        maxInstallments: settings.maxInstallments,
+        instagramUrl: settings.instagramUrl || undefined,
+        facebookUrl: settings.facebookUrl || undefined,
+      });
+      setSettings(updated);
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro ao salvar configurações');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!settings) {
+    return (
+      <div>
+        <TopBar title="Configurações" />
+        <p className="px-4 pt-8 text-center text-sm text-black/50">Carregando...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <TopBar title="Configurações" />
+
+      <form onSubmit={handleSubmit} className="space-y-5 px-4 pb-8 pt-4">
+        {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>}
+        {saved && <p className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">Configurações salvas!</p>}
+
+        <section className="card space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-wide text-black/50">Loja</p>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Nome da loja</label>
+            <input
+              required
+              value={settings.storeName}
+              onChange={(e) => update('storeName', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">E-mail de contato</label>
+            <input
+              type="email"
+              value={settings.contactEmail ?? ''}
+              onChange={(e) => update('contactEmail', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">WhatsApp de contato</label>
+            <input
+              placeholder="5511999999999"
+              value={settings.contactWhatsapp ?? ''}
+              onChange={(e) => update('contactWhatsapp', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Frete (R$)</label>
+              <input
+                required
+                type="number"
+                step="0.01"
+                min="0"
+                value={settings.shippingFee}
+                onChange={(e) => update('shippingFee', Number(e.target.value))}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Frete grátis a partir de (R$)</label>
+              <input
+                required
+                type="number"
+                step="0.01"
+                min="0"
+                value={settings.freeShippingThreshold}
+                onChange={(e) => update('freeShippingThreshold', Number(e.target.value))}
+                className="input-field"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="card space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-wide text-black/50">Formas de pagamento</p>
+          {(
+            [
+              { key: 'pixEnabled', label: 'Pix' },
+              { key: 'cardEnabled', label: 'Cartão de crédito' },
+              { key: 'boletoEnabled', label: 'Boleto' },
+            ] as const
+          ).map((option) => (
+            <label key={option.key} className="flex items-center justify-between">
+              <span className="text-sm">{option.label}</span>
+              <input
+                type="checkbox"
+                checked={settings[option.key]}
+                onChange={(e) => update(option.key, e.target.checked)}
+                className="h-5 w-5"
+              />
+            </label>
+          ))}
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Máximo de parcelas sem juros</label>
+            <input
+              required
+              type="number"
+              min="1"
+              value={settings.maxInstallments}
+              onChange={(e) => update('maxInstallments', Number(e.target.value))}
+              className="input-field"
+            />
+          </div>
+        </section>
+
+        <section className="card space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-wide text-black/50">Redes sociais</p>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Instagram</label>
+            <input
+              placeholder="https://instagram.com/..."
+              value={settings.instagramUrl ?? ''}
+              onChange={(e) => update('instagramUrl', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Facebook</label>
+            <input
+              placeholder="https://facebook.com/..."
+              value={settings.facebookUrl ?? ''}
+              onChange={(e) => update('facebookUrl', e.target.value)}
+              className="input-field"
+            />
+          </div>
+        </section>
+
+        <button type="submit" disabled={saving} className="btn-primary w-full">
+          {saving ? 'Salvando...' : 'Salvar configurações'}
+        </button>
+      </form>
+    </div>
+  );
+}

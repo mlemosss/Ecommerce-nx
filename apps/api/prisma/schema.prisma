@@ -108,3 +108,38 @@ model Expense {
 
   @@map("expenses")
 }
+
+model Coupon {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  discountType   String
+  discountValue  Float
+  minOrderValue  Float?
+  usageLimit     Int?
+  usageCount     Int       @default(0)
+  active         Boolean   @default(true)
+  startsAt       DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("coupons")
+}
+
+model StoreSettings {
+  id                   String  @id @default("singleton")
+  storeName            String  @default("No Excuse")
+  contactEmail         String?
+  contactWhatsapp      String?
+  shippingFee          Float   @default(19.9)
+  freeShippingThreshold Float  @default(199.9)
+  pixEnabled           Boolean @default(true)
+  cardEnabled          Boolean @default(true)
+  boletoEnabled        Boolean @default(true)
+  maxInstallments      Int     @default(3)
+  instagramUrl         String?
+  facebookUrl          String?
+  updatedAt            DateTime @updatedAt
+
+  @@map("store_settings")
+}

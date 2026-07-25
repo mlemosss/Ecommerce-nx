@@ -89,3 +89,36 @@ export interface DashboardSummary {
   openAccounts: { count: number; total: number };
   installmentSales: { count: number; total: number };
 }
+
+export type CouponDiscountType = 'percentage' | 'fixed';
+
+export interface Coupon {
+  id: string;
+  code: string;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  minOrderValue: number | null;
+  usageLimit: number | null;
+  usageCount: number;
+  active: boolean;
+  startsAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StoreSettings {
+  id: string;
+  storeName: string;
+  contactEmail: string | null;
+  contactWhatsapp: string | null;
+  shippingFee: number;
+  freeShippingThreshold: number;
+  pixEnabled: boolean;
+  cardEnabled: boolean;
+  boletoEnabled: boolean;
+  maxInstallments: number;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  updatedAt: string;
+}
