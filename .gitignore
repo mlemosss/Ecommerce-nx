@@ -46,6 +46,9 @@ apps/api/.env
 apps/api/prisma/*.db
 apps/api/prisma/*.db-journal
 
+# Uploads de imagens de produto
+apps/api/uploads/
+
 # Next.js
 .next
 out

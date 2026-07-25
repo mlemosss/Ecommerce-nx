@@ -49,6 +49,11 @@ export class CreateProductDto {
   @IsBoolean()
   active?: boolean;
 
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => VariantDto)
@@ -86,6 +91,11 @@ export class UpdateProductDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 
   @IsOptional()
   @IsArray()

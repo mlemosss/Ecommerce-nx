@@ -1,6 +1,26 @@
 import { clearToken, getToken } from './auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
+const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
+
+export function resolveMediaUrl(path: string): string {
+  return path.startsWith('http') ? path : `${API_ORIGIN}${path}`;
+}
+
+export function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function uploadProductImage(file: File): Promise<string> {
+  const dataUrl = await fileToDataUrl(file);
+  const { url } = await api.post<{ url: string }>('/uploads/products', { dataUrl });
+  return url;
+}
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) {

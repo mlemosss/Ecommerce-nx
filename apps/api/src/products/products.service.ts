@@ -11,6 +11,16 @@ function slugify(text: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
+function withParsedImages<T extends { images: string }>(product: T): Omit<T, 'images'> & { images: string[] } {
+  let images: string[];
+  try {
+    images = JSON.parse(product.images);
+  } catch {
+    images = [];
+  }
+  return { ...product, images };
+}
+
 @Injectable()
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -27,7 +37,7 @@ export class ProductsService {
   }
 
   async findAll(params: { category?: string; search?: string }) {
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       where: {
         ...(params.category ? { category: params.category } : {}),
         ...(params.search
@@ -37,6 +47,7 @@ export class ProductsService {
       include: { variants: true },
       orderBy: { name: 'asc' },
     });
+    return products.map(withParsedImages);
   }
 
   async findOne(id: string) {
@@ -45,7 +56,7 @@ export class ProductsService {
       include: { variants: true },
     });
     if (!product) throw new NotFoundException('Produto não encontrado');
-    return product;
+    return withParsedImages(product);
   }
 
   async findBySlug(slug: string) {
@@ -54,12 +65,12 @@ export class ProductsService {
       include: { variants: true },
     });
     if (!product) throw new NotFoundException('Produto não encontrado');
-    return product;
+    return withParsedImages(product);
   }
 
   async create(dto: CreateProductDto) {
     const slug = await this.uniqueSlug(dto.name);
-    return this.prisma.product.create({
+    const product = await this.prisma.product.create({
       data: {
         name: dto.name,
         slug,
@@ -68,6 +79,7 @@ export class ProductsService {
         costPrice: dto.costPrice,
         price: dto.price,
         compareAtPrice: dto.compareAtPrice,
+        images: JSON.stringify(dto.images ?? []),
         active: dto.active ?? true,
         variants: {
           create: dto.variants.map((v) => ({
@@ -79,6 +91,7 @@ export class ProductsService {
       },
       include: { variants: true },
     });
+    return withParsedImages(product);
   }
 
   async update(id: string, dto: UpdateProductDto) {
@@ -88,7 +101,7 @@ export class ProductsService {
       await this.prisma.productVariant.deleteMany({ where: { productId: id } });
     }
 
-    return this.prisma.product.update({
+    const product = await this.prisma.product.update({
       where: { id },
       data: {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
@@ -97,6 +110,7 @@ export class ProductsService {
         ...(dto.costPrice !== undefined ? { costPrice: dto.costPrice } : {}),
         ...(dto.price !== undefined ? { price: dto.price } : {}),
         ...(dto.compareAtPrice !== undefined ? { compareAtPrice: dto.compareAtPrice } : {}),
+        ...(dto.images !== undefined ? { images: JSON.stringify(dto.images) } : {}),
         ...(dto.active !== undefined ? { active: dto.active } : {}),
         ...(dto.variants
           ? {
@@ -112,6 +126,7 @@ export class ProductsService {
       },
       include: { variants: true },
     });
+    return withParsedImages(product);
   }
 
   async remove(id: string) {

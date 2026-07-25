@@ -15,6 +15,7 @@ export interface Product {
   costPrice: number;
   price: number;
   compareAtPrice: number | null;
+  images: string[];
   active: boolean;
   createdAt: string;
   updatedAt: string;

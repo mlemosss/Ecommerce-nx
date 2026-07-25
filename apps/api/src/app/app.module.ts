@@ -7,6 +7,7 @@ import { ExpensesModule } from '../expenses/expenses.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { AuthModule } from '../auth/auth.module';
 import { MetaModule } from '../meta/meta.module';
+import { UploadsModule } from '../uploads/uploads.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MetaModule } from '../meta/meta.module';
     ExpensesModule,
     DashboardModule,
     MetaModule,
+    UploadsModule,
   ],
 })
 export class AppModule {}

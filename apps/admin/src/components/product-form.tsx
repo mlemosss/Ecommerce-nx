@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
-import { api, ApiError } from '../lib/api';
+import { useRef, useState, type FormEvent } from 'react';
+import { api, ApiError, resolveMediaUrl, uploadProductImage } from '../lib/api';
 import type { Product } from '../lib/types';
 
 const CATEGORY_OPTIONS = ['leggings', 'tops', 'shorts', 'camisetas', 'jaquetas', 'acessorios'];
@@ -32,8 +32,32 @@ export function ProductForm({ product }: ProductFormProps) {
       { color: '', size: '', stock: 0 },
     ]
   );
+  const [images, setImages] = useState<string[]>(product?.images ?? []);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  async function handleFilesSelected(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setError('');
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const url = await uploadProductImage(file);
+        setImages((prev) => [...prev, url]);
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro ao enviar imagem');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  function removeImage(url: string) {
+    setImages((prev) => prev.filter((img) => img !== url));
+  }
 
   function updateVariant(index: number, patch: Partial<VariantRow>) {
     setVariants((prev) => prev.map((v, i) => (i === index ? { ...v, ...patch } : v)));
@@ -64,6 +88,7 @@ export function ProductForm({ product }: ProductFormProps) {
       costPrice: Number(costPrice),
       price: Number(price),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+      images,
       variants: validVariants,
     };
 
@@ -163,6 +188,43 @@ export function ProductForm({ product }: ProductFormProps) {
           onChange={(e) => setCompareAtPrice(e.target.value)}
           className="input-field"
         />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-semibold">Fotos do produto</label>
+        <div className="flex flex-wrap gap-3">
+          {images.map((url) => (
+            <div key={url} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-black/10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={resolveMediaUrl(url)} alt="" className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => removeImage(url)}
+                className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+                aria-label="Remover foto"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-black/20 text-xs text-black/50 disabled:opacity-60"
+          >
+            {uploading ? 'Enviando...' : '+ Foto'}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            className="hidden"
+            onChange={(e) => handleFilesSelected(e.target.files)}
+          />
+        </div>
+        <p className="mt-1 text-xs text-black/40">JPG, PNG ou WEBP, até 5MB cada. A primeira foto é a capa do produto.</p>
       </div>
 
       <div>

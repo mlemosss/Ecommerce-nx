@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { TopBar } from '../../components/top-bar';
-import { api } from '../../lib/api';
+import { api, resolveMediaUrl } from '../../lib/api';
 import { colorSwatch } from '../../lib/colors';
 import { formatPrice } from '../../lib/format';
 import type { Product } from '../../lib/types';
@@ -83,10 +83,19 @@ export default function ProductsPage() {
                     href={`/produtos/${product.id}`}
                     className="flex items-center gap-3 rounded-2xl bg-neutral-100 p-3"
                   >
-                    <div
-                      className="h-14 w-14 shrink-0 rounded-xl"
-                      style={{ backgroundColor: colorSwatch(colors[0] ?? '') }}
-                    />
+                    {product.images[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={resolveMediaUrl(product.images[0])}
+                        alt=""
+                        className="h-14 w-14 shrink-0 rounded-xl object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="h-14 w-14 shrink-0 rounded-xl"
+                        style={{ backgroundColor: colorSwatch(colors[0] ?? '') }}
+                      />
+                    )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">{product.name}</p>
                       <p className="text-sm">{formatPrice(product.price)}</p>
