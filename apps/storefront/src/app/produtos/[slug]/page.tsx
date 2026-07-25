@@ -5,6 +5,7 @@ import { formatInstallments, formatPrice } from '../../../lib/format';
 import { ProductGallery } from '../../../components/product-gallery';
 import { ProductCard } from '../../../components/product-card';
 import { AddToCart } from '../../../components/add-to-cart';
+import { FeatureIcon } from '../../../components/feature-icon';
 
 export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
@@ -77,12 +78,17 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-6">
-            <p className="text-sm font-semibold">Detalhes do produto</p>
-            <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-black/70">
+            <p className="text-sm font-bold uppercase tracking-wide">Detalhes do produto</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {product.details.map((detail) => (
-                <li key={detail}>{detail}</li>
+                <div key={detail} className="flex items-start gap-3 rounded-2xl border border-black/10 p-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+                    <FeatureIcon label={detail} />
+                  </span>
+                  <span className="pt-1 text-sm font-medium text-black/80">{detail}</span>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
       </div>

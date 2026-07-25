@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '../../lib/auth';
@@ -28,11 +29,17 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <p className="text-2xl font-black tracking-tighter">
-            NO <span className="text-accent">EXCUSE</span>
-          </p>
-          <p className="mt-1 text-sm text-black/60">Painel de gestão</p>
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Image
+            src="/admin/logo-nx.png"
+            alt="No Excuse"
+            width={64}
+            height={56}
+            priority
+            unoptimized
+            className="h-14 w-auto"
+          />
+          <p className="mt-2 text-sm text-black/60">Painel de gestão</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -9,6 +9,8 @@ export function OrderConfirmationClient() {
   const orderNumber = searchParams.get('pedido');
   const totalParam = searchParams.get('total');
   const total = totalParam ? Number(totalParam) : null;
+  const paymentUrl = searchParams.get('pagamento');
+  const warning = searchParams.get('aviso');
 
   return (
     <div className="container-page flex flex-col items-center gap-4 py-24 text-center">
@@ -17,7 +19,7 @@ export function OrderConfirmationClient() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       </div>
-      <h1 className="section-title">Pedido confirmado!</h1>
+      <h1 className="section-title">Pedido recebido!</h1>
       {orderNumber && (
         <p className="text-black/60">
           Número do pedido: <span className="font-semibold text-ink">{orderNumber}</span>
@@ -25,13 +27,26 @@ export function OrderConfirmationClient() {
       )}
       {total !== null && (
         <p className="text-black/60">
-          Total pago: <span className="font-semibold text-ink">{formatPrice(total)}</span>
+          Total: <span className="font-semibold text-ink">{formatPrice(total)}</span>
         </p>
       )}
-      <p className="max-w-md text-black/60">
-        Enviamos os detalhes para o seu e-mail. Este é um pedido simulado para fins de demonstração.
-      </p>
-      <Link href="/produtos" className="btn-primary mt-4">
+
+      {paymentUrl ? (
+        <>
+          <p className="max-w-md text-black/60">
+            Falta só o pagamento. Clique abaixo para concluir numa página segura.
+          </p>
+          <a href={paymentUrl} className="btn-primary mt-2">
+            Pagar agora
+          </a>
+        </>
+      ) : (
+        <p className="max-w-md text-black/60">
+          {warning ?? 'Vamos entrar em contato pelo e-mail ou telefone informado para combinar o pagamento.'}
+        </p>
+      )}
+
+      <Link href="/produtos" className="btn-secondary mt-4">
         Continuar comprando
       </Link>
     </div>

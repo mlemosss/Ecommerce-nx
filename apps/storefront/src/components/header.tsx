@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '../lib/cart-context';
@@ -18,8 +19,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="text-xl font-black tracking-tighter">
-          NO <span className="text-volt2 bg-ink px-1">EXCUSE</span>
+        <Link href="/" className="flex items-center" aria-label="No Excuse">
+          <Image src="/logo-nx.png" alt="No Excuse" width={44} height={38} priority className="h-9 w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium lg:flex">
