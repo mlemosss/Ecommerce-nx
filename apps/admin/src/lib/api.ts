@@ -42,8 +42,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (res.status === 401) {
     clearToken();
-    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-      window.location.href = '/login';
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin/login')) {
+      window.location.href = '/admin/login';
     }
     throw new ApiError('Sessão expirada, faça login novamente', 401);
   }

@@ -80,7 +80,9 @@ O admin e a loja leem a URL da API de `NEXT_PUBLIC_API_URL` (`.env.local` de cad
 ## Deploy
 
 - **Loja (storefront)**: publicada na Vercel a partir da branch deste repositório.
-- **Admin + API**: ainda não publicados. A API está pronta para rodar como Vercel Functions
+- **Admin**: publicado como projeto Vercel separado (`apps/admin`, com `basePath: '/admin'`) e exposto no
+  mesmo domínio da loja em `/admin` via `rewrites` no `vercel.json` do storefront — não é um subdomínio à parte.
+- **API**: ainda não publicada. Está pronta para rodar como Vercel Functions
   (`apps/api/api/index.js`, `apps/api/vercel.json`), faltando apenas: (1) criar um banco Postgres
   gerenciado e configurar `DATABASE_URL`/`JWT_SECRET` como variáveis de ambiente do projeto na Vercel,
-  e (2) publicar `apps/admin` apontando `NEXT_PUBLIC_API_URL` para a URL da API publicada.
+  e (2) apontar `NEXT_PUBLIC_API_URL` (do admin e da loja) para a URL da API publicada.
