@@ -6,23 +6,30 @@ export type Category =
   | 'jaquetas'
   | 'acessorios';
 
+export interface ProductVariant {
+  color: string;
+  size: string;
+  stock: number;
+}
+
 export interface Product {
   id: string;
   slug: string;
   name: string;
   category: Category;
   price: number;
-  compareAtPrice?: number;
+  compareAtPrice?: number | null;
   colors: string[];
   sizes: string[];
   description: string;
-  details: string[];
-  rating: number;
-  reviewCount: number;
+  details?: string[];
+  rating?: number;
+  reviewCount?: number;
   isNew?: boolean;
   isBestSeller?: boolean;
   gradient: [string, string];
   images?: string[];
+  variants?: ProductVariant[];
 }
 
 export interface CartItem {

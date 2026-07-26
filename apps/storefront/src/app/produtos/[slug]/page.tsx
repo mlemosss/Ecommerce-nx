@@ -1,31 +1,27 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getProductBySlug, getRelatedProducts, products } from '../../../lib/products';
+import { getProductBySlug, getRelatedProducts } from '../../../lib/products';
 import { formatInstallments, formatPrice } from '../../../lib/format';
 import { ProductGallery } from '../../../components/product-gallery';
 import { ProductCard } from '../../../components/product-card';
 import { AddToCart } from '../../../components/add-to-cart';
-import { FeatureIcon } from '../../../components/feature-icon';
 import { TrackProductView } from '../../../components/track-product-view';
 import { RecentlyViewed } from '../../../components/recently-viewed';
+import { FavoriteButton } from '../../../components/favorite-button';
 
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
-}
-
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  const product = getProductBySlug(params.slug);
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const product = await getProductBySlug(params.slug);
   return { title: product ? `${product.name} — NO EXCUSE` : 'Produto — NO EXCUSE' };
 }
 
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const product = getProductBySlug(params.slug);
+export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
+  const product = await getProductBySlug(params.slug);
 
   if (!product) {
     notFound();
   }
 
-  const related = getRelatedProducts(product);
+  const related = await getRelatedProducts(product);
 
   return (
     <div className="container-page py-10">
@@ -51,18 +47,11 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
         />
 
         <div>
-          <p className="text-sm uppercase tracking-wide text-black/50">{product.category}</p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight">{product.name}</h1>
-
-          <div className="mt-3 flex items-center gap-2 text-sm">
-            <span aria-hidden className="text-volt2/80">
-              {'★'.repeat(Math.round(product.rating))}
-              {'☆'.repeat(5 - Math.round(product.rating))}
-            </span>
-            <span className="text-black/50">
-              {product.rating.toFixed(1)} ({product.reviewCount} avaliações)
-            </span>
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm uppercase tracking-wide text-black/50">{product.category}</p>
+            <FavoriteButton productId={product.id} />
           </div>
+          <h1 className="mt-1 text-3xl font-black tracking-tight">{product.name}</h1>
 
           <div className="mt-5 flex items-baseline gap-3">
             <span className="text-3xl font-bold">{formatPrice(product.price)}</span>
@@ -78,20 +67,6 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
           <div className="mt-8">
             <AddToCart product={product} />
-          </div>
-
-          <div className="mt-10 border-t border-black/10 pt-6">
-            <p className="text-sm font-bold uppercase tracking-wide">Detalhes do produto</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {product.details.map((detail) => (
-                <div key={detail} className="flex items-start gap-3 rounded-2xl border border-black/10 p-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink text-white">
-                    <FeatureIcon label={detail} />
-                  </span>
-                  <span className="pt-1 text-sm font-medium text-black/80">{detail}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>

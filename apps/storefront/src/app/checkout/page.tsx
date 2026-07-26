@@ -4,7 +4,8 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '../../lib/cart-context';
-import { products } from '../../lib/products';
+import { useProducts } from '../../lib/products-context';
+import { useCustomerAuth } from '../../lib/customer-auth-context';
 import { formatPrice } from '../../lib/format';
 import { createOrder, DEFAULT_SETTINGS, getSettings, OrderError, validateCoupon } from '../../lib/api';
 
@@ -18,6 +19,8 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; enabledKey: 'pixEn
 
 export default function CheckoutPage() {
   const { items, subtotal, isLoaded, clearCart } = useCart();
+  const { products } = useProducts();
+  const { customer } = useCustomerAuth();
   const router = useRouter();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [payment, setPayment] = useState<PaymentMethod>('pix');
@@ -43,6 +46,13 @@ export default function CheckoutPage() {
   useEffect(() => {
     getSettings().then(setSettings);
   }, []);
+
+  useEffect(() => {
+    if (!customer) return;
+    setName((prev) => prev || customer.name);
+    setEmail((prev) => prev || customer.email || '');
+    setPhone((prev) => prev || customer.phone || '');
+  }, [customer]);
 
   const availablePayments = PAYMENT_OPTIONS.filter((option) => settings[option.enabledKey]);
 

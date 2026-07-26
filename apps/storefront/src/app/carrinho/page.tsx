@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../../lib/cart-context';
-import { products } from '../../lib/products';
+import { useProducts } from '../../lib/products-context';
 import { formatPrice } from '../../lib/format';
 import { ProductImage } from '../../components/product-image';
 import { DEFAULT_SETTINGS, getSettings } from '../../lib/api';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal, isLoaded } = useCart();
+  const { products } = useProducts();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   useEffect(() => {

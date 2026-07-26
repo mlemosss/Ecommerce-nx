@@ -1,5 +1,7 @@
 import './global.css';
 import { CartProvider } from '../lib/cart-context';
+import { ProductsProvider } from '../lib/products-context';
+import { CustomerAuthProvider } from '../lib/customer-auth-context';
 import { Header } from '../components/header';
 import { Footer } from '../components/footer';
 
@@ -17,11 +19,15 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="flex min-h-screen flex-col font-sans">
-        <CartProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </CartProvider>
+        <ProductsProvider>
+          <CustomerAuthProvider>
+            <CartProvider>
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </CartProvider>
+          </CustomerAuthProvider>
+        </ProductsProvider>
       </body>
     </html>
   );

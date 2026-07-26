@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import type { CartItem } from './types';
-import { products } from './products';
+import { useProducts } from './products-context';
 
 const STORAGE_KEY = 'no-excuse:cart';
 
@@ -36,6 +36,7 @@ function sameLine(a: CartItem, b: Pick<CartItem, 'productId' | 'size' | 'color'>
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { products } = useProducts();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -103,7 +104,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const product = products.find((p) => p.id === item.productId);
         return sum + (product?.price ?? 0) * item.quantity;
       }, 0),
-    [items]
+    [items, products]
   );
 
   const value = useMemo(

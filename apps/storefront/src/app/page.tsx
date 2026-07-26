@@ -6,7 +6,7 @@ import { NewsletterForm } from '../components/newsletter-form';
 import { getSettings } from '../lib/api';
 
 export default async function HomePage() {
-  const featured = getFeaturedProducts(8);
+  const featured = await getFeaturedProducts(8);
   const settings = await getSettings();
 
   return (

@@ -13,6 +13,8 @@ import { SettingsModule } from '../settings/settings.module';
 import { OrdersModule } from '../orders/orders.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { ImportModule } from '../imports/import.module';
+import { CustomerAuthModule } from '../customer-auth/customer-auth.module';
+import { CatalogModule } from '../catalog/catalog.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { ImportModule } from '../imports/import.module';
     OrdersModule,
     WebhooksModule,
     ImportModule,
+    CustomerAuthModule,
+    CatalogModule,
   ],
 })
 export class AppModule {}

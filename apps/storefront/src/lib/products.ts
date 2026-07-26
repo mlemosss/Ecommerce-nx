@@ -1,5 +1,7 @@
 import type { Category, Product } from './types';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
+
 export const categories: { value: Category; label: string; description: string }[] = [
   { value: 'leggings', label: 'Leggings', description: 'Compressão e liberdade de movimento' },
   { value: 'tops', label: 'Tops', description: 'Sustentação para qualquer treino' },
@@ -9,266 +11,77 @@ export const categories: { value: Category; label: string; description: string }
   { value: 'acessorios', label: 'Acessórios', description: 'Os detalhes que fazem diferença' },
 ];
 
-const sizesRoupa = ['PP', 'P', 'M', 'G', 'GG'];
-const sizesUnico = ['Único'];
+const CATEGORY_GRADIENT: Record<string, [string, string]> = {
+  leggings: ['#1f1f24', '#3a3a42'],
+  tops: ['#1a1a1a', '#a1a1aa'],
+  shorts: ['#101418', '#334155'],
+  camisetas: ['#18181b', '#3f3f46'],
+  jaquetas: ['#101a12', '#294d33'],
+  acessorios: ['#111827', '#374151'],
+};
 
-export const products: Product[] = [
-  {
-    id: 'p1',
-    slug: 'legging-power-compressao',
-    name: 'Legging Power Compressão',
-    category: 'leggings',
-    price: 179.9,
-    compareAtPrice: 219.9,
-    colors: ['Preto', 'Grafite', 'Verde Musgo', 'Marinho'],
-    sizes: sizesRoupa,
-    description:
-      'Legging de alta compressão com tecido de secagem rápida, ideal para musculação e treinos funcionais de alta intensidade.',
-    details: [
-      'Tecido com 4 vias de elasticidade',
-      'Cintura alta que não marca',
-      'Bolso lateral para celular',
-      'Costura flatlock anti-atrito',
-    ],
-    rating: 4.8,
-    reviewCount: 214,
-    isBestSeller: true,
-    gradient: ['#1f1f24', '#3a3a42'],
-    images: ['/products/legging-power-compressao-1.jpg'],
-  },
-  {
-    id: 'p2',
-    slug: 'legging-flex-recorte',
-    name: 'Legging Flex Recorte',
-    category: 'leggings',
-    price: 169.9,
-    colors: ['Preto', 'Marinho'],
-    sizes: sizesRoupa,
-    description: 'Recortes estratégicos que valorizam o movimento, com tecido leve e opaco mesmo em alongamento máximo.',
-    details: ['Tecido 100% opaco', 'Recorte com tela respirável', 'Cós largo de sustentação'],
-    rating: 4.6,
-    reviewCount: 98,
-    isNew: true,
-    gradient: ['#141821', '#2a3550'],
-  },
-  {
-    id: 'p3',
-    slug: 'top-fitness-cross',
-    name: 'Top Fitness Cross',
-    category: 'tops',
-    price: 99.9,
-    colors: ['Preto', 'Verde Neon', 'Rosa', 'Marinho'],
-    sizes: sizesRoupa,
-    description: 'Top com alças em X para maior sustentação em treinos de alto impacto, sem abrir mão do conforto.',
-    details: ['Sustentação média/alta', 'Alças cruzadas ajustáveis', 'Bojo removível'],
-    rating: 4.7,
-    reviewCount: 156,
-    isBestSeller: true,
-    gradient: ['#1a1a1a', '#a1a1aa'],
-    images: ['/products/top-fitness-cross-1.jpg', '/products/top-fitness-cross-2.jpg'],
-  },
-  {
-    id: 'p4',
-    slug: 'top-basic-nervura',
-    name: 'Top Basic Nervura',
-    category: 'tops',
-    price: 79.9,
-    colors: ['Preto', 'Branco', 'Grafite'],
-    sizes: sizesRoupa,
-    description: 'Top canelado versátil para academia ou uso casual, com toque macio e caimento justo.',
-    details: ['Tecido canelado', 'Sustentação leve', 'Ideal para yoga e pilates'],
-    rating: 4.4,
-    reviewCount: 67,
-    gradient: ['#2b2b2b', '#5c5c5c'],
-  },
-  {
-    id: 'p5',
-    slug: 'short-training-2em1',
-    name: 'Short Training 2 em 1',
-    category: 'shorts',
-    price: 129.9,
-    colors: ['Preto', 'Chumbo', 'Marinho'],
-    sizes: sizesRoupa,
-    description: 'Short com forro interno de compressão, perfeito para corrida, HIIT e treinos funcionais.',
-    details: ['Forro interno em legging curta', 'Bolso com zíper', 'Tecido antiodor'],
-    rating: 4.5,
-    reviewCount: 88,
-    gradient: ['#101418', '#334155'],
-    images: ['/products/short-training-2em1-1.jpg', '/products/short-training-2em1-2.jpg'],
-  },
-  {
-    id: 'p6',
-    slug: 'short-run-leve',
-    name: 'Short Run Leve',
-    category: 'shorts',
-    price: 109.9,
-    colors: ['Preto', 'Azul Royal'],
-    sizes: sizesRoupa,
-    description: 'Short ultraleve para corrida com fenda lateral e cordão de ajuste na cintura.',
-    details: ['Tecido ultraleve', 'Fenda lateral para mobilidade', 'Cordão de ajuste'],
-    rating: 4.3,
-    reviewCount: 41,
-    isNew: true,
-    gradient: ['#0f1b2d', '#1d4ed8'],
-  },
-  {
-    id: 'p7',
-    slug: 'camiseta-dry-performance',
-    name: 'Camiseta Dry Performance',
-    category: 'camisetas',
-    price: 89.9,
-    colors: ['Preto', 'Branco', 'Verde Musgo', 'Cinza'],
-    sizes: ['P', 'M', 'G', 'GG', 'XG'],
-    description: 'Camiseta com tecnologia de secagem rápida e proteção UV para treinos ao ar livre.',
-    details: ['Tecnologia dry-fit', 'Proteção UV 50+', 'Costura reforçada nos ombros'],
-    rating: 4.6,
-    reviewCount: 203,
-    isBestSeller: true,
-    gradient: ['#18181b', '#3f3f46'],
-  },
-  {
-    id: 'p8',
-    slug: 'camiseta-oversized-treino',
-    name: 'Camiseta Oversized Treino',
-    category: 'camisetas',
-    price: 94.9,
-    colors: ['Preto', 'Bege'],
-    sizes: ['P', 'M', 'G', 'GG'],
-    description: 'Modelagem oversized despojada para quem gosta de treinar com conforto e estilo streetwear.',
-    details: ['Modelagem solta', 'Algodão premium com toque macio', 'Gola careca reforçada'],
-    rating: 4.5,
-    reviewCount: 52,
-    isNew: true,
-    gradient: ['#2b2621', '#8a7a63'],
-  },
-  {
-    id: 'p9',
-    slug: 'jaqueta-corta-vento',
-    name: 'Jaqueta Corta-Vento',
-    category: 'jaquetas',
-    price: 249.9,
-    compareAtPrice: 299.9,
-    colors: ['Preto', 'Verde Musgo'],
-    sizes: sizesRoupa,
-    description: 'Jaqueta leve corta-vento com capuz, perfeita para aquecimento antes do treino ou dias frios.',
-    details: ['Tecido corta-vento e respirável', 'Capuz ajustável', 'Bolsos com zíper'],
-    rating: 4.7,
-    reviewCount: 74,
-    gradient: ['#101a12', '#294d33'],
-  },
-  {
-    id: 'p10',
-    slug: 'jaqueta-moletom-zip',
-    name: 'Jaqueta Moletom Zíper',
-    category: 'jaquetas',
-    price: 219.9,
-    colors: ['Preto', 'Cinza Mescla'],
-    sizes: sizesRoupa,
-    description: 'Moletom com zíper total, ideal para o pós-treino e para o dia a dia fora da academia.',
-    details: ['Fleece macio por dentro', 'Zíper YKK', 'Bolsos canguru'],
-    rating: 4.4,
-    reviewCount: 39,
-    gradient: ['#232323', '#4b4b4b'],
-  },
-  {
-    id: 'p11',
-    slug: 'mochila-training',
-    name: 'Mochila Training',
-    category: 'acessorios',
-    price: 159.9,
-    colors: ['Preto'],
-    sizes: sizesUnico,
-    description: 'Mochila resistente à água com compartimento térmico para marmita e bolso para tênis.',
-    details: ['Compartimento térmico', 'Bolso ventilado para tênis', 'Tecido resistente à água'],
-    rating: 4.6,
-    reviewCount: 58,
-    gradient: ['#111827', '#374151'],
-  },
-  {
-    id: 'p12',
-    slug: 'garrafa-shaker-600ml',
-    name: 'Garrafa Shaker 600ml',
-    category: 'acessorios',
-    price: 49.9,
-    colors: ['Preto', 'Transparente', 'Verde Neon'],
-    sizes: sizesUnico,
-    description: 'Shaker com misturador de mola para whey e pré-treino, livre de BPA.',
-    details: ['Livre de BPA', 'Misturador de mola incluso', 'Tampa com trava de segurança'],
-    rating: 4.2,
-    reviewCount: 121,
-    gradient: ['#0e1013', '#a1a1aa'],
-  },
-  {
-    id: 'p13',
-    slug: 'luva-treino-funcional',
-    name: 'Luva de Treino Funcional',
-    category: 'acessorios',
-    price: 69.9,
-    colors: ['Preto'],
-    sizes: ['P', 'M', 'G'],
-    description: 'Luvas com proteção de palma para levantamento de peso e treinos funcionais.',
-    details: ['Proteção de palma em couro sintético', 'Punho ajustável em velcro', 'Tecido respirável nas costas'],
-    rating: 4.3,
-    reviewCount: 33,
-    gradient: ['#191919', '#3c3c3c'],
-  },
-  {
-    id: 'p14',
-    slug: 'faixa-cabelo-treino',
-    name: 'Faixa de Cabelo Treino',
-    category: 'acessorios',
-    price: 29.9,
-    colors: ['Preto', 'Verde Neon', 'Rosa'],
-    sizes: sizesUnico,
-    description: 'Faixa elástica que absorve o suor e mantém o cabelo no lugar durante o treino.',
-    details: ['Tecido absorvente', 'Elástico confortável', 'Não desbota'],
-    rating: 4.1,
-    reviewCount: 27,
-    gradient: ['#151515', '#a1a1aa'],
-  },
-  {
-    id: 'p15',
-    slug: 'legging-cropped-conjunto',
-    name: 'Conjunto Legging + Top Cropped',
-    category: 'leggings',
-    price: 249.9,
-    compareAtPrice: 289.8,
-    colors: ['Preto', 'Verde Musgo'],
-    sizes: sizesRoupa,
-    description: 'Conjunto matching de legging e top cropped, tecido premium com toque de segunda pele.',
-    details: ['Conjunto combinando (2 peças)', 'Tecido premium anti-transparência', 'Cós alto modelador'],
-    rating: 4.9,
-    reviewCount: 132,
-    isBestSeller: true,
-    gradient: ['#12140f', '#3d4a2c'],
-  },
-  {
-    id: 'p16',
-    slug: 'short-saia-tenis',
-    name: 'Short-Saia Tênis',
-    category: 'shorts',
-    price: 139.9,
-    colors: ['Branco', 'Preto', 'Rosa'],
-    sizes: sizesRoupa,
-    description: 'Short-saia com forro interno, perfeito para tênis, funcional e caminhada.',
-    details: ['Forro interno de compressão', 'Bolso interno para chave', 'Caimento leve'],
-    rating: 4.5,
-    reviewCount: 46,
-    isNew: true,
-    gradient: ['#1c1c1c', '#e5e7eb'],
-  },
-];
-
-export function getProductBySlug(slug: string): Product | undefined {
-  return products.find((p) => p.slug === slug);
+interface CatalogProduct {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  compareAtPrice: number | null;
+  images: string[];
+  colors: string[];
+  sizes: string[];
+  variants: { color: string; size: string; stock: number }[];
+  isNew: boolean;
 }
 
-export function getRelatedProducts(product: Product, limit = 4): Product[] {
-  return products
-    .filter((p) => p.id !== product.id && p.category === product.category)
-    .slice(0, limit);
+function toProduct(item: CatalogProduct): Product {
+  return {
+    id: item.id,
+    slug: item.slug,
+    name: item.name,
+    category: item.category as Category,
+    price: item.price,
+    compareAtPrice: item.compareAtPrice ?? undefined,
+    colors: item.colors,
+    sizes: item.sizes,
+    description: item.description,
+    isNew: item.isNew,
+    gradient: CATEGORY_GRADIENT[item.category] ?? ['#1a1a1a', '#3a3a42'],
+    images: item.images,
+    variants: item.variants,
+  };
 }
 
-export function getFeaturedProducts(limit = 8): Product[] {
-  return products.filter((p) => p.isBestSeller || p.isNew).slice(0, limit);
+export async function getProducts(category?: string): Promise<Product[]> {
+  try {
+    const qs = category ? `?category=${encodeURIComponent(category)}` : '';
+    const res = await fetch(`${API_URL}/catalog/products${qs}`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const data: CatalogProduct[] = await res.json();
+    return data.map(toProduct);
+  } catch {
+    return [];
+  }
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  try {
+    const res = await fetch(`${API_URL}/catalog/products/${slug}`, { next: { revalidate: 60 } });
+    if (!res.ok) return undefined;
+    const data: CatalogProduct = await res.json();
+    return toProduct(data);
+  } catch {
+    return undefined;
+  }
+}
+
+export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
+  const list = await getProducts(product.category);
+  return list.filter((p) => p.id !== product.id).slice(0, limit);
+}
+
+export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
+  const list = await getProducts();
+  return list.slice(0, limit);
 }

@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { categories, products } from '../../lib/products';
+import { categories } from '../../lib/products';
+import { useProducts } from '../../lib/products-context';
 import type { Category } from '../../lib/types';
 import { ProductCard } from '../../components/product-card';
 import { RecentlyViewed } from '../../components/recently-viewed';
@@ -10,6 +11,7 @@ import { RecentlyViewed } from '../../components/recently-viewed';
 type SortOption = 'relevancia' | 'menor-preco' | 'maior-preco';
 
 export function ProductsPageClient() {
+  const { products } = useProducts();
   const searchParams = useSearchParams();
   const router = useRouter();
   const categoriaParam = searchParams.get('categoria') as Category | null;
@@ -27,7 +29,7 @@ export function ProductsPageClient() {
     }
 
     return list;
-  }, [categoriaParam, sort]);
+  }, [categoriaParam, sort, products]);
 
   function selectCategory(value: Category | null) {
     if (!value) {
