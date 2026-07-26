@@ -43,7 +43,12 @@ export default function CustomersPage() {
       />
 
       <div className="px-4 pt-4">
-        <h1 className="page-title">Lista de clientes</h1>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="page-title">Lista de clientes</h1>
+          <Link href="/importar?tipo=clientes" className="text-xs font-semibold text-accent underline">
+            Importar CSV/XML
+          </Link>
+        </div>
 
         <input
           value={search}

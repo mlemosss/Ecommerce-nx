@@ -48,11 +48,16 @@ export default function ProductsPage() {
       />
 
       <div className="px-4 pt-4">
+        <div className="flex items-center justify-end">
+          <Link href="/importar?tipo=produtos" className="text-xs font-semibold text-accent underline">
+            Importar CSV/XML
+          </Link>
+        </div>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Pesquisar produto"
-          className="input-field"
+          className="input-field mt-2"
         />
 
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}

@@ -1,8 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UpdateSettingsDto } from './dto/settings.dto';
+import { UpdateSettingsDto, ValuePropDto } from './dto/settings.dto';
 
 const SETTINGS_ID = 'singleton';
+
+function withParsedValueProps<T extends { valueProps: string }>(
+  settings: T
+): Omit<T, 'valueProps'> & { valueProps: ValuePropDto[] } {
+  let valueProps: ValuePropDto[];
+  try {
+    valueProps = JSON.parse(settings.valueProps);
+  } catch {
+    valueProps = [];
+  }
+  return { ...settings, valueProps };
+}
 
 @Injectable()
 export class SettingsService {
@@ -10,15 +22,20 @@ export class SettingsService {
 
   async get() {
     const existing = await this.prisma.storeSettings.findUnique({ where: { id: SETTINGS_ID } });
-    if (existing) return existing;
-    return this.prisma.storeSettings.create({ data: { id: SETTINGS_ID } });
+    const settings = existing ?? (await this.prisma.storeSettings.create({ data: { id: SETTINGS_ID } }));
+    return withParsedValueProps(settings);
   }
 
   async update(dto: UpdateSettingsDto) {
     await this.get();
-    return this.prisma.storeSettings.update({
+    const { valueProps, ...rest } = dto;
+    const updated = await this.prisma.storeSettings.update({
       where: { id: SETTINGS_ID },
-      data: dto,
+      data: {
+        ...rest,
+        ...(valueProps !== undefined ? { valueProps: JSON.stringify(valueProps) } : {}),
+      },
     });
+    return withParsedValueProps(updated);
   }
 }

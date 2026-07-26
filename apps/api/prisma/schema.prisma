@@ -170,19 +170,28 @@ model OrderItem {
 }
 
 model StoreSettings {
-  id                   String  @id @default("singleton")
-  storeName            String  @default("No Excuse")
-  contactEmail         String?
-  contactWhatsapp      String?
-  shippingFee          Float   @default(19.9)
-  freeShippingThreshold Float  @default(199.9)
-  pixEnabled           Boolean @default(true)
-  cardEnabled          Boolean @default(true)
-  boletoEnabled        Boolean @default(true)
-  maxInstallments      Int     @default(3)
-  instagramUrl         String?
-  facebookUrl          String?
-  updatedAt            DateTime @updatedAt
+  id                     String   @id @default("singleton")
+  storeName              String   @default("No Excuse")
+  contactEmail           String?
+  contactWhatsapp        String?
+  shippingFee            Float    @default(19.9)
+  freeShippingThreshold  Float    @default(199.9)
+  pixEnabled             Boolean  @default(true)
+  cardEnabled            Boolean  @default(true)
+  boletoEnabled          Boolean  @default(true)
+  maxInstallments        Int      @default(3)
+  instagramUrl           String?
+  facebookUrl            String?
+  heroTag                String   @default("Nova coleção")
+  heroTitleLine1         String   @default("Treine sem")
+  heroTitleHighlight     String   @default("limites.")
+  heroSubtitle           String   @default("Roupas de academia pensadas para quem treina de verdade: compressão certa, respirabilidade e caimento que acompanham cada repetição.")
+  heroPrimaryButtonLabel String   @default("Ver produtos")
+  heroSecondaryButtonLabel String @default("Explorar leggings")
+  newsletterTitle        String   @default("Ganhe 10% na primeira compra")
+  newsletterSubtitle     String   @default("Cadastre seu e-mail e receba um cupom exclusivo, além de novidades de lançamentos.")
+  valueProps             String   @default("[{\"title\":\"Troca grátis em 30 dias\",\"description\":\"Não serviu ou não gostou? Trocamos sem burocracia.\"},{\"title\":\"Entrega para todo o Brasil\",\"description\":\"Envio rastreado com prazos exibidos no checkout.\"},{\"title\":\"Tecido testado em treino real\",\"description\":\"Compressão, respirabilidade e durabilidade validadas por atletas.\"},{\"title\":\"Pagamento seguro\",\"description\":\"Pix, cartão em até 3x sem juros ou boleto.\"}]")
+  updatedAt              DateTime @updatedAt
 
   @@map("store_settings")
 }

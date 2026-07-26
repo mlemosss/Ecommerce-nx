@@ -12,6 +12,7 @@ import { CouponsModule } from '../coupons/coupons.module';
 import { SettingsModule } from '../settings/settings.module';
 import { OrdersModule } from '../orders/orders.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { ImportModule } from '../imports/import.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
     SettingsModule,
     OrdersModule,
     WebhooksModule,
+    ImportModule,
   ],
 })
 export class AppModule {}

@@ -1,4 +1,13 @@
-import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class ValuePropDto {
+  @IsString()
+  title!: string;
+
+  @IsString()
+  description!: string;
+}
 
 export class UpdateSettingsDto {
   @IsOptional()
@@ -47,4 +56,42 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsString()
   facebookUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  heroTag?: string;
+
+  @IsOptional()
+  @IsString()
+  heroTitleLine1?: string;
+
+  @IsOptional()
+  @IsString()
+  heroTitleHighlight?: string;
+
+  @IsOptional()
+  @IsString()
+  heroSubtitle?: string;
+
+  @IsOptional()
+  @IsString()
+  heroPrimaryButtonLabel?: string;
+
+  @IsOptional()
+  @IsString()
+  heroSecondaryButtonLabel?: string;
+
+  @IsOptional()
+  @IsString()
+  newsletterTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  newsletterSubtitle?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ValuePropDto)
+  valueProps?: ValuePropDto[];
 }

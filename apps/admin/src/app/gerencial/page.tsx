@@ -90,6 +90,12 @@ export default function FinancialDashboardPage() {
           <span className="flex items-center gap-2 text-sm font-medium">💳 Pagamentos personalizados</span>
           <span className="text-xs text-black/40">Em breve</span>
         </div>
+        <Link href="/importar" className="card flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-medium">📥 Importar dados</span>
+          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+            CSV ou XML
+          </span>
+        </Link>
       </div>
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">

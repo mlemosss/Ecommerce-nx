@@ -1,5 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 
+export interface ValueProp {
+  title: string;
+  description: string;
+}
+
 export interface StoreSettings {
   storeName: string;
   contactEmail: string | null;
@@ -12,6 +17,15 @@ export interface StoreSettings {
   maxInstallments: number;
   instagramUrl: string | null;
   facebookUrl: string | null;
+  heroTag: string;
+  heroTitleLine1: string;
+  heroTitleHighlight: string;
+  heroSubtitle: string;
+  heroPrimaryButtonLabel: string;
+  heroSecondaryButtonLabel: string;
+  newsletterTitle: string;
+  newsletterSubtitle: string;
+  valueProps: ValueProp[];
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -26,6 +40,24 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   maxInstallments: 3,
   instagramUrl: null,
   facebookUrl: null,
+  heroTag: 'Nova coleção',
+  heroTitleLine1: 'Treine sem',
+  heroTitleHighlight: 'limites.',
+  heroSubtitle:
+    'Roupas de academia pensadas para quem treina de verdade: compressão certa, respirabilidade e caimento que acompanham cada repetição.',
+  heroPrimaryButtonLabel: 'Ver produtos',
+  heroSecondaryButtonLabel: 'Explorar leggings',
+  newsletterTitle: 'Ganhe 10% na primeira compra',
+  newsletterSubtitle: 'Cadastre seu e-mail e receba um cupom exclusivo, além de novidades de lançamentos.',
+  valueProps: [
+    { title: 'Troca grátis em 30 dias', description: 'Não serviu ou não gostou? Trocamos sem burocracia.' },
+    { title: 'Entrega para todo o Brasil', description: 'Envio rastreado com prazos exibidos no checkout.' },
+    {
+      title: 'Tecido testado em treino real',
+      description: 'Compressão, respirabilidade e durabilidade validadas por atletas.',
+    },
+    { title: 'Pagamento seguro', description: 'Pix, cartão em até 3x sem juros ou boleto.' },
+  ],
 };
 
 export async function getSettings(): Promise<StoreSettings> {
