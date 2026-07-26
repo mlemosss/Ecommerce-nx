@@ -55,12 +55,12 @@ export default function CartPage() {
                     category={product.category}
                     gradient={product.gradient}
                     photo={product.images?.[0]}
-                    className="h-24 w-24 rounded-xl"
+                    className="h-20 w-20 rounded-xl sm:h-24 sm:w-24"
                   />
                 </Link>
                 <div className="flex flex-1 flex-col">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
                       <Link href={`/produtos/${product.slug}`} className="font-semibold hover:underline">
                         {product.name}
                       </Link>
@@ -71,7 +71,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => removeItem(item.productId, item.size, item.color)}
-                      className="text-sm text-black/40 hover:text-red-600"
+                      className="shrink-0 text-sm text-black/40 hover:text-red-600"
                       aria-label="Remover item"
                     >
                       Remover
