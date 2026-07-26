@@ -108,6 +108,12 @@ export default function FinancialDashboardPage() {
             De produtos
           </span>
         </Link>
+        <Link href="/shopee" className="card flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-medium">🛒 Shopee</span>
+          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+            Anunciar produtos
+          </span>
+        </Link>
       </div>
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
