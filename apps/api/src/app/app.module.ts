@@ -19,6 +19,7 @@ import { TestimonialsModule } from '../testimonials/testimonials.module';
 import { ReviewsModule } from '../reviews/reviews.module';
 import { ShopeeModule } from '../shopee/shopee.module';
 import { IntegrationsModule } from '../integrations/integrations.module';
+import { EmailFlowModule } from '../email-flow/email-flow.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { IntegrationsModule } from '../integrations/integrations.module';
     ReviewsModule,
     ShopeeModule,
     IntegrationsModule,
+    EmailFlowModule,
   ],
 })
 export class AppModule {}
