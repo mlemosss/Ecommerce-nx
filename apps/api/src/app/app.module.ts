@@ -15,6 +15,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
 import { ImportModule } from '../imports/import.module';
 import { CustomerAuthModule } from '../customer-auth/customer-auth.module';
 import { CatalogModule } from '../catalog/catalog.module';
+import { TestimonialsModule } from '../testimonials/testimonials.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CatalogModule } from '../catalog/catalog.module';
     ImportModule,
     CustomerAuthModule,
     CatalogModule,
+    TestimonialsModule,
   ],
 })
 export class AppModule {}

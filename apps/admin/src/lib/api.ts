@@ -22,6 +22,12 @@ export async function uploadProductImage(file: File): Promise<string> {
   return url;
 }
 
+export async function uploadTestimonialPhoto(file: File): Promise<string> {
+  const dataUrl = await fileToDataUrl(file);
+  const { url } = await api.post<{ url: string }>('/uploads/testimonials', { dataUrl });
+  return url;
+}
+
 export class ApiError extends Error {
   constructor(message: string, public status: number) {
     super(message);

@@ -70,6 +70,24 @@ export async function getSettings(): Promise<StoreSettings> {
   }
 }
 
+export interface Testimonial {
+  id: string;
+  customerName: string;
+  photoUrl: string | null;
+  quote: string;
+  rating: number;
+}
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  try {
+    const res = await fetch(`${API_URL}/testimonials`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 export interface CouponValidationResult {
   valid: boolean;
   message?: string;

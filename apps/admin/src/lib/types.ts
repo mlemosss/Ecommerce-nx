@@ -186,3 +186,15 @@ export interface StoreSettings {
   valueProps: ValueProp[];
   updatedAt: string;
 }
+
+export interface Testimonial {
+  id: string;
+  customerName: string;
+  photoUrl: string | null;
+  quote: string;
+  rating: number;
+  position: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

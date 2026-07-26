@@ -10,4 +10,9 @@ export class UploadsController {
   uploadProductImage(@Body() dto: UploadImageDto) {
     return this.uploadsService.validateProductImage(dto.dataUrl);
   }
+
+  @Post('testimonials')
+  uploadTestimonialPhoto(@Body() dto: UploadImageDto) {
+    return this.uploadsService.validateProductImage(dto.dataUrl);
+  }
 }
