@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto, UpdateProductDto, UpdateStockDto } from './dto/product.dto';
 
@@ -131,6 +131,16 @@ export class ProductsService {
 
   async remove(id: string) {
     await this.findOne(id);
+
+    const soldVariant = await this.prisma.productVariant.findFirst({
+      where: { productId: id, saleItems: { some: {} } },
+    });
+    if (soldVariant) {
+      throw new ConflictException(
+        'Este produto já tem vendas registradas e não pode ser excluído. Desative-o para tirá-lo da loja.'
+      );
+    }
+
     await this.prisma.product.delete({ where: { id } });
     return { success: true };
   }

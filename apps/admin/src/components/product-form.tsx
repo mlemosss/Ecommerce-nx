@@ -27,6 +27,7 @@ export function ProductForm({ product }: ProductFormProps) {
   const [costPrice, setCostPrice] = useState(product?.costPrice?.toString() ?? '');
   const [price, setPrice] = useState(product?.price?.toString() ?? '');
   const [compareAtPrice, setCompareAtPrice] = useState(product?.compareAtPrice?.toString() ?? '');
+  const [active, setActive] = useState(product?.active ?? true);
   const [variants, setVariants] = useState<VariantRow[]>(
     product?.variants.map((v) => ({ color: v.color, size: v.size, stock: v.stock })) ?? [
       { color: '', size: '', stock: 0 },
@@ -88,6 +89,7 @@ export function ProductForm({ product }: ProductFormProps) {
       costPrice: Number(costPrice),
       price: Number(price),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+      active,
       images,
       variants: validVariants,
     };
@@ -111,9 +113,14 @@ export function ProductForm({ product }: ProductFormProps) {
   async function handleDelete() {
     if (!product) return;
     if (!window.confirm('Excluir este produto?')) return;
-    await api.delete(`/products/${product.id}`);
-    router.push('/produtos');
-    router.refresh();
+    setError('');
+    try {
+      await api.delete(`/products/${product.id}`);
+      router.push('/produtos');
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro ao excluir produto');
+    }
   }
 
   return (
@@ -189,6 +196,11 @@ export function ProductForm({ product }: ProductFormProps) {
           className="input-field"
         />
       </div>
+
+      <label className="flex items-center gap-2 text-sm font-semibold">
+        <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="h-4 w-4" />
+        Produto ativo (visível na loja)
+      </label>
 
       <div>
         <label className="mb-1 block text-sm font-semibold">Fotos do produto</label>
