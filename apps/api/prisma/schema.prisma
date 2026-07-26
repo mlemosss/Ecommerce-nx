@@ -255,3 +255,11 @@ model Testimonial {
 
   @@map("testimonials")
 }
+
+model EmailFlowStep {
+  key       String   @id
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@map("email_flow_steps")
+}

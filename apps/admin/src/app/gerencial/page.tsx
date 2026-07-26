@@ -117,6 +117,12 @@ export default function FinancialDashboardPage() {
             Anunciar produtos
           </span>
         </Link>
+        <Link href="/emails" className="card flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-medium">✉️ Fluxo de e-mails</span>
+          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+            Ativar/desativar
+          </span>
+        </Link>
       </div>
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
