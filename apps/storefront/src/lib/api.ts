@@ -26,6 +26,8 @@ export interface StoreSettings {
   newsletterTitle: string;
   newsletterSubtitle: string;
   valueProps: ValueProp[];
+  gtmId: string | null;
+  metaPixelId: string | null;
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -58,11 +60,13 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     },
     { title: 'Pagamento seguro', description: 'Pix, cartão em até 3x sem juros ou boleto.' },
   ],
+  gtmId: null,
+  metaPixelId: null,
 };
 
 export async function getSettings(): Promise<StoreSettings> {
   try {
-    const res = await fetch(`${API_URL}/settings`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/settings`, { next: { revalidate: 60 } });
     if (!res.ok) return DEFAULT_SETTINGS;
     return await res.json();
   } catch {

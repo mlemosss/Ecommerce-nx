@@ -94,4 +94,12 @@ export class UpdateSettingsDto {
   @ValidateNested({ each: true })
   @Type(() => ValuePropDto)
   valueProps?: ValuePropDto[];
+
+  @IsOptional()
+  @IsString()
+  gtmId?: string;
+
+  @IsOptional()
+  @IsString()
+  metaPixelId?: string;
 }

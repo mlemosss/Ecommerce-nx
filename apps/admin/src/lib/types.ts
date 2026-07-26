@@ -184,6 +184,8 @@ export interface StoreSettings {
   newsletterTitle: string;
   newsletterSubtitle: string;
   valueProps: ValueProp[];
+  gtmId: string | null;
+  metaPixelId: string | null;
   updatedAt: string;
 }
 
