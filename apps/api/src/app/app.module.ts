@@ -18,6 +18,7 @@ import { CatalogModule } from '../catalog/catalog.module';
 import { TestimonialsModule } from '../testimonials/testimonials.module';
 import { ReviewsModule } from '../reviews/reviews.module';
 import { ShopeeModule } from '../shopee/shopee.module';
+import { IntegrationsModule } from '../integrations/integrations.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ShopeeModule } from '../shopee/shopee.module';
     TestimonialsModule,
     ReviewsModule,
     ShopeeModule,
+    IntegrationsModule,
   ],
 })
 export class AppModule {}
