@@ -61,7 +61,7 @@ export default function HomePage() {
               gradient={['#1f1f24', '#3a3a42']}
               className="col-span-2 aspect-[16/9] rounded-3xl"
             />
-            <ProductImage category="tops" gradient={['#1a1a1a', '#c6ff3d']} className="aspect-square rounded-3xl" />
+            <ProductImage category="tops" gradient={['#1a1a1a', '#a1a1aa']} className="aspect-square rounded-3xl" />
             <ProductImage category="jaquetas" gradient={['#101a12', '#294d33']} className="aspect-square rounded-3xl" />
           </div>
         </div>

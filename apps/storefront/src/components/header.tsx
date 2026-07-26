@@ -33,6 +33,16 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <Link
+            href="/busca"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 transition hover:bg-ink hover:text-white"
+            aria-label="Buscar produtos"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+              <circle cx="11" cy="11" r="7" />
+              <path strokeLinecap="round" d="m20 20-3.5-3.5" />
+            </svg>
+          </Link>
+          <Link
             href="/carrinho"
             className="relative flex h-10 w-10 items-center justify-center rounded-full border border-black/10 transition hover:bg-ink hover:text-white"
             aria-label="Ver carrinho"

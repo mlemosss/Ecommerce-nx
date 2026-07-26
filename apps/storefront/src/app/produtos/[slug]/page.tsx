@@ -6,6 +6,8 @@ import { ProductGallery } from '../../../components/product-gallery';
 import { ProductCard } from '../../../components/product-card';
 import { AddToCart } from '../../../components/add-to-cart';
 import { FeatureIcon } from '../../../components/feature-icon';
+import { TrackProductView } from '../../../components/track-product-view';
+import { RecentlyViewed } from '../../../components/recently-viewed';
 
 export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
@@ -27,6 +29,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
   return (
     <div className="container-page py-10">
+      <TrackProductView productId={product.id} />
       <nav className="mb-6 text-sm text-black/50">
         <Link href="/" className="hover:underline">
           Início
@@ -103,6 +106,8 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           </div>
         </section>
       )}
+
+      <RecentlyViewed excludeId={product.id} />
     </div>
   );
 }

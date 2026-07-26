@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { categories, products } from '../../lib/products';
 import type { Category } from '../../lib/types';
 import { ProductCard } from '../../components/product-card';
+import { RecentlyViewed } from '../../components/recently-viewed';
 
 type SortOption = 'relevancia' | 'menor-preco' | 'maior-preco';
 
@@ -97,6 +98,8 @@ export function ProductsPageClient() {
           ))}
         </div>
       )}
+
+      <RecentlyViewed />
     </div>
   );
 }
