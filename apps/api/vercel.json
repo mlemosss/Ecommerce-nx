@@ -1,7 +1,7 @@
 {
   "framework": null,
   "installCommand": "sh \"$(git rev-parse --show-toplevel)/scripts/vercel-install.sh\"",
-  "buildCommand": "npx prisma migrate deploy --schema prisma/schema.prisma && npx nx run api:build-serverless",
+  "buildCommand": "npx prisma migrate deploy --schema prisma/schema.prisma && npx prisma db seed --schema prisma/schema.prisma && npx nx run api:build-serverless",
   "outputDirectory": "dist-serverless",
   "rewrites": [{ "source": "/:path*", "destination": "/api" }]
 }
