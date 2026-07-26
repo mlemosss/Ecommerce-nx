@@ -28,6 +28,7 @@ model Product {
   compareAtPrice  Float?
   images          String            @default("[]")
   active          Boolean           @default(true)
+  shopeeItemId    BigInt?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   variants        ProductVariant[]
@@ -35,6 +36,18 @@ model Product {
   reviews         ProductReview[]
 
   @@map("products")
+}
+
+model ShopeeIntegration {
+  id                String    @id @default("singleton")
+  shopId            BigInt?
+  accessToken       String?
+  refreshToken      String?
+  accessTokenExpiresAt DateTime?
+  defaultCategoryId Int?
+  updatedAt         DateTime  @updatedAt
+
+  @@map("shopee_integration")
 }
 
 model ProductReview {

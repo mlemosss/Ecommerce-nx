@@ -17,6 +17,7 @@ import { CustomerAuthModule } from '../customer-auth/customer-auth.module';
 import { CatalogModule } from '../catalog/catalog.module';
 import { TestimonialsModule } from '../testimonials/testimonials.module';
 import { ReviewsModule } from '../reviews/reviews.module';
+import { ShopeeModule } from '../shopee/shopee.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ReviewsModule } from '../reviews/reviews.module';
     CatalogModule,
     TestimonialsModule,
     ReviewsModule,
+    ShopeeModule,
   ],
 })
 export class AppModule {}
