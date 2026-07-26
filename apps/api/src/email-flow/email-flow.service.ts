@@ -43,6 +43,15 @@ const STEP_DEFINITIONS: EmailFlowStepDefinition[] = [
     trigger: 'Enviado algumas horas depois de o cliente deixar itens no carrinho sem comprar.',
     defaultEnabled: false,
   },
+  {
+    key: 'pedido_avaliacao',
+    order: 5,
+    name: 'Pedido de avaliação',
+    description:
+      'Convida o cliente a avaliar os produtos que comprou, com link direto pra tela de avaliação na loja.',
+    trigger: 'Enviado alguns dias depois de o pedido ser marcado como enviado.',
+    defaultEnabled: true,
+  },
 ];
 
 @Injectable()
