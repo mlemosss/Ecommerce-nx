@@ -27,6 +27,7 @@ interface CustomerAuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   toggleFavorite: (productId: string) => Promise<void>;
+  submitReview: (productId: string, rating: number, comment: string) => Promise<void>;
 }
 
 const CustomerAuthContext = createContext<CustomerAuthContextValue | undefined>(undefined);
@@ -146,9 +147,22 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
     [token, favoriteIds]
   );
 
+  const submitReview = useCallback(
+    async (productId: string, rating: number, comment: string) => {
+      if (!token) {
+        throw new Error('Faça login para avaliar produtos.');
+      }
+      await request('/reviews', token, {
+        method: 'POST',
+        body: JSON.stringify({ productId, rating, comment }),
+      });
+    },
+    [token]
+  );
+
   const value = useMemo(
-    () => ({ customer, isLoaded, favoriteIds, register, login, logout, toggleFavorite }),
-    [customer, isLoaded, favoriteIds, register, login, logout, toggleFavorite]
+    () => ({ customer, isLoaded, favoriteIds, register, login, logout, toggleFavorite, submitReview }),
+    [customer, isLoaded, favoriteIds, register, login, logout, toggleFavorite, submitReview]
   );
 
   return <CustomerAuthContext.Provider value={value}>{children}</CustomerAuthContext.Provider>;

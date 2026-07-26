@@ -102,6 +102,12 @@ export default function FinancialDashboardPage() {
             Com foto
           </span>
         </Link>
+        <Link href="/avaliacoes" className="card flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-medium">⭐ Avaliações</span>
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+            De produtos
+          </span>
+        </Link>
       </div>
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">

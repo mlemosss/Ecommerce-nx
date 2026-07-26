@@ -88,6 +88,30 @@ export async function getTestimonials(): Promise<Testimonial[]> {
   }
 }
 
+export interface ProductReview {
+  id: string;
+  customerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface ProductReviewsResult {
+  reviews: ProductReview[];
+  average: number;
+  count: number;
+}
+
+export async function getProductReviews(productId: string): Promise<ProductReviewsResult> {
+  try {
+    const res = await fetch(`${API_URL}/reviews/product/${productId}`, { next: { revalidate: 60 } });
+    if (!res.ok) return { reviews: [], average: 0, count: 0 };
+    return await res.json();
+  } catch {
+    return { reviews: [], average: 0, count: 0 };
+  }
+}
+
 export interface CouponValidationResult {
   valid: boolean;
   message?: string;
