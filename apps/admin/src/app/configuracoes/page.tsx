@@ -58,6 +58,8 @@ export default function SettingsPage() {
         newsletterTitle: settings.newsletterTitle,
         newsletterSubtitle: settings.newsletterSubtitle,
         valueProps: settings.valueProps,
+        gtmId: settings.gtmId || undefined,
+        metaPixelId: settings.metaPixelId || undefined,
       });
       setSettings(updated);
       setSaved(true);
@@ -292,6 +294,32 @@ export default function SettingsPage() {
               className="input-field"
             />
           </div>
+        </section>
+
+        <section className="card space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-wide text-black/50">Rastreamento</p>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Google Tag Manager (ID do contêiner)</label>
+            <input
+              placeholder="GTM-XXXXXXX"
+              value={settings.gtmId ?? ''}
+              onChange={(e) => update('gtmId', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Meta Pixel (ID do pixel)</label>
+            <input
+              placeholder="123456789012345"
+              value={settings.metaPixelId ?? ''}
+              onChange={(e) => update('metaPixelId', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <p className="text-xs text-black/40">
+            Assim que preenchidos, os scripts do GTM e do Meta Pixel são carregados automaticamente em
+            todas as páginas da loja.
+          </p>
         </section>
 
         <button type="submit" disabled={saving} className="btn-primary w-full">
