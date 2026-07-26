@@ -30,7 +30,7 @@ export default function HomePage() {
       </div>
 
       <a
-        href="http://localhost:3000"
+        href={process.env.NEXT_PUBLIC_STOREFRONT_URL ?? 'https://no-excuse-storefront.vercel.app'}
         target="_blank"
         rel="noreferrer"
         className="card mt-6 block bg-ink text-white hover:opacity-90"
