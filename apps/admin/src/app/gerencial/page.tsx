@@ -96,6 +96,12 @@ export default function FinancialDashboardPage() {
             CSV ou XML
           </span>
         </Link>
+        <Link href="/depoimentos" className="card flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-medium">💬 Depoimentos</span>
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+            Com foto
+          </span>
+        </Link>
       </div>
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">

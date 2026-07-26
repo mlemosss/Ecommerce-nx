@@ -3,11 +3,13 @@ import { categories, getFeaturedProducts } from '../lib/products';
 import { ProductCard } from '../components/product-card';
 import { ProductImage } from '../components/product-image';
 import { NewsletterForm } from '../components/newsletter-form';
-import { getSettings } from '../lib/api';
+import { TestimonialsSection } from '../components/testimonials-section';
+import { getSettings, getTestimonials } from '../lib/api';
 
 export default async function HomePage() {
   const featured = await getFeaturedProducts(8);
   const settings = await getSettings();
+  const testimonials = await getTestimonials();
 
   return (
     <div>
@@ -98,6 +100,8 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      <TestimonialsSection testimonials={testimonials} />
 
       <section className="bg-ink py-16 text-white">
         <div className="container-page flex flex-col items-center gap-6 text-center">

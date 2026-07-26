@@ -213,3 +213,17 @@ model StoreSettings {
 
   @@map("store_settings")
 }
+
+model Testimonial {
+  id           String   @id @default(cuid())
+  customerName String
+  photoUrl     String?
+  quote        String
+  rating       Int      @default(5)
+  position     Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("testimonials")
+}
