@@ -20,6 +20,17 @@ export default function SettingsPage() {
     setSaved(false);
   }
 
+  function updateValueProp(index: number, field: 'title' | 'description', value: string) {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      const valueProps = prev.valueProps.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      );
+      return { ...prev, valueProps };
+    });
+    setSaved(false);
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!settings) return;
@@ -38,6 +49,15 @@ export default function SettingsPage() {
         maxInstallments: settings.maxInstallments,
         instagramUrl: settings.instagramUrl || undefined,
         facebookUrl: settings.facebookUrl || undefined,
+        heroTag: settings.heroTag,
+        heroTitleLine1: settings.heroTitleLine1,
+        heroTitleHighlight: settings.heroTitleHighlight,
+        heroSubtitle: settings.heroSubtitle,
+        heroPrimaryButtonLabel: settings.heroPrimaryButtonLabel,
+        heroSecondaryButtonLabel: settings.heroSecondaryButtonLabel,
+        newsletterTitle: settings.newsletterTitle,
+        newsletterSubtitle: settings.newsletterSubtitle,
+        valueProps: settings.valueProps,
       });
       setSettings(updated);
       setSaved(true);
@@ -152,6 +172,104 @@ export default function SettingsPage() {
               className="input-field"
             />
           </div>
+        </section>
+
+        <section className="card space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-wide text-black/50">
+            Textos da página inicial
+          </p>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Selo acima do título (ex: "Nova coleção")</label>
+            <input
+              value={settings.heroTag}
+              onChange={(e) => update('heroTag', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Título — 1ª linha</label>
+              <input
+                value={settings.heroTitleLine1}
+                onChange={(e) => update('heroTitleLine1', e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Título — destaque</label>
+              <input
+                value={settings.heroTitleHighlight}
+                onChange={(e) => update('heroTitleHighlight', e.target.value)}
+                className="input-field"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Frase de apoio</label>
+            <textarea
+              value={settings.heroSubtitle}
+              onChange={(e) => update('heroSubtitle', e.target.value)}
+              className="input-field"
+              rows={3}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Botão principal</label>
+              <input
+                value={settings.heroPrimaryButtonLabel}
+                onChange={(e) => update('heroPrimaryButtonLabel', e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold">Botão secundário</label>
+              <input
+                value={settings.heroSecondaryButtonLabel}
+                onChange={(e) => update('heroSecondaryButtonLabel', e.target.value)}
+                className="input-field"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Título da seção de newsletter</label>
+            <input
+              value={settings.newsletterTitle}
+              onChange={(e) => update('newsletterTitle', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Frase da seção de newsletter</label>
+            <textarea
+              value={settings.newsletterSubtitle}
+              onChange={(e) => update('newsletterSubtitle', e.target.value)}
+              className="input-field"
+              rows={2}
+            />
+          </div>
+        </section>
+
+        <section className="card space-y-4">
+          <p className="text-sm font-semibold uppercase tracking-wide text-black/50">
+            Diferenciais (4 cards da home)
+          </p>
+          {settings.valueProps.map((item, index) => (
+            <div key={index} className="space-y-2 border-t border-black/10 pt-3 first:border-0 first:pt-0">
+              <input
+                placeholder="Título"
+                value={item.title}
+                onChange={(e) => updateValueProp(index, 'title', e.target.value)}
+                className="input-field"
+              />
+              <input
+                placeholder="Descrição"
+                value={item.description}
+                onChange={(e) => updateValueProp(index, 'description', e.target.value)}
+                className="input-field"
+              />
+            </div>
+          ))}
         </section>
 
         <section className="card space-y-3">

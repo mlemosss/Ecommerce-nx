@@ -3,28 +3,11 @@ import { categories, getFeaturedProducts } from '../lib/products';
 import { ProductCard } from '../components/product-card';
 import { ProductImage } from '../components/product-image';
 import { NewsletterForm } from '../components/newsletter-form';
+import { getSettings } from '../lib/api';
 
-const valueProps = [
-  {
-    title: 'Troca grátis em 30 dias',
-    description: 'Não serviu ou não gostou? Trocamos sem burocracia.',
-  },
-  {
-    title: 'Entrega para todo o Brasil',
-    description: 'Envio rastreado com prazos exibidos no checkout.',
-  },
-  {
-    title: 'Tecido testado em treino real',
-    description: 'Compressão, respirabilidade e durabilidade validadas por atletas.',
-  },
-  {
-    title: 'Pagamento seguro',
-    description: 'Pix, cartão em até 3x sem juros ou boleto.',
-  },
-];
-
-export default function HomePage() {
+export default async function HomePage() {
   const featured = getFeaturedProducts(8);
+  const settings = await getSettings();
 
   return (
     <div>
@@ -32,26 +15,23 @@ export default function HomePage() {
         <div className="container-page grid gap-10 py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
           <div>
             <span className="inline-block rounded-full bg-volt2 px-4 py-1 text-xs font-bold uppercase tracking-wider text-ink">
-              Nova coleção
+              {settings.heroTag}
             </span>
             <h1 className="mt-6 text-4xl font-black uppercase leading-[1.05] tracking-tight sm:text-6xl">
-              Treine sem
+              {settings.heroTitleLine1}
               <br />
-              <span className="text-volt2">limites.</span>
+              <span className="text-volt2">{settings.heroTitleHighlight}</span>
             </h1>
-            <p className="mt-6 max-w-md text-white/70">
-              Roupas de academia pensadas para quem treina de verdade: compressão certa,
-              respirabilidade e caimento que acompanham cada repetição.
-            </p>
+            <p className="mt-6 max-w-md text-white/70">{settings.heroSubtitle}</p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/produtos" className="btn-primary bg-volt2 text-ink hover:bg-white">
-                Ver produtos
+                {settings.heroPrimaryButtonLabel}
               </Link>
               <Link
                 href="/produtos?categoria=leggings"
                 className="btn-secondary border-white/30 text-white hover:bg-white hover:text-ink"
               >
-                Explorar leggings
+                {settings.heroSecondaryButtonLabel}
               </Link>
             </div>
           </div>
@@ -105,7 +85,7 @@ export default function HomePage() {
 
       <section className="border-y border-black/5 bg-black/[0.02] py-16">
         <div className="container-page grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {valueProps.map((item) => (
+          {settings.valueProps.map((item) => (
             <div key={item.title}>
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-volt2">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
@@ -121,10 +101,8 @@ export default function HomePage() {
 
       <section className="bg-ink py-16 text-white">
         <div className="container-page flex flex-col items-center gap-6 text-center">
-          <h2 className="section-title">Ganhe 10% na primeira compra</h2>
-          <p className="max-w-md text-white/60">
-            Cadastre seu e-mail e receba um cupom exclusivo, além de novidades de lançamentos.
-          </p>
+          <h2 className="section-title">{settings.newsletterTitle}</h2>
+          <p className="max-w-md text-white/60">{settings.newsletterSubtitle}</p>
           <NewsletterForm />
         </div>
       </section>

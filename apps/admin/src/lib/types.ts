@@ -146,6 +146,11 @@ export interface Order {
   updatedAt: string;
 }
 
+export interface ValueProp {
+  title: string;
+  description: string;
+}
+
 export interface StoreSettings {
   id: string;
   storeName: string;
@@ -159,5 +164,14 @@ export interface StoreSettings {
   maxInstallments: number;
   instagramUrl: string | null;
   facebookUrl: string | null;
+  heroTag: string;
+  heroTitleLine1: string;
+  heroTitleHighlight: string;
+  heroSubtitle: string;
+  heroPrimaryButtonLabel: string;
+  heroSecondaryButtonLabel: string;
+  newsletterTitle: string;
+  newsletterSubtitle: string;
+  valueProps: ValueProp[];
   updatedAt: string;
 }
