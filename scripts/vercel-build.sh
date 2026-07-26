@@ -8,7 +8,7 @@ set -e
 # regardless of which project triggered it.
 cd "$(git rev-parse --show-toplevel)"
 
-ADMIN_PROJECT_ID="prj_rXSZns6TdaQqXUHeNrFtP7zraHWM"
+ADMIN_PROJECT_ID="prj_wW1sexIe4fu60FjZmVYyNQsddc06"
 
 if [ "$VERCEL_PROJECT_ID" = "$ADMIN_PROJECT_ID" ]; then
   npx nx build admin
