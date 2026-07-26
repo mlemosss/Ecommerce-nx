@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { formatPrice } from '../../lib/format';
 import type { DashboardSummary } from '../../lib/types';
+import { PendingIntegrations } from '../../components/pending-integrations';
 
 const today = new Date().toLocaleDateString('pt-BR', {
   weekday: 'long',
@@ -47,6 +48,8 @@ export default function FinancialDashboardPage() {
         <span className="text-sm text-black/60">Caixa atual</span>
         <span className="text-lg font-bold">{summary ? formatPrice(summary.cashBalance) : '—'}</span>
       </div>
+
+      <PendingIntegrations />
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
         Gerenciais
