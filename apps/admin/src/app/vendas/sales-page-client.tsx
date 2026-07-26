@@ -33,6 +33,11 @@ export function SalesPageClient() {
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<CartLine[]>([]);
   const [customerId, setCustomerId] = useState(preselectedCustomerId);
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [newCustomerError, setNewCustomerError] = useState('');
   const [payment, setPayment] = useState<PaymentMethod>('pix');
   const [openAccount, setOpenAccount] = useState(false);
   const [installments, setInstallments] = useState(1);
@@ -87,6 +92,30 @@ export function SalesPageClient() {
         ? prev.filter((l) => l.variantId !== variantId)
         : prev.map((l) => (l.variantId === variantId ? { ...l, quantity: Math.min(quantity, l.maxStock) } : l))
     );
+  }
+
+  async function handleCreateCustomer() {
+    if (!newCustomerName.trim()) {
+      setNewCustomerError('Informe o nome do cliente.');
+      return;
+    }
+    setCreatingCustomer(true);
+    setNewCustomerError('');
+    try {
+      const created = await api.post<Customer>('/customers', {
+        name: newCustomerName.trim(),
+        phone: newCustomerPhone.trim() || undefined,
+      });
+      setCustomers((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setCustomerId(created.id);
+      setShowNewCustomer(false);
+      setNewCustomerName('');
+      setNewCustomerPhone('');
+    } catch (err) {
+      setNewCustomerError(err instanceof ApiError ? err.message : 'Erro ao criar cliente');
+    } finally {
+      setCreatingCustomer(false);
+    }
   }
 
   async function handleConfirm() {
@@ -204,19 +233,56 @@ export function SalesPageClient() {
         </div>
 
         <div className="mt-4">
-          <label className="mb-1 block text-sm font-semibold">Cliente (opcional)</label>
-          <select
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="input-field"
-          >
-            <option value="">Consumidor não identificado</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center justify-between">
+            <label className="mb-1 block text-sm font-semibold">Cliente (opcional)</label>
+            <button
+              type="button"
+              onClick={() => setShowNewCustomer((v) => !v)}
+              className="text-xs font-semibold text-accent underline"
+            >
+              {showNewCustomer ? 'Cancelar' : '+ Novo cliente'}
+            </button>
+          </div>
+
+          {showNewCustomer ? (
+            <div className="space-y-2 rounded-2xl border border-black/10 p-3">
+              <input
+                autoFocus
+                placeholder="Nome do cliente"
+                value={newCustomerName}
+                onChange={(e) => setNewCustomerName(e.target.value)}
+                className="input-field"
+              />
+              <input
+                placeholder="Telefone (opcional)"
+                value={newCustomerPhone}
+                onChange={(e) => setNewCustomerPhone(e.target.value)}
+                className="input-field"
+              />
+              {newCustomerError && <p className="text-xs text-red-600">{newCustomerError}</p>}
+              <button
+                type="button"
+                onClick={handleCreateCustomer}
+                disabled={creatingCustomer}
+                className="btn-primary w-full !py-2 text-sm disabled:opacity-60"
+              >
+                {creatingCustomer ? 'Criando...' : 'Criar e selecionar'}
+              </button>
+            </div>
+          ) : (
+            <select
+              value={customerId}
+              onChange={(e) => setCustomerId(e.target.value)}
+              className="input-field"
+            >
+              <option value="">Consumidor não identificado</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className="mt-4">
