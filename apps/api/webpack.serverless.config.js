@@ -1,5 +1,6 @@
 const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { join } = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   output: {
@@ -16,6 +17,9 @@ module.exports = {
       optimization: false,
       outputHashing: 'none',
       generatePackageJson: true,
+    }),
+    new CopyPlugin({
+      patterns: [{ from: 'api', to: 'api' }],
     }),
   ],
 };
