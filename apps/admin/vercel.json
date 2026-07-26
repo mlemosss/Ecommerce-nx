@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "installCommand": "sh \"$(git rev-parse --show-toplevel)/scripts/vercel-install.sh\"",
+  "buildCommand": "cd \"$(git rev-parse --show-toplevel)\" && npx nx build admin",
+  "outputDirectory": ".next"
+}
