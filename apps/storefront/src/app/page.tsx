@@ -72,9 +72,12 @@ export default async function HomePage() {
       </section>
 
       <section className="container-page py-16">
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <h2 className="section-title">Mais vendidos &amp; novidades</h2>
-          <Link href="/produtos" className="text-sm font-semibold underline underline-offset-4">
+          <Link
+            href="/produtos"
+            className="shrink-0 whitespace-nowrap text-sm font-semibold underline underline-offset-4"
+          >
             Ver tudo
           </Link>
         </div>
