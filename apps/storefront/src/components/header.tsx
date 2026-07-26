@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '../lib/cart-context';
+import { useCustomerAuth } from '../lib/customer-auth-context';
 import { categories } from '../lib/products';
 
 const navLinks = [
@@ -14,6 +15,7 @@ const navLinks = [
 
 export function Header() {
   const { totalItems } = useCart();
+  const { customer } = useCustomerAuth();
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,6 +42,16 @@ export function Header() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
               <circle cx="11" cy="11" r="7" />
               <path strokeLinecap="round" d="m20 20-3.5-3.5" />
+            </svg>
+          </Link>
+          <Link
+            href={customer ? '/conta' : '/conta/entrar'}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 transition hover:bg-ink hover:text-white"
+            aria-label={customer ? 'Minha conta' : 'Entrar'}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+              <circle cx="12" cy="8" r="4" />
+              <path strokeLinecap="round" d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
             </svg>
           </Link>
           <Link

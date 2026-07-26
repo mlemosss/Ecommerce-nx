@@ -40,9 +40,35 @@ export class OrdersService {
   }
 
   async create(dto: CreateOrderDto) {
+    const customer = await this.prisma.customer.upsert({
+      where: { email: dto.customerEmail },
+      update: {
+        name: dto.customerName,
+        phone: onlyDigits(dto.customerPhone) || undefined,
+        documentNumber: onlyDigits(dto.customerDocument) || undefined,
+        city: dto.city || undefined,
+        zipCode: dto.zipCode || undefined,
+        street: dto.street || undefined,
+        number: dto.number || undefined,
+        complement: dto.complement || undefined,
+      },
+      create: {
+        name: dto.customerName,
+        email: dto.customerEmail,
+        phone: onlyDigits(dto.customerPhone),
+        documentNumber: onlyDigits(dto.customerDocument),
+        city: dto.city,
+        zipCode: dto.zipCode,
+        street: dto.street,
+        number: dto.number,
+        complement: dto.complement,
+      },
+    });
+
     const order = await this.prisma.order.create({
       data: {
         orderNumber: generateOrderNumber(),
+        customerId: customer.id,
         customerName: dto.customerName,
         customerEmail: dto.customerEmail,
         customerPhone: dto.customerPhone,

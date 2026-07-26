@@ -44,6 +44,17 @@ export interface Customer {
   createdAt: string;
   updatedAt: string;
   sales?: Sale[];
+  orders?: Order[];
+  favorites?: Favorite[];
+  hasAccount?: boolean;
+}
+
+export interface Favorite {
+  id: string;
+  customerId: string;
+  productId: string;
+  createdAt: string;
+  product: Product;
 }
 
 export type PaymentMethod = 'pix' | 'cartao' | 'boleto' | 'dinheiro';

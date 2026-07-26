@@ -1,20 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { products } from '../lib/products';
+import type { Product } from '../lib/types';
+import { useProducts } from '../lib/products-context';
 import { getRecentlyViewedIds } from '../lib/recently-viewed';
 import { ProductCard } from './product-card';
 
 export function RecentlyViewed({ excludeId }: { excludeId?: string }) {
-  const [items, setItems] = useState<typeof products>([]);
+  const { products } = useProducts();
+  const [items, setItems] = useState<Product[]>([]);
 
   useEffect(() => {
     const ids = getRecentlyViewedIds().filter((id) => id !== excludeId);
     const found = ids
       .map((id) => products.find((p) => p.id === id))
-      .filter((p): p is (typeof products)[number] => Boolean(p));
+      .filter((p): p is Product => Boolean(p));
     setItems(found);
-  }, [excludeId]);
+  }, [excludeId, products]);
 
   if (items.length === 0) return null;
 

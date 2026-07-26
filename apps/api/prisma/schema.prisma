@@ -31,8 +31,21 @@ model Product {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   variants        ProductVariant[]
+  favorites       Favorite[]
 
   @@map("products")
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@map("favorites")
 }
 
 model ProductVariant {
@@ -55,7 +68,8 @@ model Customer {
   documentNumber String?
   birthDate      DateTime?
   phone          String?
-  email          String?
+  email          String?  @unique
+  passwordHash   String?
   description    String?
   tags           String   @default("")
   zipCode        String?
@@ -68,6 +82,8 @@ model Customer {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   sales          Sale[]
+  orders         Order[]
+  favorites      Favorite[]
 
   @@map("customers")
 }
@@ -129,6 +145,8 @@ model Coupon {
 model Order {
   id                String      @id @default(cuid())
   orderNumber       String      @unique
+  customerId        String?
+  customer          Customer?   @relation(fields: [customerId], references: [id])
   customerName      String
   customerEmail     String
   customerPhone     String

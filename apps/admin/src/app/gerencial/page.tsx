@@ -131,7 +131,7 @@ export default function FinancialDashboardPage() {
           </span>
         </Link>
         <a
-          href="http://localhost:3000"
+          href={process.env.NEXT_PUBLIC_STOREFRONT_URL ?? 'https://no-excuse-storefront.vercel.app'}
           target="_blank"
           rel="noreferrer"
           className="card flex items-center justify-between"

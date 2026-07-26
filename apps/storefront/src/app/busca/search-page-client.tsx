@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { products } from '../../lib/products';
+import { useProducts } from '../../lib/products-context';
 import { ProductCard } from '../../components/product-card';
 import { RecentlyViewed } from '../../components/recently-viewed';
 
 export function SearchPageClient() {
+  const { products } = useProducts();
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialQuery = searchParams.get('q') ?? '';
@@ -18,7 +19,7 @@ export function SearchPageClient() {
     return products.filter((p) =>
       [p.name, p.category, p.description].some((field) => field.toLowerCase().includes(term))
     );
-  }, [query]);
+  }, [query, products]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

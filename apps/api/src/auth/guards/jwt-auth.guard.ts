@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY } from '../public.decorator';
+import { IS_CUSTOMER_ACCESSIBLE_KEY } from '../customer-accessible.decorator';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -30,11 +31,26 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token não informado');
     }
 
+    let payload: Record<string, unknown>;
     try {
-      request.adminUser = this.jwtService.verify(token);
-      return true;
+      payload = this.jwtService.verify(token);
     } catch {
       throw new UnauthorizedException('Token inválido ou expirado');
     }
+
+    const isCustomerAccessible = this.reflector.getAllAndOverride<boolean>(
+      IS_CUSTOMER_ACCESSIBLE_KEY,
+      [context.getHandler(), context.getClass()]
+    );
+
+    // Rotas não marcadas explicitamente como acessíveis a clientes são admin-only por
+    // padrão: um token de cliente não deve conseguir acessar dados administrativos.
+    if (payload.type === 'customer' && !isCustomerAccessible) {
+      throw new UnauthorizedException('Acesso não permitido');
+    }
+
+    request.adminUser = payload;
+    request.user = payload;
+    return true;
   }
 }
