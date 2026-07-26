@@ -198,3 +198,15 @@ export interface Testimonial {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ProductReview {
+  id: string;
+  productId: string;
+  product: { name: string };
+  customerId: string;
+  customerName: string;
+  rating: number;
+  comment: string;
+  approved: boolean;
+  createdAt: string;
+}

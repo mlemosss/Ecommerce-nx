@@ -8,6 +8,8 @@ import { AddToCart } from '../../../components/add-to-cart';
 import { TrackProductView } from '../../../components/track-product-view';
 import { RecentlyViewed } from '../../../components/recently-viewed';
 import { FavoriteButton } from '../../../components/favorite-button';
+import { ProductReviews } from '../../../components/product-reviews';
+import { getProductReviews } from '../../../lib/api';
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const product = await getProductBySlug(params.slug);
@@ -22,6 +24,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
   }
 
   const related = await getRelatedProducts(product);
+  const reviewsResult = await getProductReviews(product.id);
 
   return (
     <div className="container-page py-10">
@@ -70,6 +73,13 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           </div>
         </div>
       </div>
+
+      <ProductReviews
+        productId={product.id}
+        reviews={reviewsResult.reviews}
+        average={reviewsResult.average}
+        count={reviewsResult.count}
+      />
 
       {related.length > 0 && (
         <section className="mt-20">
