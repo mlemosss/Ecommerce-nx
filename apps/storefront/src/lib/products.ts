@@ -64,7 +64,7 @@ export const products: Product[] = [
     rating: 4.7,
     reviewCount: 156,
     isBestSeller: true,
-    gradient: ['#1a1a1a', '#c6ff3d'],
+    gradient: ['#1a1a1a', '#a1a1aa'],
     images: ['/products/top-fitness-cross-1.jpg', '/products/top-fitness-cross-2.jpg'],
   },
   {
@@ -196,7 +196,7 @@ export const products: Product[] = [
     details: ['Livre de BPA', 'Misturador de mola incluso', 'Tampa com trava de segurança'],
     rating: 4.2,
     reviewCount: 121,
-    gradient: ['#0e1013', '#9dff00'],
+    gradient: ['#0e1013', '#a1a1aa'],
   },
   {
     id: 'p13',
@@ -224,7 +224,7 @@ export const products: Product[] = [
     details: ['Tecido absorvente', 'Elástico confortável', 'Não desbota'],
     rating: 4.1,
     reviewCount: 27,
-    gradient: ['#151515', '#c6ff3d'],
+    gradient: ['#151515', '#a1a1aa'],
   },
   {
     id: 'p15',

@@ -9,8 +9,8 @@ module.exports = {
     extend: {
       colors: {
         ink: '#0b0b0d',
-        volt: '#c6ff3d',
-        volt2: '#9dff00',
+        volt: '#d4d4d8',
+        volt2: '#a1a1aa',
       },
       fontFamily: {
         sans: [
