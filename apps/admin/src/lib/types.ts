@@ -119,7 +119,7 @@ export interface Coupon {
 }
 
 export type OrderPaymentMethod = 'pix' | 'cartao' | 'boleto';
-export type OrderStatus = 'aguardando_pagamento' | 'pago' | 'cancelado';
+export type OrderStatus = 'aguardando_pagamento' | 'pago' | 'enviado' | 'cancelado';
 
 export interface OrderItem {
   id: string;
@@ -152,6 +152,9 @@ export interface Order {
   paymentMethod: OrderPaymentMethod;
   status: OrderStatus;
   asaasInvoiceUrl: string | null;
+  shippedAt: string | null;
+  trackingCode: string | null;
+  reviewRequestSentAt: string | null;
   items: OrderItem[];
   createdAt: string;
   updatedAt: string;
@@ -186,6 +189,8 @@ export interface StoreSettings {
   valueProps: ValueProp[];
   gtmId: string | null;
   metaPixelId: string | null;
+  emailFromName: string;
+  emailFromAddress: string;
   updatedAt: string;
 }
 

@@ -60,6 +60,8 @@ export default function SettingsPage() {
         valueProps: settings.valueProps,
         gtmId: settings.gtmId || undefined,
         metaPixelId: settings.metaPixelId || undefined,
+        emailFromName: settings.emailFromName,
+        emailFromAddress: settings.emailFromAddress,
       });
       setSettings(updated);
       setSaved(true);
@@ -181,7 +183,7 @@ export default function SettingsPage() {
             Textos da página inicial
           </p>
           <div>
-            <label className="mb-1 block text-sm font-semibold">Selo acima do título (ex: "Nova coleção")</label>
+            <label className="mb-1 block text-sm font-semibold">Selo acima do título (ex: “Nova coleção”)</label>
             <input
               value={settings.heroTag}
               onChange={(e) => update('heroTag', e.target.value)}
@@ -294,6 +296,31 @@ export default function SettingsPage() {
               className="input-field"
             />
           </div>
+        </section>
+
+        <section className="card space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-wide text-black/50">E-mails automáticos</p>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Nome do remetente</label>
+            <input
+              value={settings.emailFromName}
+              onChange={(e) => update('emailFromName', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">E-mail do remetente</label>
+            <input
+              type="email"
+              value={settings.emailFromAddress}
+              onChange={(e) => update('emailFromAddress', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <p className="text-xs text-black/40">
+            Pra usar um e-mail com o domínio da loja (ex: pedidos@noexcuse.com.br), o domínio precisa estar
+            verificado na sua conta Resend. Até lá, “onboarding@resend.dev” funciona pra testes.
+          </p>
         </section>
 
         <section className="card space-y-3">

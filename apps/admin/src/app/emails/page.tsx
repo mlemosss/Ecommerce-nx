@@ -12,12 +12,22 @@ interface EmailFlowStep {
   enabled: boolean;
 }
 
+interface PendingIntegration {
+  key: string;
+  configured: boolean;
+}
+
 export default function EmailFlowPage() {
   const [steps, setSteps] = useState<EmailFlowStep[] | null>(null);
   const [pending, setPending] = useState<string | null>(null);
+  const [resendConfigured, setResendConfigured] = useState<boolean | null>(null);
 
   function load() {
     api.get<EmailFlowStep[]>('/email-flow').then(setSteps);
+    api
+      .get<PendingIntegration[]>('/integrations/pending')
+      .then((items) => setResendConfigured(items.find((i) => i.key === 'resend')?.configured ?? false))
+      .catch(() => setResendConfigured(null));
   }
 
   useEffect(load, []);
@@ -41,15 +51,34 @@ export default function EmailFlowPage() {
         <div className="card border border-blue-200 bg-blue-50 text-sm text-blue-900">
           <p className="font-semibold">E-mails automáticos pro cliente</p>
           <p className="mt-1">
-            Escolha quais e-mails fazem parte da jornada do cliente. Os que estiverem "Ativo" são
+            Escolha quais e-mails fazem parte da jornada do cliente. Os que estiverem “Ativo” são
             enviados automaticamente nos momentos certos.
           </p>
-          <p className="mt-2 text-xs text-blue-700/80">
-            O envio de verdade depende da integração com a Resend — enquanto ela não estiver configurada
-            (veja em Gerencial &gt; Pendências), essas escolhas ficam salvas e prontas pra quando o envio
-            for ativado.
-          </p>
+          {resendConfigured === false && (
+            <p className="mt-2 text-xs text-blue-700/80">
+              A chave do Resend ainda não foi configurada — enquanto isso, essas escolhas ficam salvas mas
+              nenhum e-mail é enviado de verdade. Veja em Gerencial &gt; Pendências como configurar.
+            </p>
+          )}
         </div>
+
+        {resendConfigured === false && (
+          <div className="mt-3 card border border-amber-200 bg-amber-50 text-sm text-amber-900">
+            <p className="font-semibold">⚠️ Chave do Resend ainda não configurada</p>
+            <p className="mt-1 text-xs text-amber-800/80">
+              O código de envio já está pronto. Assim que a variável RESEND_API_KEY for configurada na
+              Vercel, os e-mails abaixo passam a ser enviados automaticamente.
+            </p>
+          </div>
+        )}
+        {resendConfigured === true && (
+          <div className="mt-3 card border border-emerald-200 bg-emerald-50 text-sm text-emerald-900">
+            <p className="font-semibold">✓ Resend configurado</p>
+            <p className="mt-1 text-xs text-emerald-800/80">
+              Os e-mails ativos abaixo estão sendo enviados de verdade pros clientes.
+            </p>
+          </div>
+        )}
 
         <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-black/40">
           {activeCount} de {steps?.length ?? 0} etapas ativas

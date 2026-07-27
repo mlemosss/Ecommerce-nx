@@ -92,6 +92,10 @@ export class CreateOrderDto {
 }
 
 export class UpdateOrderStatusDto {
-  @IsIn(['aguardando_pagamento', 'pago', 'cancelado'])
-  status!: 'aguardando_pagamento' | 'pago' | 'cancelado';
+  @IsIn(['aguardando_pagamento', 'pago', 'enviado', 'cancelado'])
+  status!: 'aguardando_pagamento' | 'pago' | 'enviado' | 'cancelado';
+
+  @IsOptional()
+  @IsString()
+  trackingCode?: string;
 }
