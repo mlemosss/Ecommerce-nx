@@ -22,6 +22,8 @@ import { IntegrationsModule } from '../integrations/integrations.module';
 import { EmailFlowModule } from '../email-flow/email-flow.module';
 import { EmailModule } from '../email/email.module';
 import { AbandonedCartModule } from '../abandoned-cart/abandoned-cart.module';
+import { CustomPaymentsModule } from '../custom-payments/custom-payments.module';
+import { QuotesModule } from '../quotes/quotes.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { AbandonedCartModule } from '../abandoned-cart/abandoned-cart.module';
     EmailFlowModule,
     EmailModule,
     AbandonedCartModule,
+    CustomPaymentsModule,
+    QuotesModule,
   ],
 })
 export class AppModule {}

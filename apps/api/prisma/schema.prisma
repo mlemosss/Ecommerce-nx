@@ -284,3 +284,38 @@ model AbandonedCart {
 
   @@map("abandoned_carts")
 }
+
+model CustomPayment {
+  id          String   @id @default(cuid())
+  description String
+  method      String   @default("pix")
+  amount      Float
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@map("custom_payments")
+}
+
+model Quote {
+  id           String      @id @default(cuid())
+  customerName String?
+  status       String      @default("aberto")
+  notes        String?
+  total        Float
+  items        QuoteItem[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String @id @default(cuid())
+  quoteId     String
+  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int
+  unitPrice   Float
+
+  @@map("quote_items")
+}
