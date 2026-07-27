@@ -9,12 +9,14 @@ import type { Order, OrderStatus } from '../../lib/types';
 const STATUS_LABEL: Record<OrderStatus, string> = {
   aguardando_pagamento: 'Aguardando pagamento',
   pago: 'Pago',
+  enviado: 'Enviado',
   cancelado: 'Cancelado',
 };
 
 const STATUS_STYLE: Record<OrderStatus, string> = {
   aguardando_pagamento: 'bg-amber-100 text-amber-700',
   pago: 'bg-green-100 text-green-700',
+  enviado: 'bg-blue-100 text-blue-700',
   cancelado: 'bg-black/10 text-black/50',
 };
 
@@ -35,14 +37,20 @@ export function OrdersPageClient() {
 
   useEffect(load, []);
 
-  async function updateStatus(order: Order, status: OrderStatus) {
+  async function updateStatus(order: Order, status: OrderStatus, trackingCode?: string) {
     setUpdatingId(order.id);
     try {
-      await api.patch(`/orders/${order.id}/status`, { status });
+      await api.patch(`/orders/${order.id}/status`, { status, trackingCode });
       load();
     } finally {
       setUpdatingId(null);
     }
+  }
+
+  function handleMarkShipped(order: Order) {
+    const trackingCode = window.prompt('Código de rastreio (opcional):', order.trackingCode ?? '');
+    if (trackingCode === null) return;
+    updateStatus(order, 'enviado', trackingCode || undefined);
   }
 
   return (
@@ -115,6 +123,11 @@ export function OrdersPageClient() {
                         {formatPrice(order.discount)})
                       </p>
                     )}
+                    {order.trackingCode && (
+                      <p className="text-black/60">
+                        Rastreio: <span className="font-semibold">{order.trackingCode}</span>
+                      </p>
+                    )}
                     {order.asaasInvoiceUrl && (
                       <a
                         href={order.asaasInvoiceUrl}
@@ -135,6 +148,16 @@ export function OrdersPageClient() {
                           className="rounded-full bg-green-100 px-3 py-1.5 text-xs font-semibold text-green-700 disabled:opacity-50"
                         >
                           Marcar como pago
+                        </button>
+                      )}
+                      {order.status !== 'enviado' && order.status !== 'cancelado' && (
+                        <button
+                          type="button"
+                          disabled={updatingId === order.id}
+                          onClick={() => handleMarkShipped(order)}
+                          className="rounded-full bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 disabled:opacity-50"
+                        >
+                          Marcar como enviado
                         </button>
                       )}
                       {order.status !== 'cancelado' && (

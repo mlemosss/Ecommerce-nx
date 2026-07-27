@@ -194,6 +194,9 @@ model Order {
   asaasCustomerId   String?
   asaasPaymentId    String?
   asaasInvoiceUrl   String?
+  shippedAt           DateTime?
+  trackingCode        String?
+  reviewRequestSentAt DateTime?
   items             OrderItem[]
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
@@ -239,6 +242,8 @@ model StoreSettings {
   valueProps             String   @default("[{\"title\":\"Troca grátis em 30 dias\",\"description\":\"Não serviu ou não gostou? Trocamos sem burocracia.\"},{\"title\":\"Entrega para todo o Brasil\",\"description\":\"Envio rastreado com prazos exibidos no checkout.\"},{\"title\":\"Tecido testado em treino real\",\"description\":\"Compressão, respirabilidade e durabilidade validadas por atletas.\"},{\"title\":\"Pagamento seguro\",\"description\":\"Pix, cartão em até 3x sem juros ou boleto.\"}]")
   gtmId                  String?
   metaPixelId             String?
+  emailFromName          String   @default("NO EXCUSE")
+  emailFromAddress       String   @default("onboarding@resend.dev")
   updatedAt              DateTime @updatedAt
 
   @@map("store_settings")
@@ -264,4 +269,18 @@ model EmailFlowStep {
   updatedAt DateTime @updatedAt
 
   @@map("email_flow_steps")
+}
+
+model AbandonedCart {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  name       String?
+  itemsJson  String
+  total      Float
+  recovered  Boolean   @default(false)
+  remindedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("abandoned_carts")
 }

@@ -175,6 +175,25 @@ export interface CreateOrderResult {
 
 export class OrderError extends Error {}
 
+export interface TrackAbandonedCartInput {
+  email: string;
+  name?: string;
+  items: CreateOrderItemInput[];
+  total: number;
+}
+
+export async function trackAbandonedCart(input: TrackAbandonedCartInput): Promise<void> {
+  try {
+    await fetch(`${API_URL}/abandoned-cart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+  } catch {
+    // melhor esforço: se falhar, não atrapalha o checkout do cliente
+  }
+}
+
 export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
   const res = await fetch(`${API_URL}/orders`, {
     method: 'POST',

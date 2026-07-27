@@ -20,6 +20,8 @@ import { ReviewsModule } from '../reviews/reviews.module';
 import { ShopeeModule } from '../shopee/shopee.module';
 import { IntegrationsModule } from '../integrations/integrations.module';
 import { EmailFlowModule } from '../email-flow/email-flow.module';
+import { EmailModule } from '../email/email.module';
+import { AbandonedCartModule } from '../abandoned-cart/abandoned-cart.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { EmailFlowModule } from '../email-flow/email-flow.module';
     ShopeeModule,
     IntegrationsModule,
     EmailFlowModule,
+    EmailModule,
+    AbandonedCartModule,
   ],
 })
 export class AppModule {}

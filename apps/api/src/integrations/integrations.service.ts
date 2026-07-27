@@ -68,14 +68,14 @@ export class IntegrationsService {
       },
       {
         key: 'resend',
-        name: 'E-mails automáticos (pedido confirmado, envio) — Resend',
-        codeReady: false,
+        name: 'E-mails automáticos (pedido, pagamento, envio, carrinho, avaliação) — Resend',
+        codeReady: true,
         configured: hasEnv('RESEND_API_KEY'),
         missingEnvVars: hasEnv('RESEND_API_KEY') ? [] : ['RESEND_API_KEY'],
         instructions: [
           'Crie uma conta em resend.com e verifique o domínio de e-mail da loja (ou use o domínio de testes deles pra começar).',
           'Gere uma API Key em resend.com/api-keys.',
-          'Me envie a API Key — eu construo os e-mails automáticos (pedido confirmado, atualização de envio) e configuro a variável.',
+          'Me envie a API Key — eu configuro a variável na Vercel e os 5 e-mails automáticos (já implementados em Gerencial > Fluxo de e-mails) passam a ser enviados de verdade.',
         ],
         envExample: 'RESEND_API_KEY=sua_chave_aqui',
       },

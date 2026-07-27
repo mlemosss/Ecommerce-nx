@@ -102,4 +102,12 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsString()
   metaPixelId?: string;
+
+  @IsOptional()
+  @IsString()
+  emailFromName?: string;
+
+  @IsOptional()
+  @IsString()
+  emailFromAddress?: string;
 }

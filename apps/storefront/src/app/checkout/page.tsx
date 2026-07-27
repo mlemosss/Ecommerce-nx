@@ -7,9 +7,20 @@ import { useCart } from '../../lib/cart-context';
 import { useProducts } from '../../lib/products-context';
 import { useCustomerAuth } from '../../lib/customer-auth-context';
 import { formatPrice } from '../../lib/format';
-import { createOrder, DEFAULT_SETTINGS, getSettings, OrderError, validateCoupon } from '../../lib/api';
+import {
+  createOrder,
+  DEFAULT_SETTINGS,
+  getSettings,
+  OrderError,
+  trackAbandonedCart,
+  validateCoupon,
+} from '../../lib/api';
 
 type PaymentMethod = 'pix' | 'cartao' | 'boleto';
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; enabledKey: 'pixEnabled' | 'cardEnabled' | 'boletoEnabled' }[] = [
   { value: 'pix', label: 'Pix', enabledKey: 'pixEnabled' },
@@ -58,6 +69,29 @@ export default function CheckoutPage() {
 
   const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
   const total = Math.max(0, subtotal + shipping - appliedDiscount);
+
+  useEffect(() => {
+    if (!isValidEmail(email) || items.length === 0) return;
+    const timeout = setTimeout(() => {
+      void trackAbandonedCart({
+        email,
+        name: name || undefined,
+        items: items.map((item) => {
+          const product = products.find((p) => p.id === item.productId);
+          return {
+            productId: item.productId,
+            productName: product?.name ?? item.productId,
+            size: item.size,
+            color: item.color,
+            quantity: item.quantity,
+            unitPrice: product?.price ?? 0,
+          };
+        }),
+        total,
+      });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [email, name, items, products, total]);
 
   async function handleApplyCoupon() {
     if (!couponCode.trim()) return;

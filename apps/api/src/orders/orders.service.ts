@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AsaasService } from '../asaas/asaas.service';
+import { EmailService } from '../email/email.service';
+import { AbandonedCartService } from '../abandoned-cart/abandoned-cart.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/order.dto';
 
 const BILLING_TYPE: Record<CreateOrderDto['paymentMethod'], 'PIX' | 'CREDIT_CARD' | 'BOLETO'> = {
@@ -23,7 +25,9 @@ function onlyDigits(value: string): string {
 export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly asaas: AsaasService
+    private readonly asaas: AsaasService,
+    private readonly emailService: EmailService,
+    private readonly abandonedCart: AbandonedCartService
   ) {}
 
   findAll() {
@@ -98,6 +102,9 @@ export class OrdersService {
       include: { items: true },
     });
 
+    await this.emailService.sendOrderConfirmed(order);
+    await this.abandonedCart.markRecovered(dto.customerEmail);
+
     if (!this.asaas.isConfigured()) {
       return {
         order,
@@ -151,17 +158,32 @@ export class OrdersService {
 
   async updateStatus(id: string, dto: UpdateOrderStatusDto) {
     await this.findOne(id);
-    return this.prisma.order.update({
+    const updated = await this.prisma.order.update({
       where: { id },
-      data: { status: dto.status },
+      data: {
+        status: dto.status,
+        ...(dto.status === 'enviado' ? { shippedAt: new Date(), trackingCode: dto.trackingCode } : {}),
+      },
       include: { items: true },
     });
+
+    if (dto.status === 'enviado') {
+      await this.emailService.sendOrderShipped(updated);
+    }
+
+    return updated;
   }
 
   async markPaidByAsaasPaymentId(asaasPaymentId: string) {
     const order = await this.prisma.order.findFirst({ where: { asaasPaymentId } });
     if (!order || order.status === 'pago') return order;
-    return this.prisma.order.update({ where: { id: order.id }, data: { status: 'pago' } });
+    const updated = await this.prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'pago' },
+      include: { items: true },
+    });
+    await this.emailService.sendPaymentApproved(updated);
+    return updated;
   }
 
   async markCancelledByAsaasPaymentId(asaasPaymentId: string) {

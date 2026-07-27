@@ -22,6 +22,7 @@ interface OrderSummary {
 const STATUS_LABEL: Record<string, string> = {
   aguardando_pagamento: 'Aguardando pagamento',
   pago: 'Pago',
+  enviado: 'Enviado',
   cancelado: 'Cancelado',
 };
 
