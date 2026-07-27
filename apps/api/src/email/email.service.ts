@@ -70,6 +70,9 @@ export class EmailService {
       if (!res.ok) {
         const body = await res.text().catch(() => '');
         this.logger.error(`Falha ao enviar e-mail via Resend (status ${res.status}): ${body}`);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        this.logger.log(`E-mail enviado via Resend (id ${body?.id ?? '?'}) para ${to}: "${template.subject}"`);
       }
     } catch (err) {
       this.logger.error(`Erro ao enviar e-mail via Resend: ${err instanceof Error ? err.message : err}`);
