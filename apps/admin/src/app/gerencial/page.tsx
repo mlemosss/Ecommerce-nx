@@ -89,10 +89,12 @@ export default function FinancialDashboardPage() {
           <span className="flex items-center gap-2 text-sm font-medium">💰 Lucro Bruto</span>
           <span className="font-semibold">{summary ? formatPrice(summary.grossProfit) : '—'}</span>
         </div>
-        <div className="card flex items-center justify-between opacity-60">
+        <Link href="/pagamentos-personalizados" className="card flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm font-medium">💳 Pagamentos personalizados</span>
-          <span className="text-xs text-black/40">Em breve</span>
-        </div>
+          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+            Registrar pagamento
+          </span>
+        </Link>
         <Link href="/importar" className="card flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm font-medium">📥 Importar dados</span>
           <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -141,10 +143,12 @@ export default function FinancialDashboardPage() {
             {summary?.installmentSales.count ?? 0}
           </span>
         </Link>
-        <div className="card flex items-center justify-between opacity-60">
+        <Link href="/orcamentos" className="card flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm font-medium">🧮 Orçamentos</span>
-          <span className="text-xs text-black/40">Em breve</span>
-        </div>
+          <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-semibold text-fuchsia-700">
+            Propostas de venda
+          </span>
+        </Link>
       </div>
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">

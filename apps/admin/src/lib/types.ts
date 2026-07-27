@@ -90,6 +90,15 @@ export interface Expense {
   createdAt: string;
 }
 
+export interface CustomPayment {
+  id: string;
+  description: string;
+  method: PaymentMethod;
+  amount: number;
+  date: string;
+  createdAt: string;
+}
+
 export interface DashboardSummary {
   cashBalance: number;
   todayIn: number;
@@ -216,4 +225,25 @@ export interface ProductReview {
   comment: string;
   approved: boolean;
   createdAt: string;
+}
+
+export type QuoteStatus = 'aberto' | 'aceito' | 'recusado';
+
+export interface QuoteItem {
+  id: string;
+  quoteId: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface Quote {
+  id: string;
+  customerName: string | null;
+  status: QuoteStatus;
+  notes: string | null;
+  total: number;
+  items: QuoteItem[];
+  createdAt: string;
+  updatedAt: string;
 }
