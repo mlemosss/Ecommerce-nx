@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../../lib/cart-context';
 import { useProducts } from '../../lib/products-context';
+import { getVariantPrice } from '../../lib/products';
 import { formatPrice } from '../../lib/format';
 import { ProductImage } from '../../components/product-image';
 import { DEFAULT_SETTINGS, getSettings } from '../../lib/api';
@@ -102,7 +103,9 @@ export default function CartPage() {
                         +
                       </button>
                     </div>
-                    <span className="font-bold">{formatPrice(product.price * item.quantity)}</span>
+                    <span className="font-bold">
+                      {formatPrice(getVariantPrice(product, item.color, item.size) * item.quantity)}
+                    </span>
                   </div>
                 </div>
               </li>

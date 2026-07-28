@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getProductBySlug, getRelatedProducts } from '../../../lib/products';
-import { formatInstallments, formatPrice } from '../../../lib/format';
 import { ProductGallery } from '../../../components/product-gallery';
 import { ProductCard } from '../../../components/product-card';
 import { AddToCart } from '../../../components/add-to-cart';
@@ -56,19 +55,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           </div>
           <h1 className="mt-1 text-3xl font-black tracking-tight">{product.name}</h1>
 
-          <div className="mt-5 flex items-baseline gap-3">
-            <span className="text-3xl font-bold">{formatPrice(product.price)}</span>
-            {product.compareAtPrice && (
-              <span className="text-lg text-black/40 line-through">
-                {formatPrice(product.compareAtPrice)}
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-sm text-black/50">{formatInstallments(product.price)}</p>
-
-          <p className="mt-6 text-black/70">{product.description}</p>
-
-          <div className="mt-8">
+          <div className="mt-6">
             <AddToCart product={product} />
           </div>
         </div>

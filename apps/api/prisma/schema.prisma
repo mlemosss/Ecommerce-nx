@@ -83,6 +83,8 @@ model ProductVariant {
   color      String
   size       String
   stock      Int         @default(0)
+  price      Float?
+  costPrice  Float?
   saleItems  SaleItem[]
 
   @@unique([productId, color, size])

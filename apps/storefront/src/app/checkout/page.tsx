@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useCart } from '../../lib/cart-context';
 import { useProducts } from '../../lib/products-context';
 import { useCustomerAuth } from '../../lib/customer-auth-context';
+import { getVariantPrice } from '../../lib/products';
 import { formatPrice } from '../../lib/format';
 import {
   createOrder,
@@ -84,7 +85,7 @@ export default function CheckoutPage() {
             size: item.size,
             color: item.color,
             quantity: item.quantity,
-            unitPrice: product?.price ?? 0,
+            unitPrice: product ? getVariantPrice(product, item.color, item.size) : 0,
           };
         }),
         total,
@@ -143,7 +144,7 @@ export default function CheckoutPage() {
             size: item.size,
             color: item.color,
             quantity: item.quantity,
-            unitPrice: product?.price ?? 0,
+            unitPrice: product ? getVariantPrice(product, item.color, item.size) : 0,
           };
         }),
         subtotal,
@@ -316,7 +317,7 @@ export default function CheckoutPage() {
                   <span>
                     {product.name} × {item.quantity}
                   </span>
-                  <span>{formatPrice(product.price * item.quantity)}</span>
+                  <span>{formatPrice(getVariantPrice(product, item.color, item.size) * item.quantity)}</span>
                 </li>
               );
             })}

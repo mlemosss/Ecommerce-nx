@@ -1,6 +1,6 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateProductDto, UpdateProductDto, UpdateStockDto } from './dto/product.dto';
+import { CreateProductDto, ReplaceCatalogDto, UpdateProductDto, UpdateStockDto } from './dto/product.dto';
 
 function slugify(text: string): string {
   return text
@@ -86,6 +86,8 @@ export class ProductsService {
             color: v.color,
             size: v.size,
             stock: v.stock,
+            price: v.price,
+            costPrice: v.costPrice,
           })),
         },
       },
@@ -119,6 +121,8 @@ export class ProductsService {
                   color: v.color,
                   size: v.size,
                   stock: v.stock,
+                  price: v.price,
+                  costPrice: v.costPrice,
                 })),
               },
             }
@@ -161,4 +165,74 @@ export class ProductsService {
       orderBy: { stock: 'asc' },
     });
   }
+
+  /**
+   * Apaga todo o catálogo atual (produtos, variações e vendas ligadas a eles)
+   * e insere os produtos informados no lugar. Operação destrutiva e irreversível,
+   * pensada para reset completo do catálogo a partir de um inventário real.
+   */
+  async replaceCatalog(dto: ReplaceCatalogDto) {
+    if (!dto.confirmDeleteAll) {
+      throw new BadRequestException(
+        'Envie confirmDeleteAll=true para confirmar a substituição total do catálogo (apaga produtos, variações e vendas ligadas a eles).'
+      );
+    }
+
+    return this.prisma.$transaction(
+      async (tx) => {
+        await tx.sale.deleteMany({});
+        await tx.product.deleteMany({});
+
+        const created = [];
+        for (const p of dto.products) {
+          const slug = slugify(p.name);
+          const prices = p.variants.map((v) => v.price);
+          const costs = p.variants.map((v) => v.costPrice);
+          const product = await tx.product.create({
+            data: {
+              name: p.name,
+              slug,
+              category: p.category,
+              description: p.description ?? '',
+              price: mode(prices),
+              costPrice: mode(costs),
+              images: '[]',
+              active: true,
+              variants: {
+                create: p.variants.map((v) => ({
+                  color: v.color,
+                  size: v.size,
+                  stock: v.stock,
+                  price: v.price,
+                  costPrice: v.costPrice,
+                })),
+              },
+            },
+            include: { variants: true },
+          });
+          created.push(product);
+        }
+
+        return {
+          productsCreated: created.length,
+          variantsCreated: created.reduce((sum, p) => sum + p.variants.length, 0),
+        };
+      },
+      { timeout: 30000 }
+    );
+  }
+}
+
+function mode(values: number[]): number {
+  const counts = new Map<number, number>();
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+  let best = values[0];
+  let bestCount = 0;
+  for (const [v, count] of counts) {
+    if (count > bestCount) {
+      best = v;
+      bestCount = count;
+    }
+  }
+  return best;
 }

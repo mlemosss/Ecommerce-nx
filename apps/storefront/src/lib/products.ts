@@ -20,7 +20,7 @@ const CATEGORY_GRADIENT: Record<string, [string, string]> = {
   acessorios: ['#111827', '#374151'],
 };
 
-interface CatalogProduct {
+export interface CatalogProduct {
   id: string;
   slug: string;
   name: string;
@@ -31,17 +31,19 @@ interface CatalogProduct {
   images: string[];
   colors: string[];
   sizes: string[];
-  variants: { color: string; size: string; stock: number }[];
+  variants: { color: string; size: string; stock: number; price: number }[];
+  priceRange: { min: number; max: number } | null;
   isNew: boolean;
 }
 
-function toProduct(item: CatalogProduct): Product {
+export function toProduct(item: CatalogProduct): Product {
   return {
     id: item.id,
     slug: item.slug,
     name: item.name,
     category: item.category as Category,
     price: item.price,
+    priceRange: item.priceRange,
     compareAtPrice: item.compareAtPrice ?? undefined,
     colors: item.colors,
     sizes: item.sizes,
@@ -84,4 +86,9 @@ export async function getRelatedProducts(product: Product, limit = 4): Promise<P
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   const list = await getProducts();
   return list.slice(0, limit);
+}
+
+export function getVariantPrice(product: Product, color: string, size: string): number {
+  const variant = product.variants?.find((v) => v.color === color && v.size === size);
+  return variant?.price ?? product.price;
 }

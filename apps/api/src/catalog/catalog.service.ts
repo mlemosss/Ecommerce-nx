@@ -13,7 +13,7 @@ function toCatalogProduct(product: {
   compareAtPrice: number | null;
   images: string;
   createdAt: Date;
-  variants: { color: string; size: string; stock: number }[];
+  variants: { color: string; size: string; stock: number; price: number | null }[];
 }) {
   let images: string[];
   try {
@@ -22,9 +22,18 @@ function toCatalogProduct(product: {
     images = [];
   }
 
-  const colors = Array.from(new Set(product.variants.map((v) => v.color)));
-  const sizes = Array.from(new Set(product.variants.map((v) => v.size)));
+  const variants = product.variants.map((v) => ({
+    color: v.color,
+    size: v.size,
+    stock: v.stock,
+    price: v.price ?? product.price,
+  }));
+  const colors = Array.from(new Set(variants.map((v) => v.color)));
+  const sizes = Array.from(new Set(variants.map((v) => v.size)));
   const isNew = Date.now() - product.createdAt.getTime() < NEW_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const prices = variants.map((v) => v.price);
+  const minPrice = prices.length ? Math.min(...prices) : product.price;
+  const maxPrice = prices.length ? Math.max(...prices) : product.price;
 
   return {
     id: product.id,
@@ -32,12 +41,13 @@ function toCatalogProduct(product: {
     name: product.name,
     category: product.category,
     description: product.description,
-    price: product.price,
+    price: minPrice,
+    priceRange: minPrice === maxPrice ? null : { min: minPrice, max: maxPrice },
     compareAtPrice: product.compareAtPrice,
     images,
     colors,
     sizes,
-    variants: product.variants,
+    variants,
     isNew,
   };
 }
@@ -49,7 +59,7 @@ export class CatalogService {
   async findAll(category?: string) {
     const products = await this.prisma.product.findMany({
       where: { active: true, ...(category ? { category } : {}) },
-      include: { variants: { select: { color: true, size: true, stock: true } } },
+      include: { variants: { select: { color: true, size: true, stock: true, price: true } } },
       orderBy: { name: 'asc' },
     });
     return products.map(toCatalogProduct);
@@ -58,7 +68,7 @@ export class CatalogService {
   async findBySlug(slug: string) {
     const product = await this.prisma.product.findUnique({
       where: { slug },
-      include: { variants: { select: { color: true, size: true, stock: true } } },
+      include: { variants: { select: { color: true, size: true, stock: true, price: true } } },
     });
     if (!product || !product.active) throw new NotFoundException('Produto não encontrado');
     return toCatalogProduct(product);

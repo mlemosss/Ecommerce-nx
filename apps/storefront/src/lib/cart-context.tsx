@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { CartItem } from './types';
 import { useProducts } from './products-context';
+import { getVariantPrice } from './products';
 
 const STORAGE_KEY = 'no-excuse:cart';
 
@@ -102,7 +103,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     () =>
       items.reduce((sum, item) => {
         const product = products.find((p) => p.id === item.productId);
-        return sum + (product?.price ?? 0) * item.quantity;
+        if (!product) return sum;
+        return sum + getVariantPrice(product, item.color, item.size) * item.quantity;
       }, 0),
     [items, products]
   );

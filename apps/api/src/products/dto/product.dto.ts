@@ -19,6 +19,16 @@ export class VariantDto {
   @IsNumber()
   @Min(0)
   stock!: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  price?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  costPrice?: number;
 }
 
 export class CreateProductDto {
@@ -108,4 +118,51 @@ export class UpdateStockDto {
   @IsNumber()
   @Min(0)
   stock!: number;
+}
+
+export class ReplaceCatalogVariantDto {
+  @IsString()
+  color!: string;
+
+  @IsString()
+  size!: string;
+
+  @IsNumber()
+  @Min(0)
+  stock!: number;
+
+  @IsNumber()
+  @Min(0)
+  price!: number;
+
+  @IsNumber()
+  @Min(0)
+  costPrice!: number;
+}
+
+export class ReplaceCatalogProductDto {
+  @IsString()
+  name!: string;
+
+  @IsString()
+  category!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReplaceCatalogVariantDto)
+  variants!: ReplaceCatalogVariantDto[];
+}
+
+export class ReplaceCatalogDto {
+  @IsBoolean()
+  confirmDeleteAll!: boolean;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReplaceCatalogProductDto)
+  products!: ReplaceCatalogProductDto[];
 }

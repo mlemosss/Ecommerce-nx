@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductDto, UpdateProductDto, UpdateStockDto } from './dto/product.dto';
+import { CreateProductDto, ReplaceCatalogDto, UpdateProductDto, UpdateStockDto } from './dto/product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -38,6 +38,11 @@ export class ProductsController {
   @Post()
   create(@Body() dto: CreateProductDto) {
     return this.productsService.create(dto);
+  }
+
+  @Post('replace-catalog')
+  replaceCatalog(@Body() dto: ReplaceCatalogDto) {
+    return this.productsService.replaceCatalog(dto);
   }
 
   @Patch(':id')

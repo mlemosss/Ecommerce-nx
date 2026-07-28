@@ -82,6 +82,9 @@ export default function ProductsPage() {
                 const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
                 const colors = Array.from(new Set(product.variants.map((v) => v.color)));
                 const sizes = Array.from(new Set(product.variants.map((v) => v.size)));
+                const prices = product.variants.map((v) => v.price ?? product.price);
+                const minPrice = prices.length ? Math.min(...prices) : product.price;
+                const maxPrice = prices.length ? Math.max(...prices) : product.price;
                 return (
                   <Link
                     key={product.id}
@@ -103,7 +106,11 @@ export default function ProductsPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">{product.name}</p>
-                      <p className="text-sm">{formatPrice(product.price)}</p>
+                      <p className="text-sm">
+                        {minPrice === maxPrice
+                          ? formatPrice(minPrice)
+                          : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`}
+                      </p>
                       <p className="text-xs text-black/50">Custo: {formatPrice(product.costPrice)}</p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1.5">

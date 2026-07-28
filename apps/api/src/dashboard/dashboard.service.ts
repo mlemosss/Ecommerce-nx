@@ -60,7 +60,9 @@ export class DashboardService {
 
     const monthCogs = sum(
       monthSales.flatMap((sale) =>
-        sale.items.map((item) => item.quantity * item.productVariant.product.costPrice)
+        sale.items.map(
+          (item) => item.quantity * (item.productVariant.costPrice ?? item.productVariant.product.costPrice)
+        )
       )
     );
     const grossProfit = monthRevenue - monthCogs;

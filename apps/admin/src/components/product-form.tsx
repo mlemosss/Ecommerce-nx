@@ -11,6 +11,8 @@ interface VariantRow {
   color: string;
   size: string;
   stock: number;
+  price: string;
+  costPrice: string;
 }
 
 interface ProductFormProps {
@@ -29,9 +31,13 @@ export function ProductForm({ product }: ProductFormProps) {
   const [compareAtPrice, setCompareAtPrice] = useState(product?.compareAtPrice?.toString() ?? '');
   const [active, setActive] = useState(product?.active ?? true);
   const [variants, setVariants] = useState<VariantRow[]>(
-    product?.variants.map((v) => ({ color: v.color, size: v.size, stock: v.stock })) ?? [
-      { color: '', size: '', stock: 0 },
-    ]
+    product?.variants.map((v) => ({
+      color: v.color,
+      size: v.size,
+      stock: v.stock,
+      price: v.price?.toString() ?? '',
+      costPrice: v.costPrice?.toString() ?? '',
+    })) ?? [{ color: '', size: '', stock: 0, price: '', costPrice: '' }]
   );
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
@@ -65,7 +71,7 @@ export function ProductForm({ product }: ProductFormProps) {
   }
 
   function addVariant() {
-    setVariants((prev) => [...prev, { color: '', size: '', stock: 0 }]);
+    setVariants((prev) => [...prev, { color: '', size: '', stock: 0, price: '', costPrice: '' }]);
   }
 
   function removeVariant(index: number) {
@@ -91,7 +97,13 @@ export function ProductForm({ product }: ProductFormProps) {
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
       active,
       images,
-      variants: validVariants,
+      variants: validVariants.map((v) => ({
+        color: v.color,
+        size: v.size,
+        stock: v.stock,
+        price: v.price ? Number(v.price) : undefined,
+        costPrice: v.costPrice ? Number(v.costPrice) : undefined,
+      })),
     };
 
     setSubmitting(true);
@@ -246,40 +258,66 @@ export function ProductForm({ product }: ProductFormProps) {
             + Adicionar
           </button>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {variants.map((variant, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <input
-                placeholder="Cor"
-                value={variant.color}
-                onChange={(e) => updateVariant(index, { color: e.target.value })}
-                className="input-field flex-1"
-              />
-              <input
-                placeholder="Tam."
-                value={variant.size}
-                onChange={(e) => updateVariant(index, { size: e.target.value })}
-                className="input-field w-20"
-              />
-              <input
-                type="number"
-                min="0"
-                placeholder="Qtd."
-                value={variant.stock}
-                onChange={(e) => updateVariant(index, { stock: Number(e.target.value) })}
-                className="input-field w-20"
-              />
-              <button
-                type="button"
-                onClick={() => removeVariant(index)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-red-500"
-                aria-label="Remover variação"
-              >
-                ✕
-              </button>
+            <div key={index} className="rounded-xl border border-black/10 p-2">
+              <div className="flex items-center gap-2">
+                <input
+                  placeholder="Cor"
+                  value={variant.color}
+                  onChange={(e) => updateVariant(index, { color: e.target.value })}
+                  className="input-field flex-1"
+                />
+                <input
+                  placeholder="Tam."
+                  value={variant.size}
+                  onChange={(e) => updateVariant(index, { size: e.target.value })}
+                  className="input-field w-20"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Qtd."
+                  value={variant.stock}
+                  onChange={(e) => updateVariant(index, { stock: Number(e.target.value) })}
+                  className="input-field w-20"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeVariant(index)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-red-500"
+                  aria-label="Remover variação"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Custo diferente (opcional)"
+                  value={variant.costPrice}
+                  onChange={(e) => updateVariant(index, { costPrice: e.target.value })}
+                  className="input-field flex-1 !text-xs"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Preço diferente (opcional)"
+                  value={variant.price}
+                  onChange={(e) => updateVariant(index, { price: e.target.value })}
+                  className="input-field flex-1 !text-xs"
+                />
+              </div>
             </div>
           ))}
         </div>
+        <p className="mt-1 text-xs text-black/40">
+          Deixe em branco pra usar o custo/preço do produto. Preencha só quando essa cor/tamanho tiver um
+          valor diferente.
+        </p>
       </div>
 
       <button type="submit" disabled={submitting} className="btn-primary w-full">
