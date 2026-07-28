@@ -4,6 +4,8 @@ export interface ProductVariant {
   color: string;
   size: string;
   stock: number;
+  price: number | null;
+  costPrice: number | null;
 }
 
 export interface Product {

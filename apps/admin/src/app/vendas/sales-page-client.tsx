@@ -78,7 +78,7 @@ export function SalesPageClient() {
           productName: product.name,
           color: variant.color,
           size: variant.size,
-          price: product.price,
+          price: variant.price ?? product.price,
           quantity: 1,
           maxStock: variant.stock,
         },
@@ -177,25 +177,34 @@ export function SalesPageClient() {
         />
 
         <div className="mt-4 max-h-64 space-y-2 overflow-y-auto">
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="card !p-3">
-              <p className="text-sm font-semibold">{product.name}</p>
-              <p className="text-xs text-black/50">{formatPrice(product.price)}</p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {product.variants.map((variant) => (
-                  <button
-                    key={variant.id}
-                    type="button"
-                    disabled={variant.stock <= 0}
-                    onClick={() => addToCart(product, variant.id)}
-                    className="rounded-lg border border-black/10 px-2 py-1 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-30"
-                  >
-                    {variant.color}/{variant.size} ({variant.stock})
-                  </button>
-                ))}
+          {filteredProducts.map((product) => {
+            const prices = product.variants.map((v) => v.price ?? product.price);
+            const minPrice = Math.min(...prices, product.price);
+            const maxPrice = Math.max(...prices, product.price);
+            return (
+              <div key={product.id} className="card !p-3">
+                <p className="text-sm font-semibold">{product.name}</p>
+                <p className="text-xs text-black/50">
+                  {minPrice === maxPrice
+                    ? formatPrice(minPrice)
+                    : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {product.variants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      disabled={variant.stock <= 0}
+                      onClick={() => addToCart(product, variant.id)}
+                      className="rounded-lg border border-black/10 px-2 py-1 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      {variant.color}/{variant.size} ({variant.stock}) · {formatPrice(variant.price ?? product.price)}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="mt-6 border-t border-black/10 pt-4">

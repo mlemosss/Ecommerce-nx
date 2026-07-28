@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { Product } from '../lib/types';
 import { useCart } from '../lib/cart-context';
+import { getVariantPrice } from '../lib/products';
+import { formatInstallments, formatPrice } from '../lib/format';
 
 export function AddToCart({ product }: { product: Product }) {
   const { addItem } = useCart();
@@ -12,6 +14,8 @@ export function AddToCart({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
+  const price = getVariantPrice(product, color, size);
+
   function handleAdd() {
     addItem({ productId: product.id, size, color, quantity });
     setAdded(true);
@@ -19,6 +23,20 @@ export function AddToCart({ product }: { product: Product }) {
 
   return (
     <div className="flex flex-col gap-6">
+      <div>
+        <div className="flex items-baseline gap-3">
+          <span className="text-3xl font-bold">{formatPrice(price)}</span>
+          {product.compareAtPrice && (
+            <span className="text-lg text-black/40 line-through">
+              {formatPrice(product.compareAtPrice)}
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-black/50">{formatInstallments(price)}</p>
+      </div>
+
+      <p className="text-black/70">{product.description}</p>
+
       <div>
         <p className="mb-2 text-sm font-semibold">Tamanho</p>
         <div className="flex flex-wrap gap-2">

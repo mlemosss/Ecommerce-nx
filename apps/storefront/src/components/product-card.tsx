@@ -26,8 +26,10 @@ export function ProductCard({ product }: { product: Product }) {
             {product.name}
           </h3>
           <div className="mt-auto flex items-baseline gap-2 pt-2">
-            <span className="text-lg font-bold text-ink">{formatPrice(product.price)}</span>
-            {product.compareAtPrice && (
+            <span className="text-lg font-bold text-ink">
+              {product.priceRange ? `A partir de ${formatPrice(product.price)}` : formatPrice(product.price)}
+            </span>
+            {!product.priceRange && product.compareAtPrice && (
               <span className="text-sm text-black/40 line-through">
                 {formatPrice(product.compareAtPrice)}
               </span>

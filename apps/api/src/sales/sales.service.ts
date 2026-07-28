@@ -52,7 +52,7 @@ export class SalesService {
           data: { stock: variant.stock - item.quantity },
         });
 
-        const unitPrice = variant.product.price;
+        const unitPrice = variant.price ?? variant.product.price;
         total += unitPrice * item.quantity;
         itemsData.push({
           productVariantId: variant.id,

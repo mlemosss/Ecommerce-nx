@@ -2,50 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { Product } from './types';
+import { type CatalogProduct, toProduct } from './products';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
-
-const CATEGORY_GRADIENT: Record<string, [string, string]> = {
-  leggings: ['#1f1f24', '#3a3a42'],
-  tops: ['#1a1a1a', '#a1a1aa'],
-  shorts: ['#101418', '#334155'],
-  camisetas: ['#18181b', '#3f3f46'],
-  jaquetas: ['#101a12', '#294d33'],
-  acessorios: ['#111827', '#374151'],
-};
-
-interface CatalogProduct {
-  id: string;
-  slug: string;
-  name: string;
-  category: string;
-  description: string;
-  price: number;
-  compareAtPrice: number | null;
-  images: string[];
-  colors: string[];
-  sizes: string[];
-  variants: { color: string; size: string; stock: number }[];
-  isNew: boolean;
-}
-
-function toProduct(item: CatalogProduct): Product {
-  return {
-    id: item.id,
-    slug: item.slug,
-    name: item.name,
-    category: item.category as Product['category'],
-    price: item.price,
-    compareAtPrice: item.compareAtPrice ?? undefined,
-    colors: item.colors,
-    sizes: item.sizes,
-    description: item.description,
-    isNew: item.isNew,
-    gradient: CATEGORY_GRADIENT[item.category] ?? ['#1a1a1a', '#3a3a42'],
-    images: item.images,
-    variants: item.variants,
-  };
-}
 
 interface ProductsContextValue {
   products: Product[];

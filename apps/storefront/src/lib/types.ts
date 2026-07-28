@@ -10,6 +10,7 @@ export interface ProductVariant {
   color: string;
   size: string;
   stock: number;
+  price: number;
 }
 
 export interface Product {
@@ -18,6 +19,7 @@ export interface Product {
   name: string;
   category: Category;
   price: number;
+  priceRange?: { min: number; max: number } | null;
   compareAtPrice?: number | null;
   colors: string[];
   sizes: string[];
