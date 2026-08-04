@@ -27,7 +27,7 @@ export function AddToCart({ product }: { product: Product }) {
         <div className="flex items-baseline gap-3">
           <span className="text-3xl font-bold">{formatPrice(price)}</span>
           {product.compareAtPrice && (
-            <span className="text-lg text-black/40 line-through">
+            <span className="text-lg text-black/60 line-through">
               {formatPrice(product.compareAtPrice)}
             </span>
           )}

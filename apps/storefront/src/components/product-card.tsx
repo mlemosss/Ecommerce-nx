@@ -21,7 +21,7 @@ export function ProductCard({ product }: { product: Product }) {
           label={badge}
         />
         <div className="flex flex-1 flex-col gap-1 p-4">
-          <p className="text-xs uppercase tracking-wide text-black/50">{product.category}</p>
+          <p className="text-xs uppercase tracking-wide text-black/60">{product.category}</p>
           <h3 className="font-semibold leading-snug text-ink group-hover:underline">
             {product.name}
           </h3>
@@ -30,7 +30,7 @@ export function ProductCard({ product }: { product: Product }) {
               {product.priceRange ? `A partir de ${formatPrice(product.price)}` : formatPrice(product.price)}
             </span>
             {!product.priceRange && product.compareAtPrice && (
-              <span className="text-sm text-black/40 line-through">
+              <span className="text-sm text-black/60 line-through">
                 {formatPrice(product.compareAtPrice)}
               </span>
             )}

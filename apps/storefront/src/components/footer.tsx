@@ -44,7 +44,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10 py-4">
-        <p className="container-page text-xs text-white/40">
+        <p className="container-page text-xs text-white/60">
           © {new Date().getFullYear()} NO EXCUSE. Todos os direitos reservados.
         </p>
       </div>
