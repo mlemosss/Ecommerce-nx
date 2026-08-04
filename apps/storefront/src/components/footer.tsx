@@ -39,7 +39,7 @@ export function Footer() {
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-white/80">Pagamento</p>
           <p className="mt-3 text-sm text-white/60">
-            Pix, cartão em até 3x sem juros e boleto. Ambiente de compra simulado para fins de demonstração.
+            Pix, cartão em até 3x sem juros e boleto. Compra 100% segura.
           </p>
         </div>
       </div>

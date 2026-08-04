@@ -14,9 +14,17 @@ body {
   @apply bg-volt text-ink;
 }
 
+/* Foco de teclado visível em toda a loja (usa a cor do próprio texto, então
+   contrasta tanto no fundo claro quanto no rodapé escuro). */
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-volt hover:text-ink;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-ink/90 hover:shadow-lg;
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink px-6 py-3 text-sm font-semibold uppercase tracking-wide text-ink transition hover:bg-ink hover:text-white;
