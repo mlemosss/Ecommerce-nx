@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { LogoutButton } from '../components/logout-button';
+import { Dashboard } from '../components/dashboard';
 
 const tools = [
   { href: '/produtos', label: 'Produtos', icon: 'M20 7 12 3 4 7m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'text-ink' },
@@ -38,6 +39,8 @@ export default function HomePage() {
         <p className="text-sm text-white/70">Ver como o cliente vê</p>
         <p className="mt-1 text-lg font-bold">Abrir Loja Virtual ↗</p>
       </a>
+
+      <Dashboard />
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
         Suas ferramentas
