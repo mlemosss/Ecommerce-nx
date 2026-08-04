@@ -16,14 +16,60 @@ export function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+/**
+ * Redimensiona e comprime a imagem no navegador antes de enviar.
+ * As fotos vão como dataURL base64 no corpo da requisição; sem isso, fotos de
+ * celular estouram o limite de tamanho ("request entity too large" / 413).
+ * Mantém proporção, limita a maior dimensão e exporta em JPEG.
+ */
+export async function compressImageToDataUrl(
+  file: File,
+  maxDimension = 1600,
+  quality = 0.82
+): Promise<string> {
+  const original = await fileToDataUrl(file);
+
+  // Formatos não-raster (ex.: SVG) ou ambiente sem canvas: envia como está.
+  if (typeof document === 'undefined' || !file.type.startsWith('image/') || file.type === 'image/svg+xml') {
+    return original;
+  }
+
+  try {
+    const img = document.createElement('img');
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
+      img.src = original;
+    });
+
+    const largest = Math.max(img.width, img.height);
+    const scale = largest > maxDimension ? maxDimension / largest : 1;
+    const width = Math.max(1, Math.round(img.width * scale));
+    const height = Math.max(1, Math.round(img.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return original;
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const compressed = canvas.toDataURL('image/jpeg', quality);
+    // Usa o menor entre original e comprimido (evita casos raros de crescer).
+    return compressed.length < original.length ? compressed : original;
+  } catch {
+    return original;
+  }
+}
+
 export async function uploadProductImage(file: File): Promise<string> {
-  const dataUrl = await fileToDataUrl(file);
+  const dataUrl = await compressImageToDataUrl(file);
   const { url } = await api.post<{ url: string }>('/uploads/products', { dataUrl });
   return url;
 }
 
 export async function uploadTestimonialPhoto(file: File): Promise<string> {
-  const dataUrl = await fileToDataUrl(file);
+  const dataUrl = await compressImageToDataUrl(file);
   const { url } = await api.post<{ url: string }>('/uploads/testimonials', { dataUrl });
   return url;
 }
