@@ -13,6 +13,10 @@ const CATEGORY_WEIGHT: Record<string, number> = {
 };
 const DEFAULT_WEIGHT = 0.3;
 
+// CEP de origem da loja (São Paulo). Sobrescrevível pela env MELHOR_ENVIO_FROM_CEP.
+// TODO: mover para as Configurações do admin quando o campo existir no schema.
+const DEFAULT_FROM_CEP = '01233001';
+
 export interface ShippingOption {
   id: string;
   name: string;
@@ -34,7 +38,7 @@ interface MelhorEnvioService {
 @Injectable()
 export class ShippingService {
   isConfigured(): boolean {
-    return Boolean(process.env.MELHOR_ENVIO_TOKEN && process.env.MELHOR_ENVIO_FROM_CEP);
+    return Boolean(process.env.MELHOR_ENVIO_TOKEN);
   }
 
   private baseUrl(): string {
@@ -59,7 +63,7 @@ export class ShippingService {
     const insuranceValue =
       dto.subtotal ?? dto.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
     const toCep = (dto.toZipCode || '').replace(/\D/g, '');
-    const fromCep = (process.env.MELHOR_ENVIO_FROM_CEP || '').replace(/\D/g, '');
+    const fromCep = (process.env.MELHOR_ENVIO_FROM_CEP || DEFAULT_FROM_CEP).replace(/\D/g, '');
 
     const body = {
       from: { postal_code: fromCep },
