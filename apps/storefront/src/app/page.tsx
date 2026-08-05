@@ -5,6 +5,7 @@ import { ProductImage } from '../components/product-image';
 import { NewsletterForm } from '../components/newsletter-form';
 import { TestimonialsSection } from '../components/testimonials-section';
 import { getSettings, getTestimonials } from '../lib/api';
+import { formatPrice } from '../lib/format';
 
 export default async function HomePage() {
   const featured = await getFeaturedProducts(8);
@@ -26,7 +27,7 @@ export default async function HomePage() {
             </h1>
             <p className="mt-6 max-w-md text-white/70">{settings.heroSubtitle}</p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/produtos" className="btn-primary bg-volt2 text-ink hover:bg-white">
+              <Link href="/produtos" className="btn-primary bg-white text-ink hover:bg-white/90">
                 {settings.heroPrimaryButtonLabel}
               </Link>
               <Link
@@ -46,6 +47,45 @@ export default async function HomePage() {
             <ProductImage category="tops" gradient={['#1a1a1a', '#a1a1aa']} className="aspect-square rounded-3xl" />
             <ProductImage category="jaquetas" gradient={['#101a12', '#294d33']} className="aspect-square rounded-3xl" />
           </div>
+        </div>
+      </section>
+
+      {/* Faixa de confiança logo abaixo do hero — os argumentos que decidem a compra,
+          antes ficavam enterrados no meio da página. */}
+      <section className="bg-ink text-white">
+        <div className="container-page grid grid-cols-2 gap-x-6 py-2 sm:grid-cols-4">
+          {[
+            {
+              title: 'Frete grátis',
+              subtitle: `acima de ${formatPrice(settings.freeShippingThreshold)}`,
+              icon: 'M3 3h2l.4 2M7 13h10l3-8H5.4M6 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm11 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z',
+            },
+            {
+              title: 'Troca grátis',
+              subtitle: 'em até 30 dias',
+              icon: 'M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5',
+            },
+            {
+              title: 'Compra 100% segura',
+              subtitle: 'Pix, cartão 3x e boleto',
+              icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z',
+            },
+            {
+              title: 'Envio para todo o Brasil',
+              subtitle: 'prazo calculado no CEP',
+              icon: 'M3 9h13v7H3zM16 12h3l2 3v1h-5M6 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm12 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z',
+            },
+          ].map((item) => (
+            <div key={item.title} className="flex items-center gap-3 py-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 shrink-0 text-volt2">
+                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+              </svg>
+              <div className="min-w-0">
+                <p className="text-xs font-bold leading-tight">{item.title}</p>
+                <p className="text-[11px] text-white/50">{item.subtitle}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
