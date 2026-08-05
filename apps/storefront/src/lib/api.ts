@@ -207,3 +207,39 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   }
   return res.json();
 }
+
+export interface ShippingOption {
+  id: string;
+  name: string;
+  company: string;
+  price: number;
+  deliveryTime: number | null;
+}
+
+export interface ShippingQuoteResult {
+  configured: boolean;
+  options: ShippingOption[];
+  error?: string;
+}
+
+export interface ShippingQuoteInput {
+  toZipCode: string;
+  subtotal: number;
+  items: { category?: string; quantity: number; unitPrice: number }[];
+}
+
+/** Cota o frete no Melhor Envio. Best-effort: se falhar, devolve lista vazia e o
+ * checkout usa o frete fixo, sem travar. */
+export async function quoteShipping(input: ShippingQuoteInput): Promise<ShippingQuoteResult> {
+  try {
+    const res = await fetch(`${API_URL}/shipping/quote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) return { configured: false, options: [] };
+    return res.json();
+  } catch {
+    return { configured: false, options: [] };
+  }
+}

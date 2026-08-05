@@ -13,6 +13,8 @@ import {
   DEFAULT_SETTINGS,
   getSettings,
   OrderError,
+  quoteShipping,
+  type ShippingOption,
   trackAbandonedCart,
   validateCoupon,
 } from '../../lib/api';
@@ -55,6 +57,12 @@ export default function CheckoutPage() {
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
 
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [selectedShippingId, setSelectedShippingId] = useState<string | null>(null);
+  const [quotingShipping, setQuotingShipping] = useState(false);
+  const [shippingError, setShippingError] = useState('');
+  const [showAllShipping, setShowAllShipping] = useState(false);
+
   useEffect(() => {
     getSettings().then(setSettings);
   }, []);
@@ -68,7 +76,9 @@ export default function CheckoutPage() {
 
   const availablePayments = PAYMENT_OPTIONS.filter((option) => settings[option.enabledKey]);
 
-  const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
+  const freeShipping = subtotal >= settings.freeShippingThreshold;
+  const selectedShipping = shippingOptions.find((o) => o.id === selectedShippingId) ?? null;
+  const shipping = freeShipping ? 0 : selectedShipping ? selectedShipping.price : settings.shippingFee;
   const total = Math.max(0, subtotal + shipping - appliedDiscount);
 
   useEffect(() => {
@@ -120,6 +130,48 @@ export default function CheckoutPage() {
     setCouponCode('');
     setCouponMessage('');
   }
+
+  async function handleQuoteShipping() {
+    const digits = zipCode.replace(/\D/g, '');
+    if (digits.length !== 8) return;
+    setQuotingShipping(true);
+    setShippingError('');
+    try {
+      const result = await quoteShipping({
+        toZipCode: digits,
+        subtotal,
+        items: items.map((item) => {
+          const product = products.find((p) => p.id === item.productId);
+          return {
+            category: product?.category,
+            quantity: item.quantity,
+            unitPrice: product ? getVariantPrice(product, item.color, item.size) : 0,
+          };
+        }),
+      });
+      if (!result.configured || result.options.length === 0) {
+        setShippingOptions([]);
+        if (result.error) {
+          setShippingError('Não foi possível calcular o frete agora. Usaremos o frete padrão.');
+        }
+      } else {
+        const sorted = [...result.options].sort((a, b) => a.price - b.price);
+        setShippingOptions(sorted);
+        setSelectedShippingId((prev) => (prev && sorted.some((o) => o.id === prev) ? prev : sorted[0].id));
+      }
+    } finally {
+      setQuotingShipping(false);
+    }
+  }
+
+  // Cota o frete automaticamente quando o CEP fica completo (e não é frete grátis).
+  useEffect(() => {
+    if (freeShipping) return;
+    if (zipCode.replace(/\D/g, '').length !== 8) return;
+    const timeout = setTimeout(() => void handleQuoteShipping(), 700);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zipCode, subtotal, items.length, freeShipping]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -270,6 +322,77 @@ export default function CheckoutPage() {
           </fieldset>
 
           <fieldset className="rounded-2xl border border-black/10 p-6">
+            <legend className="px-2 text-sm font-bold uppercase tracking-wide">Frete</legend>
+            {freeShipping ? (
+              <p className="text-sm font-medium text-green-700">Frete grátis nesta compra! 🎉</p>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-black/60">
+                    {zipCode.replace(/\D/g, '').length === 8
+                      ? 'Escolha a forma de envio:'
+                      : 'Preencha o CEP acima para calcular o frete.'}
+                  </p>
+                  {zipCode.replace(/\D/g, '').length === 8 && (
+                    <button
+                      type="button"
+                      onClick={handleQuoteShipping}
+                      disabled={quotingShipping}
+                      className="ml-auto shrink-0 text-xs font-semibold underline underline-offset-2 disabled:opacity-50"
+                    >
+                      {quotingShipping ? 'Calculando...' : 'Recalcular'}
+                    </button>
+                  )}
+                </div>
+                {shippingError && <p className="mt-2 text-xs text-black/50">{shippingError}</p>}
+                {shippingOptions.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {(showAllShipping ? shippingOptions : shippingOptions.slice(0, 5)).map((option) => (
+                      <label
+                        key={option.id}
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 transition ${
+                          selectedShippingId === option.id
+                            ? 'border-ink bg-black/[0.03]'
+                            : 'border-black/10 hover:border-black/20'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shipping"
+                          checked={selectedShippingId === option.id}
+                          onChange={() => setSelectedShippingId(option.id)}
+                          className="accent-ink"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold">
+                            {option.company} {option.name}
+                          </span>
+                          {option.deliveryTime != null && (
+                            <span className="block text-xs text-black/50">
+                              Entrega em até {option.deliveryTime}{' '}
+                              {option.deliveryTime === 1 ? 'dia útil' : 'dias úteis'}
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0 text-sm font-bold">{formatPrice(option.price)}</span>
+                      </label>
+                    ))}
+                    {shippingOptions.length > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllShipping((v) => !v)}
+                        className="text-xs font-semibold underline underline-offset-2"
+                      >
+                        {showAllShipping ? 'Ver menos' : `Ver todas as ${shippingOptions.length} opções`}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </fieldset>
+
+          <fieldset className="rounded-2xl border border-black/10 p-6">
             <legend className="px-2 text-sm font-bold uppercase tracking-wide">Forma de pagamento</legend>
             <div className="flex flex-wrap gap-3">
               {availablePayments.map((option) => (
@@ -360,7 +483,9 @@ export default function CheckoutPage() {
               <dd>{formatPrice(subtotal)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-black/60">Frete</dt>
+              <dt className="text-black/60">
+                Frete{!freeShipping && selectedShipping ? ` · ${selectedShipping.company}` : ''}
+              </dt>
               <dd>{shipping === 0 ? 'Grátis' : formatPrice(shipping)}</dd>
             </div>
             {appliedDiscount > 0 && (
