@@ -173,6 +173,26 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zipCode, subtotal, items.length, freeShipping]);
 
+  // Preenche endereço automaticamente pelo CEP (ViaCEP), como as boas lojas fazem.
+  useEffect(() => {
+    const digits = zipCode.replace(/\D/g, '');
+    if (digits.length !== 8) return;
+    let cancelled = false;
+    fetch(`https://viacep.com.br/ws/${digits}/json/`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { logradouro?: string; localidade?: string; erro?: boolean } | null) => {
+        if (cancelled || !data || data.erro) return;
+        if (data.localidade) setCity(data.localidade);
+        if (data.logradouro) setStreet((prev) => prev || data.logradouro || '');
+      })
+      .catch(() => {
+        // sem CEP válido: o cliente digita o endereço manualmente.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [zipCode]);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');

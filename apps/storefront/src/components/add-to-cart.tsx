@@ -107,12 +107,42 @@ export function AddToCart({ product }: { product: Product }) {
       </button>
 
       {added && (
-        <p className="rounded-xl bg-black/5 px-4 py-3 text-sm">
-          Produto adicionado!{' '}
-          <Link href="/carrinho" className="font-semibold underline underline-offset-4">
-            Ir para o carrinho
-          </Link>
-        </p>
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          onClick={() => setAdded(false)}
+          role="dialog"
+          aria-label="Produto adicionado ao carrinho"
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 text-green-700">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
+              </svg>
+              <p className="text-sm font-bold uppercase tracking-wide">Adicionado ao carrinho</p>
+            </div>
+            <p className="mt-2 text-sm text-black/60">
+              {product.name} · {color} · {size} · {quantity} un
+            </p>
+            <div className="mt-5 flex flex-col gap-2">
+              <Link href="/checkout" className="btn-primary w-full">
+                Finalizar compra
+              </Link>
+              <Link href="/carrinho" className="btn-secondary w-full">
+                Ver carrinho
+              </Link>
+              <button
+                type="button"
+                onClick={() => setAdded(false)}
+                className="w-full py-2 text-sm font-semibold text-black/60 underline underline-offset-4 hover:text-ink"
+              >
+                Continuar comprando
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
