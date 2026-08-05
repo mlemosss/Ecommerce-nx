@@ -320,15 +320,18 @@ export function ProductForm({ product }: ProductFormProps) {
         </p>
       </div>
 
-      <button type="submit" disabled={submitting} className="btn-primary w-full">
-        {submitting ? 'Salvando...' : 'Salvar'}
-      </button>
-
       {isEdit && (
         <button type="button" onClick={handleDelete} className="btn-danger w-full">
           Excluir produto
         </button>
       )}
+
+      {/* Barra de ação fixa no rodapé da tela para salvar sem precisar rolar. */}
+      <div className="sticky bottom-0 z-50 mt-2 border-t border-black/10 bg-white/95 py-3 backdrop-blur">
+        <button type="submit" disabled={submitting} className="btn-primary w-full">
+          {submitting ? 'Salvando...' : 'Salvar'}
+        </button>
+      </div>
     </form>
   );
 }

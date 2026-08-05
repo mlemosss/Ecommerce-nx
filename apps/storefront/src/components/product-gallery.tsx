@@ -28,6 +28,7 @@ export function ProductGallery({ category, gradient, images, label, className = 
         photo={images[active]}
         label={label}
         className={className}
+        fit="contain"
       />
       {images.length > 1 && (
         <div className="mt-3 flex gap-3">

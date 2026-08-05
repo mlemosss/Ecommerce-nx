@@ -53,6 +53,17 @@ export function OrdersPageClient() {
     updateStatus(order, 'enviado', trackingCode || undefined);
   }
 
+  async function handleDelete(order: Order) {
+    if (!window.confirm(`Apagar o pedido #${order.orderNumber}? Esta ação não pode ser desfeita.`)) return;
+    setUpdatingId(order.id);
+    try {
+      await api.delete(`/orders/${order.id}`);
+      load();
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   return (
     <div>
       <TopBar title="Pedidos" />
@@ -180,6 +191,14 @@ export function OrdersPageClient() {
                           Voltar p/ aguardando
                         </button>
                       )}
+                      <button
+                        type="button"
+                        disabled={updatingId === order.id}
+                        onClick={() => handleDelete(order)}
+                        className="rounded-full bg-black/5 px-3 py-1.5 text-xs font-semibold text-black/60 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                      >
+                        Apagar
+                      </button>
                     </div>
                   </div>
                 )}

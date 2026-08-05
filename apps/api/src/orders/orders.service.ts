@@ -191,4 +191,11 @@ export class OrdersService {
     if (!order) return null;
     return this.prisma.order.update({ where: { id: order.id }, data: { status: 'cancelado' } });
   }
+
+  async remove(id: string) {
+    await this.findOne(id);
+    await this.prisma.orderItem.deleteMany({ where: { orderId: id } });
+    await this.prisma.order.delete({ where: { id } });
+    return { deleted: true };
+  }
 }

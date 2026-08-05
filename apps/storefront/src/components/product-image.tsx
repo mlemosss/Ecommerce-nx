@@ -21,13 +21,22 @@ interface ProductImageProps {
   className?: string;
   label?: string;
   photo?: string;
+  /** 'cover' recorta para preencher (padrão, usado nos cards); 'contain' mostra a foto
+   * inteira enquadrada, sem zoom/corte (usado na página de produto). */
+  fit?: 'cover' | 'contain';
 }
 
-export function ProductImage({ category, gradient, className = '', label, photo }: ProductImageProps) {
+export function ProductImage({ category, gradient, className = '', label, photo, fit = 'cover' }: ProductImageProps) {
   return (
-    <div className={`relative flex items-center justify-center overflow-hidden ${className}`}>
+    <div className={`relative flex items-center justify-center overflow-hidden ${fit === 'contain' && photo ? 'bg-neutral-100' : ''} ${className}`}>
       {photo ? (
-        <Image src={photo} alt="" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+        <Image
+          src={photo}
+          alt=""
+          fill
+          sizes="(max-width: 768px) 50vw, 25vw"
+          className={fit === 'contain' ? 'object-contain' : 'object-cover'}
+        />
       ) : (
         <>
           <div
