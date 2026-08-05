@@ -45,7 +45,7 @@ export default function HomePage() {
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
         Suas ferramentas
       </h2>
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {tools.map((tool) => (
           <Link key={tool.href} href={tool.href} className="tool-card">
             <svg

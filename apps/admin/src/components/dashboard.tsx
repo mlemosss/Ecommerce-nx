@@ -120,7 +120,7 @@ export function Dashboard() {
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
       {loading && !error && (
-        <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-24 animate-pulse rounded-2xl bg-black/5" />
           ))}
@@ -130,7 +130,7 @@ export function Dashboard() {
       {metrics && (
         <>
           {/* KPIs */}
-          <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Kpi label="Faturamento" value={formatPrice(metrics.revenue)} hint={`${metrics.itemsSold} itens vendidos`} highlight />
             <Kpi label="Pedidos" value={String(metrics.orderCount)} hint={`${metrics.pending.length} aguardando`} />
             <Kpi label="Ticket médio" value={formatPrice(metrics.aov)} />

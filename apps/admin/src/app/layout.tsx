@@ -1,5 +1,6 @@
 import './global.css';
 import { BottomNav } from '../components/bottom-nav';
+import { Sidebar } from '../components/sidebar';
 import { AuthGuard } from '../components/auth-guard';
 
 export const metadata = {
@@ -14,9 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className="flex min-h-screen flex-col font-sans">
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
-          <div className="flex-1 pb-4">
+      <body className="flex min-h-screen font-sans">
+        <Sidebar />
+        <div className="flex min-h-screen flex-1 flex-col">
+          <div className="mx-auto w-full max-w-5xl flex-1 pb-24 md:pb-8">
             <AuthGuard>{children}</AuthGuard>
           </div>
           <BottomNav />
