@@ -1,9 +1,13 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
+import { requestContextMiddleware } from './common/request-context';
 
 export function configureApp(app: INestApplication): void {
   app.setGlobalPrefix('api');
   app.enableCors();
+  // Antes de tudo: guarda a URL pública desta requisição, usada para montar as
+  // URLs absolutas das fotos de produto.
+  app.use(requestContextMiddleware);
   // Uploads de imagem chegam como dataURL base64 no corpo JSON; o limite padrão do
   // Express (~100kb) estoura com fotos ("request entity too large" / 413). Elevado
   // para caber fotos comprimidas do celular. (bodyParser desativado no main.ts.)

@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto, ReplaceCatalogDto, UpdateProductDto, UpdateStockDto } from './dto/product.dto';
+import { parseImages, toPublicImageUrls, toStoredImages } from './product-images';
 
 function slugify(text: string): string {
   return text
@@ -11,14 +12,11 @@ function slugify(text: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
-function withParsedImages<T extends { images: string }>(product: T): Omit<T, 'images'> & { images: string[] } {
-  let images: string[];
-  try {
-    images = JSON.parse(product.images);
-  } catch {
-    images = [];
-  }
-  return { ...product, images };
+/** Sai com as fotos como URL pública, nunca como base64 (ver product-images.ts). */
+function withParsedImages<T extends { id: string; images: string }>(
+  product: T
+): Omit<T, 'images'> & { images: string[] } {
+  return { ...product, images: toPublicImageUrls(product.id, parseImages(product.images)) };
 }
 
 @Injectable()
@@ -97,7 +95,18 @@ export class ProductsService {
   }
 
   async update(id: string, dto: UpdateProductDto) {
-    await this.findOne(id);
+    const existing = await this.prisma.product.findUnique({
+      where: { id },
+      select: { images: true },
+    });
+    if (!existing) throw new NotFoundException('Produto não encontrado');
+
+    // O admin devolve no PATCH as URLs que recebeu no GET; cada uma volta a ser
+    // a foto gravada, senão salvar o produto apagaria a imagem.
+    const images =
+      dto.images !== undefined
+        ? toStoredImages(dto.images, parseImages(existing.images))
+        : undefined;
 
     if (dto.variants) {
       await this.prisma.productVariant.deleteMany({ where: { productId: id } });
@@ -112,7 +121,7 @@ export class ProductsService {
         ...(dto.costPrice !== undefined ? { costPrice: dto.costPrice } : {}),
         ...(dto.price !== undefined ? { price: dto.price } : {}),
         ...(dto.compareAtPrice !== undefined ? { compareAtPrice: dto.compareAtPrice } : {}),
-        ...(dto.images !== undefined ? { images: JSON.stringify(dto.images) } : {}),
+        ...(images !== undefined ? { images: JSON.stringify(images) } : {}),
         ...(dto.active !== undefined ? { active: dto.active } : {}),
         ...(dto.variants
           ? {

@@ -3,19 +3,16 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterCustomerDto, LoginCustomerDto } from './dto/customer-auth.dto';
+import { parseImages, toPublicImageUrls } from '../products/product-images';
 
 function safeCustomer(customer: { id: string; name: string; email: string | null; phone: string | null }) {
   return { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone };
 }
 
-function withParsedImages<T extends { images: string }>(product: T): Omit<T, 'images'> & { images: string[] } {
-  let images: string[];
-  try {
-    images = JSON.parse(product.images);
-  } catch {
-    images = [];
-  }
-  return { ...product, images };
+function withParsedImages<T extends { id: string; images: string }>(
+  product: T
+): Omit<T, 'images'> & { images: string[] } {
+  return { ...product, images: toPublicImageUrls(product.id, parseImages(product.images)) };
 }
 
 @Injectable()

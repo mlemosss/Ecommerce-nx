@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { parseImages, toPublicImageUrls } from '../products/product-images';
 
 const NEW_WINDOW_DAYS = 14;
 
@@ -15,12 +16,7 @@ function toCatalogProduct(product: {
   createdAt: Date;
   variants: { color: string; size: string; stock: number; price: number | null }[];
 }) {
-  let images: string[];
-  try {
-    images = JSON.parse(product.images);
-  } catch {
-    images = [];
-  }
+  const images = toPublicImageUrls(product.id, parseImages(product.images));
 
   const variants = product.variants.map((v) => ({
     color: v.color,
