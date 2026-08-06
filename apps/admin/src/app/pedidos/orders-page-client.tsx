@@ -26,39 +26,73 @@ const PAYMENT_LABEL: Record<Order['paymentMethod'], string> = {
   boleto: 'Boleto',
 };
 
+const FILTERS: { value: OrderStatus | 'todos'; label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'aguardando_pagamento', label: 'Aguardando' },
+  { value: 'pago', label: 'Pagos' },
+  { value: 'enviado', label: 'Enviados' },
+  { value: 'cancelado', label: 'Cancelados' },
+];
+
 export function OrdersPageClient() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'todos'>('todos');
+  const [search, setSearch] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [error, setError] = useState('');
+  // Rastreio digitado por pedido, antes de salvar.
+  const [tracking, setTracking] = useState<Record<string, string>>({});
 
-  function load() {
-    api.get<Order[]>('/orders').then(setOrders);
+  // A busca vai para a API com um respiro, para não disparar a cada tecla.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (statusFilter !== 'todos') params.set('status', statusFilter);
+      const q = search.trim();
+      if (q) params.set('q', q);
+      const query = params.toString();
+
+      api
+        .get<Order[]>(`/orders${query ? `?${query}` : ''}`)
+        .then((data) => {
+          setOrders(data);
+          setError('');
+        })
+        .catch((e) => setError(e?.message ?? 'Não foi possível carregar os pedidos.'));
+    }, 250);
+
+    return () => clearTimeout(handle);
+  }, [statusFilter, search, reloadKey]);
+
+  function reload() {
+    setReloadKey((key) => key + 1);
   }
-
-  useEffect(load, []);
 
   async function updateStatus(order: Order, status: OrderStatus, trackingCode?: string) {
     setUpdatingId(order.id);
+    setError('');
     try {
       await api.patch(`/orders/${order.id}/status`, { status, trackingCode });
-      load();
+      reload();
+    } catch (e) {
+      // Ex.: reabrir um pedido cancelado sem estoque para repor a saída.
+      setError((e as Error)?.message ?? 'Não foi possível mudar o status.');
     } finally {
       setUpdatingId(null);
     }
   }
 
-  function handleMarkShipped(order: Order) {
-    const trackingCode = window.prompt('Código de rastreio (opcional):', order.trackingCode ?? '');
-    if (trackingCode === null) return;
-    updateStatus(order, 'enviado', trackingCode || undefined);
-  }
-
   async function handleDelete(order: Order) {
     if (!window.confirm(`Apagar o pedido #${order.orderNumber}? Esta ação não pode ser desfeita.`)) return;
     setUpdatingId(order.id);
+    setError('');
     try {
       await api.delete(`/orders/${order.id}`);
-      load();
+      reload();
+    } catch (e) {
+      setError((e as Error)?.message ?? 'Não foi possível apagar o pedido.');
     } finally {
       setUpdatingId(null);
     }
@@ -68,14 +102,48 @@ export function OrdersPageClient() {
     <div>
       <TopBar title="Pedidos" />
       <div className="px-4 pt-4">
-        {orders === null && <p className="mt-8 text-center text-sm text-black/50">Carregando...</p>}
-        {orders && orders.length === 0 && (
-          <p className="mt-8 text-center text-sm text-black/50">Nenhum pedido ainda.</p>
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por número, nome ou e-mail"
+          className="w-full rounded-full border border-black/10 px-4 py-2 text-sm outline-none focus:border-ink"
+        />
+
+        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+          {FILTERS.map((filter) => (
+            <button
+              key={filter.value}
+              type="button"
+              onClick={() => setStatusFilter(filter.value)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                statusFilter === filter.value
+                  ? 'bg-ink text-white'
+                  : 'bg-black/5 text-black/60 hover:text-ink'
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
+        {error && (
+          <p className="mt-3 rounded-2xl bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>
         )}
 
-        <div className="space-y-2">
+        {orders === null && <p className="mt-8 text-center text-sm text-black/50">Carregando...</p>}
+        {orders && orders.length === 0 && (
+          <p className="mt-8 text-center text-sm text-black/50">
+            {search.trim() || statusFilter !== 'todos'
+              ? 'Nenhum pedido encontrado com esse filtro.'
+              : 'Nenhum pedido ainda.'}
+          </p>
+        )}
+
+        <div className="mt-3 space-y-2">
           {orders?.map((order) => {
             const expanded = expandedId === order.id;
+            const trackingValue = tracking[order.id] ?? order.trackingCode ?? '';
             return (
               <div key={order.id} className="card !p-3">
                 <button
@@ -134,11 +202,6 @@ export function OrdersPageClient() {
                         {formatPrice(order.discount)})
                       </p>
                     )}
-                    {order.trackingCode && (
-                      <p className="text-black/60">
-                        Rastreio: <span className="font-semibold">{order.trackingCode}</span>
-                      </p>
-                    )}
                     {order.asaasInvoiceUrl && (
                       <a
                         href={order.asaasInvoiceUrl}
@@ -149,6 +212,24 @@ export function OrdersPageClient() {
                         Ver cobrança na Asaas
                       </a>
                     )}
+
+                    <div>
+                      <label
+                        htmlFor={`rastreio-${order.id}`}
+                        className="text-xs font-semibold text-black/60"
+                      >
+                        Código de rastreio
+                      </label>
+                      <input
+                        id={`rastreio-${order.id}`}
+                        value={trackingValue}
+                        onChange={(e) =>
+                          setTracking((current) => ({ ...current, [order.id]: e.target.value }))
+                        }
+                        placeholder="Opcional — vai no e-mail de envio"
+                        className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 text-sm outline-none focus:border-ink"
+                      />
+                    </div>
 
                     <div className="flex flex-wrap gap-2 pt-1">
                       {order.status !== 'pago' && (
@@ -165,7 +246,9 @@ export function OrdersPageClient() {
                         <button
                           type="button"
                           disabled={updatingId === order.id}
-                          onClick={() => handleMarkShipped(order)}
+                          onClick={() =>
+                            updateStatus(order, 'enviado', trackingValue.trim() || undefined)
+                          }
                           className="rounded-full bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 disabled:opacity-50"
                         >
                           Marcar como enviado
@@ -200,6 +283,12 @@ export function OrdersPageClient() {
                         Apagar
                       </button>
                     </div>
+
+                    {order.status === 'cancelado' && (
+                      <p className="text-xs text-black/50">
+                        As peças deste pedido voltaram para o estoque.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

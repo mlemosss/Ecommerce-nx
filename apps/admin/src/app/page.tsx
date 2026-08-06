@@ -3,6 +3,7 @@ import { LogoutButton } from '../components/logout-button';
 import { Dashboard } from '../components/dashboard';
 
 const tools = [
+  { href: '/pedidos', label: 'Pedidos', icon: 'M6 2h9l3 3v17l-3-2-3 2-3-2-3 2V2Zm3 6h6M9 12h6M9 16h4', color: 'text-emerald-600' },
   { href: '/produtos', label: 'Produtos', icon: 'M20 7 12 3 4 7m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'text-ink' },
   { href: '/estoque', label: 'Estoque', icon: 'M21 8V7l-3-4H6L3 7v1m18 0H3m18 0-1 12H4L3 8', color: 'text-blue-600' },
   { href: '/clientes', label: 'Clientes', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M13 3.13a4 4 0 0 1 0 7.75M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', color: 'text-ink' },
