@@ -91,6 +91,37 @@ export class CreateOrderDto {
   paymentMethod!: 'pix' | 'cartao' | 'boleto';
 }
 
+/**
+ * Filtros opcionais do GET /orders. Sem nenhum parâmetro a rota devolve o mesmo
+ * array de sempre, então as telas antigas continuam funcionando.
+ */
+export class FindOrdersQueryDto {
+  @IsOptional()
+  @IsIn(['aguardando_pagamento', 'pago', 'enviado', 'cancelado'])
+  status?: 'aguardando_pagamento' | 'pago' | 'enviado' | 'cancelado';
+
+  /** Busca por número do pedido, nome ou e-mail do cliente. */
+  @IsOptional()
+  @IsString()
+  q?: string;
+
+  /** Data inicial (YYYY-MM-DD ou ISO). */
+  @IsOptional()
+  @IsString()
+  from?: string;
+
+  /** Data final, inclusiva quando vier só a data (YYYY-MM-DD ou ISO). */
+  @IsOptional()
+  @IsString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  limit?: number;
+}
+
 export class UpdateOrderStatusDto {
   @IsIn(['aguardando_pagamento', 'pago', 'enviado', 'cancelado'])
   status!: 'aguardando_pagamento' | 'pago' | 'enviado' | 'cancelado';
