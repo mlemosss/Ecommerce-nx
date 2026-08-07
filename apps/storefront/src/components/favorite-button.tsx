@@ -13,7 +13,7 @@ export function FavoriteButton({ productId }: { productId: string }) {
     return (
       <Link
         href="/conta/entrar"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-black/50 transition hover:border-ink hover:text-ink"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/90 text-ink/70 shadow-sm backdrop-blur transition hover:bg-white hover:text-ink"
         aria-label="Entre para favoritar"
         title="Entre para favoritar"
       >
@@ -38,8 +38,10 @@ export function FavoriteButton({ productId }: { productId: string }) {
       type="button"
       onClick={handleClick}
       disabled={pending || !isLoaded}
-      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition disabled:opacity-60 ${
-        isFavorited ? 'border-ink bg-ink text-white' : 'border-black/10 text-black/50 hover:border-ink hover:text-ink'
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm backdrop-blur transition disabled:opacity-60 ${
+        isFavorited
+          ? 'bg-ink text-white'
+          : 'bg-white/90 text-ink/70 hover:bg-white hover:text-ink'
       }`}
       aria-label={isFavorited ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
       aria-pressed={isFavorited}

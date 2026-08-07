@@ -25,9 +25,13 @@ export function Header() {
           <Image src="/logo-nx.png" alt="No Excuse" width={44} height={38} priority className="h-9 w-auto" />
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm font-medium lg:flex">
+        <nav className="hidden items-center gap-7 text-[11px] font-semibold uppercase tracking-[0.16em] lg:flex">
           {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="underline-offset-4 transition hover:underline">
+            <Link
+              key={link.href}
+              href={link.href}
+              className="underline-offset-8 transition hover:underline"
+            >
               {link.label}
             </Link>
           ))}
@@ -36,7 +40,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link
             href="/busca"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 transition hover:bg-ink hover:text-white"
+            className="flex h-10 w-10 items-center justify-center transition hover:opacity-60"
             aria-label="Buscar produtos"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
@@ -46,7 +50,7 @@ export function Header() {
           </Link>
           <Link
             href={customer ? '/conta' : '/conta/entrar'}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 transition hover:bg-ink hover:text-white"
+            className="flex h-10 w-10 items-center justify-center transition hover:opacity-60"
             aria-label={customer ? 'Minha conta' : 'Entrar'}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
@@ -56,7 +60,7 @@ export function Header() {
           </Link>
           <Link
             href="/carrinho"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-black/10 transition hover:bg-ink hover:text-white"
+            className="relative flex h-10 w-10 items-center justify-center transition hover:opacity-60"
             aria-label="Ver carrinho"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
@@ -67,7 +71,7 @@ export function Header() {
               />
             </svg>
             {totalItems > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-volt2 px-1 text-[10px] font-bold text-ink">
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-ink px-1 text-[10px] font-bold text-white">
                 {totalItems}
               </span>
             )}
@@ -75,7 +79,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 lg:hidden"
+            className="flex h-10 w-10 items-center justify-center lg:hidden"
             aria-label="Abrir menu"
             aria-expanded={open}
           >

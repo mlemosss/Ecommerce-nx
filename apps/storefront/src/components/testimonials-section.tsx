@@ -4,30 +4,34 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
   if (testimonials.length === 0) return null;
 
   return (
-    <section className="container-page py-16">
-      <h2 className="section-title text-center">O que dizem nossos clientes</h2>
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <section className="container-page py-20 sm:py-24">
+      <p className="eyebrow text-ink/50">Quem já treina com a gente</p>
+      <h2 className="section-title mt-3">O que dizem nossos clientes</h2>
+
+      <div className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
         {testimonials.map((testimonial) => (
-          <figure key={testimonial.id} className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
-            <div aria-hidden className="text-volt2/80">
-              {'★'.repeat(testimonial.rating)}
-              {'☆'.repeat(5 - testimonial.rating)}
+          <figure key={testimonial.id} className="flex flex-col bg-white p-6">
+            <div className="text-sm tracking-[0.2em] text-ink" aria-label={`${testimonial.rating} de 5 estrelas`}>
+              <span aria-hidden>
+                {'★'.repeat(testimonial.rating)}
+                <span className="text-ink/25">{'★'.repeat(5 - testimonial.rating)}</span>
+              </span>
             </div>
-            <blockquote className="mt-3 text-sm text-black/70">&ldquo;{testimonial.quote}&rdquo;</blockquote>
-            <figcaption className="mt-4 flex items-center gap-3">
+            <blockquote className="mt-4 flex-1 text-sm leading-relaxed text-ink/75">
+              &ldquo;{testimonial.quote}&rdquo;
+            </blockquote>
+            <figcaption className="mt-6 flex items-center gap-3 border-t border-line pt-4">
               {testimonial.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={testimonial.photoUrl}
-                  alt=""
-                  className="h-10 w-10 rounded-full object-cover"
-                />
+                <img src={testimonial.photoUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-lg">
-                  🙂
-                </div>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-paper text-xs font-bold text-ink/70">
+                  {testimonial.customerName.charAt(0).toUpperCase()}
+                </span>
               )}
-              <span className="text-sm font-semibold">{testimonial.customerName}</span>
+              <span className="text-xs font-semibold uppercase tracking-wide">
+                {testimonial.customerName}
+              </span>
             </figcaption>
           </figure>
         ))}

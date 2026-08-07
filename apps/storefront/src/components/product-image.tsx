@@ -24,9 +24,19 @@ interface ProductImageProps {
   /** 'cover' recorta para preencher (padrão, usado nos cards); 'contain' mostra a foto
    * inteira enquadrada, sem zoom/corte (usado na página de produto). */
   fit?: 'cover' | 'contain';
+  /** Carrega na frente da fila. Use só na foto do topo da página (o LCP). */
+  priority?: boolean;
 }
 
-export function ProductImage({ category, gradient, className = '', label, photo, fit = 'cover' }: ProductImageProps) {
+export function ProductImage({
+  category,
+  gradient,
+  className = '',
+  label,
+  photo,
+  fit = 'cover',
+  priority = false,
+}: ProductImageProps) {
   return (
     <div className={`relative flex items-center justify-center overflow-hidden ${fit === 'contain' && photo ? 'bg-neutral-100' : ''} ${className}`}>
       {photo ? (
@@ -34,6 +44,7 @@ export function ProductImage({ category, gradient, className = '', label, photo,
           src={photo}
           alt=""
           fill
+          priority={priority}
           sizes="(max-width: 768px) 50vw, 25vw"
           className={fit === 'contain' ? 'object-contain' : 'object-cover'}
         />
@@ -64,7 +75,7 @@ export function ProductImage({ category, gradient, className = '', label, photo,
         </>
       )}
       {label && (
-        <span className="absolute left-3 top-3 z-10 rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur">
+        <span className="absolute left-3 top-3 z-10 rounded-full bg-ink/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white backdrop-blur">
           {label}
         </span>
       )}

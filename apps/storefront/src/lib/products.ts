@@ -11,13 +11,16 @@ export const categories: { value: Category; label: string; description: string }
   { value: 'acessorios', label: 'Acessórios', description: 'Os detalhes que fazem diferença' },
 ];
 
+// Fundo de quem ainda não tem foto. A paleta da loja é monocromática, então
+// estes gradientes são só cinzas — o verde e o azul de antes destoavam do
+// resto da vitrine e disputavam atenção com a foto do produto ao lado.
 const CATEGORY_GRADIENT: Record<string, [string, string]> = {
-  leggings: ['#1f1f24', '#3a3a42'],
-  tops: ['#1a1a1a', '#a1a1aa'],
-  shorts: ['#101418', '#334155'],
+  leggings: ['#1c1c1f', '#3a3a3f'],
+  tops: ['#151517', '#45454b'],
+  shorts: ['#1a1a1d', '#4b4b51'],
   camisetas: ['#18181b', '#3f3f46'],
-  jaquetas: ['#101a12', '#294d33'],
-  acessorios: ['#111827', '#374151'],
+  jaquetas: ['#131316', '#35353a'],
+  acessorios: ['#101012', '#2f2f34'],
 };
 
 export interface CatalogProduct {

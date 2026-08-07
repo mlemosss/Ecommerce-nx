@@ -1,156 +1,261 @@
 import Link from 'next/link';
-import { categories, getFeaturedProducts } from '../lib/products';
+import { categories, getProducts } from '../lib/products';
 import { ProductCard } from '../components/product-card';
 import { ProductImage } from '../components/product-image';
 import { NewsletterForm } from '../components/newsletter-form';
 import { TestimonialsSection } from '../components/testimonials-section';
 import { getSettings, getTestimonials } from '../lib/api';
 import { formatPrice } from '../lib/format';
+import type { Category, Product } from '../lib/types';
+
+const TRUST = [
+  {
+    title: 'Frete grátis',
+    icon: 'M3 3h2l.4 2M7 13h10l3-8H5.4M6 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm11 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z',
+  },
+  { title: 'Troca grátis', icon: 'M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5' },
+  { title: 'Compra 100% segura', icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z' },
+  {
+    title: 'Envio para todo o Brasil',
+    icon: 'M3 9h13v7H3zM16 12h3l2 3v1h-5M6 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm12 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z',
+  },
+];
+
+/** Primeira foto de um produto da categoria — a vitrine mostra peça real, não ícone. */
+function photoOfCategory(products: Product[], category: Category): string | undefined {
+  return products.find((p) => p.category === category && p.images?.[0])?.images?.[0];
+}
 
 export default async function HomePage() {
-  const featured = await getFeaturedProducts(8);
+  const products = await getProducts();
   const settings = await getSettings();
   const testimonials = await getTestimonials();
 
+  const featured = products.slice(0, 8);
+  const showcase = products.filter((p) => p.images?.[0]);
+  const [heroProduct, secondProduct] = showcase;
+  const variantCount = products.reduce((sum, p) => sum + (p.variants?.length ?? 0), 0);
+  // Catálogo recém-carregado deixa todo produto "novo": aí o selo vira ruído.
+  const everythingIsNew = featured.length > 0 && featured.every((p) => p.isNew);
+
+  const trust = [
+    `acima de ${formatPrice(settings.freeShippingThreshold)}`,
+    'em até 30 dias',
+    `Pix, cartão ${settings.maxInstallments}x e boleto`,
+    'prazo calculado no seu CEP',
+  ];
+
   return (
     <div>
-      <section className="relative overflow-hidden bg-ink text-white">
-        <div className="container-page grid gap-10 py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
+      {/* ---------------- HERO ---------------- */}
+      <section className="bg-ink text-white">
+        <div className="container-page grid items-center gap-14 py-20 sm:py-24 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:py-28">
           <div>
-            <span className="inline-block rounded-full bg-volt2 px-4 py-1 text-xs font-bold uppercase tracking-wider text-ink">
+            <p className="eyebrow flex items-center gap-4 text-white/60">
+              <span aria-hidden className="h-px w-10 bg-white/30" />
               {settings.heroTag}
-            </span>
-            <h1 className="mt-6 text-4xl font-black uppercase leading-[1.05] tracking-tight sm:text-6xl">
-              {settings.heroTitleLine1}
-              <br />
-              <span className="text-volt2">{settings.heroTitleHighlight}</span>
+            </p>
+
+            <h1 className="display mt-8">
+              <span className="block text-white/45">{settings.heroTitleLine1}</span>
+              <span className="block">{settings.heroTitleHighlight}</span>
             </h1>
-            <p className="mt-6 max-w-md text-white/70">{settings.heroSubtitle}</p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/produtos" className="btn-primary bg-white text-ink hover:bg-white/90">
+
+            <p className="mt-8 max-w-md leading-relaxed text-white/70">{settings.heroSubtitle}</p>
+
+            <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
+              <Link href="/produtos" className="btn-invert">
                 {settings.heroPrimaryButtonLabel}
               </Link>
-              <Link
-                href="/produtos?categoria=leggings"
-                className="btn-secondary border-white/30 text-white hover:bg-white hover:text-ink"
-              >
+              <Link href="/produtos?categoria=leggings" className="link-ghost text-white">
                 {settings.heroSecondaryButtonLabel}
+                <span aria-hidden>→</span>
               </Link>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <ProductImage
-              category="leggings"
-              gradient={['#1f1f24', '#3a3a42']}
-              className="col-span-2 aspect-[16/9] rounded-3xl"
-            />
-            <ProductImage category="tops" gradient={['#1a1a1a', '#a1a1aa']} className="aspect-square rounded-3xl" />
-            <ProductImage category="jaquetas" gradient={['#101a12', '#294d33']} className="aspect-square rounded-3xl" />
-          </div>
-        </div>
-      </section>
 
-      {/* Faixa de confiança logo abaixo do hero — os argumentos que decidem a compra,
-          antes ficavam enterrados no meio da página. */}
-      <section className="bg-ink text-white">
-        <div className="container-page grid grid-cols-2 gap-x-6 py-2 sm:grid-cols-4">
-          {[
-            {
-              title: 'Frete grátis',
-              subtitle: `acima de ${formatPrice(settings.freeShippingThreshold)}`,
-              icon: 'M3 3h2l.4 2M7 13h10l3-8H5.4M6 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm11 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z',
-            },
-            {
-              title: 'Troca grátis',
-              subtitle: 'em até 30 dias',
-              icon: 'M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5',
-            },
-            {
-              title: 'Compra 100% segura',
-              subtitle: 'Pix, cartão 3x e boleto',
-              icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z',
-            },
-            {
-              title: 'Envio para todo o Brasil',
-              subtitle: 'prazo calculado no CEP',
-              icon: 'M3 9h13v7H3zM16 12h3l2 3v1h-5M6 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm12 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z',
-            },
-          ].map((item) => (
-            <div key={item.title} className="flex items-center gap-3 py-3">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 shrink-0 text-volt2">
-                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-              </svg>
-              <div className="min-w-0">
-                <p className="text-xs font-bold leading-tight">{item.title}</p>
-                <p className="text-[11px] text-white/50">{item.subtitle}</p>
+            <p className="mt-10 border-t border-white/10 pt-6 text-xs uppercase tracking-[0.2em] text-white/50">
+              Frete grátis acima de {formatPrice(settings.freeShippingThreshold)}
+            </p>
+          </div>
+
+          {/* Composição da vitrine: peça grande + peça de apoio + contagem real do estoque. */}
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            <Link
+              href={heroProduct ? `/produtos/${heroProduct.slug}` : '/produtos'}
+              className="group col-span-2 block"
+            >
+              <div className="overflow-hidden">
+                <ProductImage
+                  category={heroProduct?.category ?? 'leggings'}
+                  gradient={heroProduct?.gradient ?? ['#1f1f24', '#3a3a42']}
+                  photo={heroProduct?.images?.[0]}
+                  priority
+                  className="aspect-[4/5] w-full transition duration-700 group-hover:scale-[1.04]"
+                />
+              </div>
+              {heroProduct && (
+                <span className="mt-4 flex items-baseline justify-between gap-3 border-t border-white/15 pt-4">
+                  <span className="truncate text-sm font-semibold group-hover:underline">
+                    {heroProduct.name}
+                  </span>
+                  <span className="shrink-0 text-sm text-white/60">
+                    {formatPrice(heroProduct.price)}
+                  </span>
+                </span>
+              )}
+            </Link>
+
+            <div className="flex flex-col gap-3 sm:gap-4">
+              <Link
+                href={secondProduct ? `/produtos/${secondProduct.slug}` : '/produtos'}
+                className="group block overflow-hidden"
+              >
+                <ProductImage
+                  category={secondProduct?.category ?? 'tops'}
+                  gradient={secondProduct?.gradient ?? ['#1a1a1a', '#3f3f46']}
+                  photo={secondProduct?.images?.[0]}
+                  className="aspect-square w-full transition duration-700 group-hover:scale-[1.06]"
+                />
+              </Link>
+
+              <div className="flex flex-1 flex-col justify-end border border-white/15 p-4">
+                <p className="text-3xl font-black leading-none tracking-tight">{variantCount}</p>
+                <p className="eyebrow mt-2 text-white/50">
+                  variações
+                  <br />
+                  prontas p/ envio
+                </p>
               </div>
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
-      <section className="container-page py-16">
-        <h2 className="section-title">Compre por categoria</h2>
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      {/* ---------------- FAIXA DE CONFIANÇA ---------------- */}
+      <section className="border-b border-line bg-line">
+        <div className="container-page">
+          <div className="grid grid-cols-2 gap-px md:grid-cols-4">
+            {TRUST.map((item, index) => (
+              <div key={item.title} className="flex items-start gap-3 bg-paper px-4 py-5">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.6}
+                  aria-hidden
+                  className="mt-0.5 h-5 w-5 shrink-0 text-ink/70"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wide">{item.title}</p>
+                  <p className="mt-0.5 text-xs text-ink/60">{trust[index]}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- CATEGORIAS ---------------- */}
+      <section className="container-page py-20 sm:py-24">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="eyebrow text-ink/50">Vitrine</p>
+            <h2 className="section-title mt-3">Compre por categoria</h2>
+          </div>
+          <Link href="/produtos" className="link-ghost">
+            Ver tudo
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
+
+        <div className="mt-10 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-6">
           {categories.map((category) => (
             <Link
               key={category.value}
               href={`/produtos?categoria=${category.value}`}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-black/5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              className="group relative overflow-hidden bg-ink"
             >
               <ProductImage
                 category={category.value}
                 gradient={['#18181b', '#3a3a42']}
-                className="aspect-square w-full"
+                photo={photoOfCategory(products, category.value)}
+                className="aspect-[3/4] w-full transition duration-700 group-hover:scale-105"
               />
-              <span className="bg-white p-3 text-center text-sm font-semibold">
-                {category.label}
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink via-ink/70 to-transparent px-3 pb-3 pt-10">
+                <span className="block text-xs font-bold uppercase tracking-[0.12em] text-white">
+                  {category.label}
+                </span>
               </span>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="container-page py-16">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="section-title">Mais vendidos &amp; novidades</h2>
-          <Link
-            href="/produtos"
-            className="shrink-0 whitespace-nowrap text-sm font-semibold underline underline-offset-4"
-          >
+      {/* ---------------- DESTAQUES ---------------- */}
+      <section className="container-page pb-20 sm:pb-24">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="eyebrow text-ink/50">Seleção</p>
+            <h2 className="section-title mt-3">Mais vendidos &amp; novidades</h2>
+          </div>
+          <Link href="/produtos" className="link-ghost">
             Ver tudo
+            <span aria-hidden>→</span>
           </Link>
         </div>
-        <div className="mt-8 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+
+        <div className="mt-10 grid grid-cols-2 gap-x-2 gap-y-8 sm:gap-x-3 md:grid-cols-3 lg:grid-cols-4">
           {featured.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} showBadge={!everythingIsNew} />
           ))}
         </div>
       </section>
 
-      <section className="border-y border-black/5 bg-black/[0.02] py-16">
-        <div className="container-page grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {settings.valueProps.map((item) => (
-            <div key={item.title}>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-volt2">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="mt-4 font-bold">{item.title}</h3>
-              <p className="mt-1 text-sm text-black/60">{item.description}</p>
-            </div>
-          ))}
+      {/* ---------------- MANIFESTO + VANTAGENS ---------------- */}
+      <section className="bg-ink py-20 text-white sm:py-24">
+        <div className="container-page grid gap-14 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
+          <div>
+            <p className="eyebrow text-white/50">Por que No Excuse</p>
+            <h2 className="display-sm mt-6">
+              Feito para o treino
+              <br />
+              <span className="text-white/45">que você faz de verdade.</span>
+            </h2>
+          </div>
+
+          <ol className="border-t border-white/10">
+            {settings.valueProps.map((item, index) => (
+              <li key={item.title} className="flex gap-6 border-b border-white/10 py-6">
+                <span className="eyebrow shrink-0 pt-1 text-white/40">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wide">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white/60">{item.description}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
       <TestimonialsSection testimonials={testimonials} />
 
-      <section className="bg-ink py-16 text-white">
-        <div className="container-page flex flex-col items-center gap-6 text-center">
-          <h2 className="section-title">{settings.newsletterTitle}</h2>
-          <p className="max-w-md text-white/60">{settings.newsletterSubtitle}</p>
-          <NewsletterForm />
+      {/* ---------------- NEWSLETTER ---------------- */}
+      <section className="border-t border-line bg-paper py-20 sm:py-24">
+        <div className="container-page grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+          <div>
+            <p className="eyebrow text-ink/50">Newsletter</p>
+            <h2 className="section-title mt-3">{settings.newsletterTitle}</h2>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-ink/60">
+              {settings.newsletterSubtitle}
+            </p>
+          </div>
+          <div className="lg:justify-self-end">
+            <NewsletterForm />
+          </div>
         </div>
       </section>
     </div>

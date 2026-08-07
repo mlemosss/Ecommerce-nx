@@ -11,7 +11,7 @@ body {
 }
 
 ::selection {
-  @apply bg-volt text-ink;
+  @apply bg-ink text-white;
 }
 
 /* Foco de teclado visível em toda a loja (usa a cor do próprio texto, então
@@ -22,20 +22,53 @@ body {
   border-radius: 3px;
 }
 
+/* Quem pediu menos movimento não recebe o zoom das fotos nem transições longas. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer components {
+  /* Botões: o hover sempre AUMENTA o peso visual (sombra + leve elevação).
+     O padrão antigo clareava o botão no hover, deixando o CTA principal com
+     cara de desabilitado justo quando o mouse chegava nele. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-ink/90 hover:shadow-lg;
+    @apply inline-flex items-center justify-center gap-2 bg-ink px-8 py-4 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:-translate-y-0.5 hover:bg-ink hover:shadow-xl;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink px-6 py-3 text-sm font-semibold uppercase tracking-wide text-ink transition hover:bg-ink hover:text-white;
+    @apply inline-flex items-center justify-center gap-2 border border-ink px-8 py-4 text-xs font-bold uppercase tracking-[0.18em] text-ink transition hover:-translate-y-0.5 hover:bg-ink hover:text-white hover:shadow-xl;
+  }
+  /* Botão claro para uso sobre fundo preto. */
+  .btn-invert {
+    @apply inline-flex items-center justify-center gap-2 bg-white px-8 py-4 text-xs font-bold uppercase tracking-[0.18em] text-ink transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.6)];
+  }
+  /* Link de apoio: o sublinhado engrossa no hover, não some. */
+  .link-ghost {
+    @apply inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide underline decoration-1 underline-offset-8 transition hover:decoration-2 hover:underline-offset-4;
   }
   .container-page {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
+  /* Micro-rótulo editorial (olho) que abre as seções. */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.28em];
+  }
   .section-title {
-    @apply text-3xl font-black uppercase tracking-tight sm:text-4xl;
+    @apply text-3xl font-black uppercase leading-[0.95] tracking-[-0.02em] sm:text-4xl;
+  }
+  /* Tipografia de vitrine, para a hero e as chamadas de seção. */
+  .display {
+    @apply text-[2.75rem] font-black uppercase leading-[0.88] tracking-[-0.035em] sm:text-7xl lg:text-8xl;
+  }
+  .display-sm {
+    @apply text-3xl font-black uppercase leading-[0.95] tracking-[-0.025em] sm:text-5xl;
   }
   .input-field {
-    @apply rounded-xl border border-black/15 px-4 py-3 text-sm focus:border-ink focus:outline-none;
+    @apply border border-black/15 px-4 py-3 text-sm focus:border-ink focus:outline-none;
   }
 }

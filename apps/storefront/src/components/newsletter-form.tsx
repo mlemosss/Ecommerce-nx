@@ -14,7 +14,10 @@ export function NewsletterForm() {
 
   if (submitted) {
     return (
-      <p className="rounded-full bg-white/10 px-6 py-3 text-sm font-medium text-white">
+      <p
+        role="status"
+        className="border border-ink/15 bg-white px-6 py-4 text-sm font-medium text-ink"
+      >
         Prontinho! Você vai receber nossas novidades e promoções em {email}.
       </p>
     );
@@ -22,15 +25,19 @@ export function NewsletterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-md flex-col gap-3 sm:flex-row">
+      <label htmlFor="newsletter-email" className="sr-only">
+        Seu melhor e-mail
+      </label>
       <input
+        id="newsletter-email"
         type="email"
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Seu melhor e-mail"
-        className="w-full flex-1 rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm text-white placeholder:text-white/40 focus:border-volt2 focus:outline-none"
+        className="w-full flex-1 border border-ink/20 bg-white px-5 py-4 text-sm text-ink placeholder:text-ink/50 focus:border-ink focus:outline-none"
       />
-      <button type="submit" className="btn-primary bg-volt2 text-ink hover:bg-white">
+      <button type="submit" className="btn-primary shrink-0">
         Quero descontos
       </button>
     </form>
