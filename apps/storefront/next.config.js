@@ -23,9 +23,11 @@ const nextConfig = {
     svgr: false,
   },
   images: {
+    // Só o host da própria API. Um curinga como '**.vercel.app' liberaria
+    // qualquer deploy da Vercel — de qualquer pessoa — a ser servido pelo
+    // /_next/image desta loja, que viraria proxy de imagem de terceiros.
     remotePatterns: [
       { protocol: 'https', hostname: apiHostname },
-      { protocol: 'https', hostname: '**.vercel.app' },
       { protocol: 'http', hostname: 'localhost' },
     ],
   },

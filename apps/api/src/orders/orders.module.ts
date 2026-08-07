@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { AsaasService } from '../asaas/asaas.service';
+import { CouponsModule } from '../coupons/coupons.module';
 import { EmailModule } from '../email/email.module';
 import { AbandonedCartModule } from '../abandoned-cart/abandoned-cart.module';
 
 @Module({
-  imports: [EmailModule, AbandonedCartModule],
+  imports: [CouponsModule, EmailModule, AbandonedCartModule],
   controllers: [OrdersController],
   providers: [OrdersService, AsaasService],
   exports: [OrdersService],

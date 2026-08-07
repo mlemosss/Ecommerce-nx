@@ -1,7 +1,13 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AsaasService } from '../asaas/asaas.service';
+import { CouponsService } from '../coupons/coupons.service';
 import { EmailService } from '../email/email.service';
 import { AbandonedCartService } from '../abandoned-cart/abandoned-cart.service';
 import { CreateOrderDto, FindOrdersQueryDto, UpdateOrderStatusDto } from './dto/order.dto';
@@ -15,11 +21,28 @@ const BILLING_TYPE: Record<CreateOrderDto['paymentMethod'], 'PIX' | 'CREDIT_CARD
 const PAYMENT_DUE_DAYS = 3;
 
 /**
- * Pedidos criados antes desta data foram gravados por uma versão que não dava
- * baixa no estoque. Devolver estoque ao cancelá-los inventaria peças que nunca
- * saíram, então a movimentação só vale para pedidos daqui em diante.
+ * Deploy da versão que passou a movimentar estoque. Pedidos anteriores nunca
+ * tiveram baixa, então devolver estoque ao cancelá-los inventaria peças que
+ * nunca saíram: para eles não se movimenta nada.
  */
-const STOCK_TRACKED_SINCE = new Date('2026-08-06T00:00:00.000Z');
+const STOCK_TRACKED_SINCE = new Date('2026-08-06T15:37:00.000Z');
+
+/**
+ * A partir daqui o estoque sai no **pagamento**, não na criação do pedido.
+ *
+ * `POST /orders` é público (é o checkout da loja), então debitar na criação dava
+ * a qualquer visitante anônimo um jeito de zerar o estoque de todas as variações
+ * — bastava ler `GET /catalog/products`, que publica o saldo, e pedir a
+ * quantidade exata. Com a baixa no pagamento, ninguém sem token mexe em estoque.
+ *
+ * Pedidos criados na janela entre as duas datas nasceram na versão que debitava
+ * na criação: eles seguram estoque mesmo enquanto aguardam pagamento, e por isso
+ * não podem ser debitados de novo ao serem pagos.
+ */
+const DEBIT_ON_PAYMENT_SINCE = new Date('2026-08-06T23:55:00.000Z');
+
+/** Status em que o pedido segura estoque, no modelo novo. */
+const DEBITED_STATUSES = new Set(['pago', 'enviado']);
 
 interface StockItem {
   productId: string;
@@ -27,6 +50,10 @@ interface StockItem {
   color: string;
   size: string;
   quantity: number;
+}
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 function generateOrderNumber(): string {
@@ -52,6 +79,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly asaas: AsaasService,
+    private readonly coupons: CouponsService,
     private readonly emailService: EmailService,
     private readonly abandonedCart: AbandonedCartService
   ) {}
@@ -130,6 +158,105 @@ export class OrdersService {
     return order.createdAt.getTime() >= STOCK_TRACKED_SINCE.getTime();
   }
 
+  /** O pedido segura estoque neste status? */
+  private holdsStock(order: { createdAt: Date }, status: string): boolean {
+    if (!this.tracksStock(order)) return false;
+    // Janela da versão que debitava na criação: segura estoque até ser cancelado.
+    if (order.createdAt.getTime() < DEBIT_ON_PAYMENT_SINCE.getTime()) {
+      return status !== 'cancelado';
+    }
+    return DEBITED_STATUSES.has(status);
+  }
+
+  /** Ajusta o estoque quando a mudança de status muda quem segura a peça. */
+  private async syncStock(
+    tx: Prisma.TransactionClient,
+    order: { createdAt: Date; status: string; items: StockItem[] },
+    nextStatus: string
+  ) {
+    const before = this.holdsStock(order, order.status);
+    const after = this.holdsStock(order, nextStatus);
+    if (before === after) return;
+    await this.moveStock(tx, order.items, after ? 'saida' : 'entrada');
+  }
+
+  /**
+   * Confere disponibilidade sem escrever nada e devolve os itens já com o preço
+   * do catálogo. A conferência é só um aviso antecipado: a baixa de verdade
+   * acontece no pagamento.
+   */
+  private async priceItems(tx: Prisma.TransactionClient, items: CreateOrderDto['items']) {
+    const priced: {
+      productId: string;
+      productName: string;
+      size: string;
+      color: string;
+      quantity: number;
+      unitPrice: number;
+    }[] = [];
+
+    for (const item of items) {
+      const variant = await tx.productVariant.findFirst({
+        where: { productId: item.productId, color: item.color, size: item.size },
+        select: {
+          stock: true,
+          price: true,
+          product: { select: { name: true, price: true, active: true } },
+        },
+      });
+
+      if (!variant) {
+        // Sem variação correspondente, o preço do produto vale — e não há
+        // estoque a conferir.
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+          select: { name: true, price: true, active: true },
+        });
+        if (!product || !product.active) {
+          throw new BadRequestException(`Produto indisponível: ${item.productName}`);
+        }
+        priced.push({
+          productId: item.productId,
+          productName: product.name,
+          size: item.size,
+          color: item.color,
+          quantity: item.quantity,
+          unitPrice: product.price,
+        });
+        continue;
+      }
+
+      if (!variant.product.active) {
+        throw new BadRequestException(`Produto indisponível: ${variant.product.name}`);
+      }
+      if (variant.stock < item.quantity) {
+        throw new ConflictException(
+          `Estoque insuficiente para ${variant.product.name} (${item.color}/${item.size}).`
+        );
+      }
+
+      priced.push({
+        productId: item.productId,
+        productName: variant.product.name,
+        size: item.size,
+        color: item.color,
+        quantity: item.quantity,
+        // Mesma regra do catálogo: preço da variação quando existe.
+        unitPrice: variant.price ?? variant.product.price,
+      });
+    }
+
+    return priced;
+  }
+
+  /** Revalida o cupom no servidor; cupom inválido simplesmente não desconta. */
+  private async resolveDiscount(code: string | undefined, subtotal: number): Promise<number> {
+    if (!code?.trim()) return 0;
+    const result = await this.coupons.validate({ code, orderTotal: subtotal });
+    if (!('discountAmount' in result) || !result.valid) return 0;
+    return round2(Math.min(subtotal, result.discountAmount));
+  }
+
   async findOne(id: string) {
     const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
     if (!order) throw new NotFoundException('Pedido não encontrado');
@@ -162,10 +289,17 @@ export class OrdersService {
       },
     });
 
-    // O pedido e a baixa de estoque vão na mesma transação: ou a venda entra com
-    // o estoque já debitado, ou não entra.
     const order = await this.prisma.$transaction(async (tx) => {
-      await this.moveStock(tx, dto.items, 'saida');
+      // Preço vem do catálogo, nunca do corpo da requisição: `POST /orders` é
+      // público, então aceitar `unitPrice`/`total` do cliente deixaria qualquer
+      // pessoa comprar qualquer peça pelo valor que quisesse.
+      const items = await this.priceItems(tx, dto.items);
+      const subtotal = round2(items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0));
+      const discount = await this.resolveDiscount(dto.couponCode, subtotal);
+      // O frete é o único valor que legitimamente vem do cliente (é a cotação
+      // que ele escolheu no checkout); aqui só se garante que não é negativo.
+      const shipping = Math.max(0, dto.shipping ?? 0);
+      const total = round2(Math.max(0, subtotal + shipping - discount));
 
       return tx.order.create({
         data: {
@@ -180,22 +314,13 @@ export class OrdersService {
           street: dto.street,
           number: dto.number,
           complement: dto.complement,
-          subtotal: dto.subtotal,
-          shipping: dto.shipping,
-          discount: dto.discount,
-          couponCode: dto.couponCode,
-          total: dto.total,
+          subtotal,
+          shipping,
+          discount,
+          couponCode: discount > 0 ? dto.couponCode : null,
+          total,
           paymentMethod: dto.paymentMethod,
-          items: {
-            create: dto.items.map((item) => ({
-              productId: item.productId,
-              productName: item.productName,
-              size: item.size,
-              color: item.color,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-            })),
-          },
+          items: { create: items },
         },
         include: { items: true },
       });
@@ -227,7 +352,8 @@ export class OrdersService {
       const payment = await this.asaas.createPayment({
         customer: customer.id,
         billingType: BILLING_TYPE[dto.paymentMethod],
-        value: dto.total,
+        // Valor cobrado é o calculado pelo servidor, não o que o cliente mandou.
+        value: order.total,
         dueDate: dueDate.toISOString().slice(0, 10),
         description: `Pedido ${order.orderNumber}`,
         externalReference: order.id,
@@ -259,14 +385,8 @@ export class OrdersService {
     const current = await this.findOne(id);
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      if (this.tracksStock(current)) {
-        // Cancelar devolve as peças; reabrir um pedido cancelado tira de novo.
-        if (dto.status === 'cancelado' && current.status !== 'cancelado') {
-          await this.moveStock(tx, current.items, 'entrada');
-        } else if (current.status === 'cancelado' && dto.status !== 'cancelado') {
-          await this.moveStock(tx, current.items, 'saida');
-        }
-      }
+      // Marcar como pago tira do estoque; cancelar devolve.
+      await this.syncStock(tx, current, dto.status);
 
       return tx.order.update({
         where: { id },
@@ -288,12 +408,20 @@ export class OrdersService {
   }
 
   async markPaidByAsaasPaymentId(asaasPaymentId: string) {
-    const order = await this.prisma.order.findFirst({ where: { asaasPaymentId } });
-    if (!order || order.status === 'pago') return order;
-    const updated = await this.prisma.order.update({
-      where: { id: order.id },
-      data: { status: 'pago' },
+    const order = await this.prisma.order.findFirst({
+      where: { asaasPaymentId },
       include: { items: true },
+    });
+    if (!order || order.status === 'pago') return order;
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      // É aqui que a peça sai do estoque de verdade.
+      await this.syncStock(tx, order, 'pago');
+      return tx.order.update({
+        where: { id: order.id },
+        data: { status: 'pago' },
+        include: { items: true },
+      });
     });
     await this.emailService.sendPaymentApproved(updated);
     return updated;
@@ -307,9 +435,7 @@ export class OrdersService {
     if (!order || order.status === 'cancelado') return order;
 
     return this.prisma.$transaction(async (tx) => {
-      if (this.tracksStock(order)) {
-        await this.moveStock(tx, order.items, 'entrada');
-      }
+      await this.syncStock(tx, order, 'cancelado');
       return tx.order.update({ where: { id: order.id }, data: { status: 'cancelado' } });
     });
   }
@@ -318,11 +444,8 @@ export class OrdersService {
     const order = await this.findOne(id);
 
     await this.prisma.$transaction(async (tx) => {
-      // Apagar um pedido que ainda não foi cancelado equivale a cancelá-lo:
-      // as peças voltam para o estoque.
-      if (this.tracksStock(order) && order.status !== 'cancelado') {
-        await this.moveStock(tx, order.items, 'entrada');
-      }
+      // Apagar um pedido equivale a cancelá-lo: se ele segurava peça, devolve.
+      await this.syncStock(tx, order, 'cancelado');
       await tx.orderItem.deleteMany({ where: { orderId: id } });
       await tx.order.delete({ where: { id } });
     });
