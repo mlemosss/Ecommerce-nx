@@ -183,6 +183,11 @@ export interface StoreSettings {
   contactWhatsapp: string | null;
   shippingFee: number;
   freeShippingThreshold: number;
+  /** CEP de onde a loja despacha; base da cotação do Melhor Envio. */
+  shippingOriginZip: string | null;
+  packageHeightCm: number;
+  packageWidthCm: number;
+  packageLengthCm: number;
   pixEnabled: boolean;
   cardEnabled: boolean;
   boletoEnabled: boolean;

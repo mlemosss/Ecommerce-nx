@@ -43,6 +43,10 @@ export default function SettingsPage() {
         contactWhatsapp: settings.contactWhatsapp || undefined,
         shippingFee: settings.shippingFee,
         freeShippingThreshold: settings.freeShippingThreshold,
+        shippingOriginZip: settings.shippingOriginZip || undefined,
+        packageHeightCm: settings.packageHeightCm,
+        packageWidthCm: settings.packageWidthCm,
+        packageLengthCm: settings.packageLengthCm,
         pixEnabled: settings.pixEnabled,
         cardEnabled: settings.cardEnabled,
         boletoEnabled: settings.boletoEnabled,
@@ -143,6 +147,49 @@ export default function SettingsPage() {
                 className="input-field"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold">CEP de origem (de onde você despacha)</label>
+            <input
+              value={settings.shippingOriginZip ?? ''}
+              onChange={(e) => update('shippingOriginZip', e.target.value)}
+              placeholder="00000-000"
+              className="input-field"
+            />
+            <p className="mt-1 text-xs text-black/60">
+              É daqui que a cotação do Melhor Envio é calculada. Se estiver errado, o cliente paga um
+              frete diferente do que você vai pagar na etiqueta.
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Embalagem padrão (cm)</label>
+            <div className="grid grid-cols-3 gap-3">
+              {(
+                [
+                  ['packageHeightCm', 'Altura'],
+                  ['packageWidthCm', 'Largura'],
+                  ['packageLengthCm', 'Comprimento'],
+                ] as const
+              ).map(([field, label]) => (
+                <div key={field}>
+                  <input
+                    type="number"
+                    min="1"
+                    value={settings[field] ?? ''}
+                    onChange={(e) => update(field, Number(e.target.value))}
+                    className="input-field w-full"
+                    aria-label={label}
+                  />
+                  <p className="mt-1 text-xs text-black/60">{label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-black/60">
+              Caixa maior que o informado é cobrada por cubagem pela transportadora — e a diferença
+              sai do seu bolso.
+            </p>
           </div>
         </section>
 
