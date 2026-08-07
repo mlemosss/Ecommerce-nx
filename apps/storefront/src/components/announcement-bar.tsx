@@ -13,7 +13,7 @@ export function AnnouncementBar({
 }) {
   const items = [
     `Frete grátis acima de ${formatPrice(freeShippingThreshold)}`,
-    'Troca grátis em até 30 dias',
+    'Troca grátis em até 7 dias',
     `Pix, cartão em até ${maxInstallments}x ou boleto`,
   ];
 

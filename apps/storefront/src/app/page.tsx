@@ -40,7 +40,7 @@ export default async function HomePage() {
 
   const trust = [
     `acima de ${formatPrice(settings.freeShippingThreshold)}`,
-    'em até 30 dias',
+    'em até 7 dias',
     `Pix, cartão ${settings.maxInstallments}x e boleto`,
     'prazo calculado no seu CEP',
   ];

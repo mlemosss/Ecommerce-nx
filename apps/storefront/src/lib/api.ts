@@ -35,7 +35,9 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   contactEmail: null,
   contactWhatsapp: null,
   shippingFee: 19.9,
-  freeShippingThreshold: 199.9,
+  // Só vale se a API não responder; deve espelhar o que está em Configurações,
+  // senão a loja promete um frete grátis diferente do que vai praticar.
+  freeShippingThreshold: 499.9,
   pixEnabled: true,
   cardEnabled: true,
   boletoEnabled: true,
@@ -52,7 +54,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   newsletterTitle: 'Ganhe 10% na primeira compra',
   newsletterSubtitle: 'Cadastre seu e-mail e receba um cupom exclusivo, além de novidades de lançamentos.',
   valueProps: [
-    { title: 'Troca grátis em 30 dias', description: 'Não serviu ou não gostou? Trocamos sem burocracia.' },
+    { title: 'Troca grátis em 7 dias', description: 'Não serviu ou não gostou? Trocamos sem burocracia.' },
     { title: 'Entrega para todo o Brasil', description: 'Envio rastreado com prazos exibidos no checkout.' },
     {
       title: 'Tecido testado em treino real',
