@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { Public } from './public.decorator';
 
@@ -16,5 +17,13 @@ export class AuthController {
   @Get('me')
   me(@Req() req: { adminUser: { sub: string; email: string; name: string } }) {
     return req.adminUser;
+  }
+
+  @Patch('password')
+  changePassword(
+    @Req() req: { adminUser: { sub: string } },
+    @Body() dto: ChangePasswordDto
+  ) {
+    return this.authService.changePassword(req.adminUser.sub, dto);
   }
 }

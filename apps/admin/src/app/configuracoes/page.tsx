@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { ChangePasswordForm } from '../../components/change-password-form';
 import { TopBar } from '../../components/top-bar';
 import { api, ApiError } from '../../lib/api';
 import type { StoreSettings } from '../../lib/types';
@@ -400,6 +401,9 @@ export default function SettingsPage() {
           {saving ? 'Salvando...' : 'Salvar configurações'}
         </button>
       </form>
+
+      {/* Fora do formulário acima: a troca de senha tem envio próprio. */}
+      <ChangePasswordForm />
     </div>
   );
 }

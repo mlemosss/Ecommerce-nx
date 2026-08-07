@@ -3,8 +3,19 @@ import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-const ADMIN_EMAIL = 'admin@noexcuse.com.br';
-const ADMIN_PASSWORD = 'NoExcuse@2026';
+// Credenciais NUNCA no código: este arquivo vive num repositório público, e o
+// histórico do git guarda para sempre o que passar por aqui. Vêm do ambiente,
+// e o seed falha se não vierem — melhor não rodar do que criar um admin com
+// senha conhecida.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  throw new Error(
+    'Defina ADMIN_EMAIL e ADMIN_PASSWORD no ambiente antes de rodar o seed. ' +
+      'Ex.: ADMIN_EMAIL=voce@dominio.com ADMIN_PASSWORD=... npx nx run api:prisma-seed'
+  );
+}
 
 function slugify(text: string): string {
   return text
@@ -213,6 +224,17 @@ const expenses = [
 ];
 
 async function main() {
+  // Este seed é destrutivo: apaga produtos, variações, vendas, clientes e
+  // despesas antes de recriar os dados de demonstração. Rodar isso contra o
+  // banco de produção acaba com o catálogo real, então exige confirmação
+  // explícita.
+  if (process.env.SEED_CONFIRM_WIPE !== 'sim') {
+    throw new Error(
+      'O seed APAGA produtos, clientes, vendas e despesas antes de inserir dados de demonstração. ' +
+        'Se é isso mesmo que você quer, rode com SEED_CONFIRM_WIPE=sim.'
+    );
+  }
+
   await prisma.saleItem.deleteMany();
   await prisma.sale.deleteMany();
   await prisma.productVariant.deleteMany();
@@ -302,7 +324,7 @@ async function main() {
   console.log(
     `Seed concluído: ${products.length} produtos, ${customers.length} clientes, ${expenses.length} despesas, 3 vendas de demonstração.`
   );
-  console.log(`Login do admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+  console.log(`Admin garantido para ${ADMIN_EMAIL} (senha vinda do ambiente).`);
 }
 
 main()
