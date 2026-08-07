@@ -101,7 +101,7 @@ export function Header() {
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-black/5"
+              className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] transition hover:bg-paper"
             >
               {link.label}
             </Link>

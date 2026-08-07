@@ -69,6 +69,6 @@ body {
     @apply text-3xl font-black uppercase leading-[0.95] tracking-[-0.025em] sm:text-5xl;
   }
   .input-field {
-    @apply border border-black/15 px-4 py-3 text-sm focus:border-ink focus:outline-none;
+    @apply border border-ink/20 px-4 py-3 text-sm focus:border-ink focus:outline-none;
   }
 }

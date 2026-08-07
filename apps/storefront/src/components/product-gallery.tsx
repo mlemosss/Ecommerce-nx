@@ -37,7 +37,7 @@ export function ProductGallery({ category, gradient, images, label, className = 
               key={src}
               type="button"
               onClick={() => setActive(index)}
-              className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition ${
+              className={`relative h-16 w-16 shrink-0 overflow-hidden border-2 transition ${
                 index === active ? 'border-ink' : 'border-transparent opacity-70 hover:opacity-100'
               }`}
               aria-label={`Ver foto ${index + 1}`}

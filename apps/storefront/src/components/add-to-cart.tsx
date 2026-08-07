@@ -22,79 +22,75 @@ export function AddToCart({ product }: { product: Product }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-7">
       <div>
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-bold">{formatPrice(price)}</span>
+          <span className="text-3xl font-black tracking-tight">{formatPrice(price)}</span>
           {product.compareAtPrice && (
-            <span className="text-lg text-black/60 line-through">
+            <span className="text-lg text-ink/60 line-through">
               {formatPrice(product.compareAtPrice)}
             </span>
           )}
         </div>
-        <p className="mt-1 text-sm text-black/50">{formatInstallments(price)}</p>
+        <p className="mt-1 text-sm text-ink/60">{formatInstallments(price)}</p>
       </div>
 
-      <p className="text-black/70">{product.description}</p>
+      <p className="text-sm leading-relaxed text-ink/75">{product.description}</p>
 
       <div>
-        <p className="mb-2 text-sm font-semibold">Tamanho</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="eyebrow mb-3 text-ink/50">Tamanho</p>
+        <div className="flex flex-wrap gap-1.5">
           {product.sizes.map((s) => (
-            <button
+            <OptionButton
               key={s}
-              type="button"
+              active={size === s}
               onClick={() => {
                 setSize(s);
                 setAdded(false);
               }}
-              className={`h-10 min-w-[2.5rem] rounded-lg border px-3 text-sm font-medium transition ${
-                size === s ? 'border-ink bg-ink text-white' : 'border-black/15 hover:border-ink'
-              }`}
+              className="h-11 min-w-[2.75rem] px-3"
             >
               {s}
-            </button>
+            </OptionButton>
           ))}
         </div>
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-semibold">Cor</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="eyebrow mb-3 text-ink/50">Cor</p>
+        <div className="flex flex-wrap gap-1.5">
           {product.colors.map((c) => (
-            <button
+            <OptionButton
               key={c}
-              type="button"
+              active={color === c}
               onClick={() => {
                 setColor(c);
                 setAdded(false);
               }}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                color === c ? 'border-ink bg-ink text-white' : 'border-black/15 hover:border-ink'
-              }`}
+              className="h-11 px-4"
             >
               {c}
-            </button>
+            </OptionButton>
           ))}
         </div>
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-semibold">Quantidade</p>
-        <div className="inline-flex items-center rounded-full border border-black/15">
+        <p className="eyebrow mb-3 text-ink/50">Quantidade</p>
+        <div className="inline-flex items-center border border-ink/15">
           <button
             type="button"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="flex h-10 w-10 items-center justify-center text-lg"
+            className="flex h-11 w-11 items-center justify-center text-lg transition hover:bg-paper"
             aria-label="Diminuir quantidade"
           >
             −
           </button>
-          <span className="w-8 text-center text-sm font-semibold">{quantity}</span>
+          <span className="w-10 text-center text-sm font-bold">{quantity}</span>
           <button
             type="button"
             onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-            className="flex h-10 w-10 items-center justify-center text-lg"
+            className="flex h-11 w-11 items-center justify-center text-lg transition hover:bg-paper"
             aria-label="Aumentar quantidade"
           >
             +
@@ -102,31 +98,40 @@ export function AddToCart({ product }: { product: Product }) {
         </div>
       </div>
 
-      <button type="button" onClick={handleAdd} className="btn-primary w-full sm:w-auto">
+      <button type="button" onClick={handleAdd} className="btn-primary w-full">
         Adicionar ao carrinho
       </button>
 
       {added && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-4 sm:items-center"
           onClick={() => setAdded(false)}
           role="dialog"
           aria-label="Produto adicionado ao carrinho"
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg"
+            className="w-full max-w-sm bg-white p-7 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-2 text-green-700">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+            <div className="flex items-center gap-2">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden
+                className="h-5 w-5"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
               </svg>
-              <p className="text-sm font-bold uppercase tracking-wide">Adicionado ao carrinho</p>
+              <p className="text-xs font-bold uppercase tracking-[0.16em]">
+                Adicionado ao carrinho
+              </p>
             </div>
-            <p className="mt-2 text-sm text-black/60">
+            <p className="mt-3 text-sm text-ink/60">
               {product.name} · {color} · {size} · {quantity} un
             </p>
-            <div className="mt-5 flex flex-col gap-2">
+            <div className="mt-6 flex flex-col gap-2">
               <Link href="/checkout" className="btn-primary w-full">
                 Finalizar compra
               </Link>
@@ -136,7 +141,7 @@ export function AddToCart({ product }: { product: Product }) {
               <button
                 type="button"
                 onClick={() => setAdded(false)}
-                className="w-full py-2 text-sm font-semibold text-black/60 underline underline-offset-4 hover:text-ink"
+                className="w-full py-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink/60 underline underline-offset-4 transition hover:text-ink"
               >
                 Continuar comprando
               </button>
@@ -145,5 +150,30 @@ export function AddToCart({ product }: { product: Product }) {
         </div>
       )}
     </div>
+  );
+}
+
+function OptionButton({
+  active,
+  onClick,
+  className = '',
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`border text-sm font-semibold transition ${className} ${
+        active ? 'border-ink bg-ink text-white' : 'border-ink/15 hover:border-ink'
+      }`}
+    >
+      {children}
+    </button>
   );
 }

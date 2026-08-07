@@ -243,7 +243,11 @@ export default function CheckoutPage() {
   }
 
   if (!isLoaded) {
-    return <div className="container-page py-24 text-center text-black/50">Carregando...</div>;
+    return (
+      <div className="container-page py-24 text-center text-sm text-ink/60" role="status">
+        Carregando...
+      </div>
+    );
   }
 
   if (items.length === 0) {
@@ -258,16 +262,17 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="container-page py-10">
-      <h1 className="section-title">Finalizar compra</h1>
-      <p className="mt-2 text-sm text-black/50">
+    <div className="container-page py-14 sm:py-16">
+      <p className="eyebrow text-ink/50">Checkout</p>
+      <h1 className="section-title mt-3">Finalizar compra</h1>
+      <p className="mt-3 text-sm text-ink/60">
         Você será redirecionado para uma página segura para concluir o pagamento.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 grid gap-10 lg:grid-cols-3">
         <div className="space-y-8 lg:col-span-2">
-          <fieldset className="rounded-2xl border border-black/10 p-6">
-            <legend className="px-2 text-sm font-bold uppercase tracking-wide">Dados pessoais</legend>
+          <fieldset className="border border-line p-6 sm:p-7">
+            <legend className="px-2 text-[11px] font-bold uppercase tracking-[0.18em]">Dados pessoais</legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <input
                 required
@@ -301,8 +306,8 @@ export default function CheckoutPage() {
             </div>
           </fieldset>
 
-          <fieldset className="rounded-2xl border border-black/10 p-6">
-            <legend className="px-2 text-sm font-bold uppercase tracking-wide">Endereço de entrega</legend>
+          <fieldset className="border border-line p-6 sm:p-7">
+            <legend className="px-2 text-[11px] font-bold uppercase tracking-[0.18em]">Endereço de entrega</legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <input
                 required
@@ -341,14 +346,16 @@ export default function CheckoutPage() {
             </div>
           </fieldset>
 
-          <fieldset className="rounded-2xl border border-black/10 p-6">
-            <legend className="px-2 text-sm font-bold uppercase tracking-wide">Frete</legend>
+          <fieldset className="border border-line p-6 sm:p-7">
+            <legend className="px-2 text-[11px] font-bold uppercase tracking-[0.18em]">Frete</legend>
             {freeShipping ? (
-              <p className="text-sm font-medium text-green-700">Frete grátis nesta compra! 🎉</p>
+              <p className="text-xs font-bold uppercase tracking-[0.14em]">
+                Frete grátis nesta compra
+              </p>
             ) : (
               <>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm text-black/60">
+                  <p className="text-sm text-ink/70">
                     {zipCode.replace(/\D/g, '').length === 8
                       ? 'Escolha a forma de envio:'
                       : 'Preencha o CEP acima para calcular o frete.'}
@@ -364,16 +371,16 @@ export default function CheckoutPage() {
                     </button>
                   )}
                 </div>
-                {shippingError && <p className="mt-2 text-xs text-black/50">{shippingError}</p>}
+                {shippingError && <p className="mt-2 text-xs text-ink/60">{shippingError}</p>}
                 {shippingOptions.length > 0 && (
                   <div className="mt-3 space-y-2">
                     {(showAllShipping ? shippingOptions : shippingOptions.slice(0, 5)).map((option) => (
                       <label
                         key={option.id}
-                        className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 transition ${
+                        className={`flex cursor-pointer items-center gap-3 border-2 p-3 transition ${
                           selectedShippingId === option.id
-                            ? 'border-ink bg-black/[0.03]'
-                            : 'border-black/10 hover:border-black/20'
+                            ? 'border-ink bg-paper'
+                            : 'border-line hover:border-ink/40'
                         }`}
                       >
                         <input
@@ -388,7 +395,7 @@ export default function CheckoutPage() {
                             {option.company} {option.name}
                           </span>
                           {option.deliveryTime != null && (
-                            <span className="block text-xs text-black/50">
+                            <span className="block text-xs text-ink/60">
                               Entrega em até {option.deliveryTime}{' '}
                               {option.deliveryTime === 1 ? 'dia útil' : 'dias úteis'}
                             </span>
@@ -412,18 +419,19 @@ export default function CheckoutPage() {
             )}
           </fieldset>
 
-          <fieldset className="rounded-2xl border border-black/10 p-6">
-            <legend className="px-2 text-sm font-bold uppercase tracking-wide">Forma de pagamento</legend>
+          <fieldset className="border border-line p-6 sm:p-7">
+            <legend className="px-2 text-[11px] font-bold uppercase tracking-[0.18em]">Forma de pagamento</legend>
             <div className="flex flex-wrap gap-3">
               {availablePayments.map((option) => (
                 <button
                   type="button"
                   key={option.value}
                   onClick={() => setPayment(option.value)}
-                  className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                  aria-pressed={payment === option.value}
+                  className={`border px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
                     payment === option.value
                       ? 'border-ink bg-ink text-white'
-                      : 'border-black/15 hover:border-ink'
+                      : 'border-ink/15 hover:border-ink'
                   }`}
                 >
                   {option.label}
@@ -432,26 +440,26 @@ export default function CheckoutPage() {
             </div>
 
             {payment === 'cartao' && (
-              <p className="mt-4 text-sm text-black/60">
+              <p className="mt-4 text-sm text-ink/70">
                 Você vai inserir os dados do cartão numa página segura, depois de confirmar o pedido.
               </p>
             )}
             {payment === 'pix' && (
-              <p className="mt-4 text-sm text-black/60">
+              <p className="mt-4 text-sm text-ink/70">
                 O código Pix será exibido após a confirmação do pedido.
               </p>
             )}
             {payment === 'boleto' && (
-              <p className="mt-4 text-sm text-black/60">
+              <p className="mt-4 text-sm text-ink/70">
                 O boleto será gerado após a confirmação do pedido, com vencimento em 3 dias úteis.
               </p>
             )}
           </fieldset>
         </div>
 
-        <div className="h-fit rounded-2xl border border-black/10 p-6">
-          <h2 className="text-lg font-bold">Resumo do pedido</h2>
-          <ul className="mt-4 space-y-2 text-sm text-black/70">
+        <div className="h-fit bg-paper p-6 sm:p-7">
+          <p className="eyebrow text-ink/50">Resumo do pedido</p>
+          <ul className="mt-4 space-y-2 text-sm text-ink/75">
             {items.map((item) => {
               const product = products.find((p) => p.id === item.productId);
               if (!product) return null;
@@ -466,13 +474,13 @@ export default function CheckoutPage() {
             })}
           </ul>
 
-          <div className="mt-4 border-t border-black/10 pt-4">
+          <div className="mt-4 border-t border-line pt-4">
             {appliedCode ? (
-              <div className="flex items-center justify-between rounded-xl bg-black/5 px-3 py-2 text-sm">
+              <div className="flex items-center justify-between border border-ink/15 bg-white px-3 py-2 text-sm">
                 <span>
                   Cupom <span className="font-semibold">{appliedCode}</span> aplicado
                 </span>
-                <button type="button" onClick={handleRemoveCoupon} className="text-black/50 hover:text-red-600">
+                <button type="button" onClick={handleRemoveCoupon} className="text-ink/60 hover:text-red-600">
                   Remover
                 </button>
               </div>
@@ -482,7 +490,7 @@ export default function CheckoutPage() {
                   placeholder="Cupom de desconto"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  className="input-field flex-1"
+                  className="input-field flex-1 bg-white"
                 />
                 <button
                   type="button"
@@ -497,13 +505,13 @@ export default function CheckoutPage() {
             {couponMessage && !appliedCode && <p className="mt-2 text-xs text-red-600">{couponMessage}</p>}
           </div>
 
-          <dl className="mt-4 space-y-2 border-t border-black/10 pt-4 text-sm">
+          <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
             <div className="flex justify-between">
-              <dt className="text-black/60">Subtotal</dt>
+              <dt className="text-ink/70">Subtotal</dt>
               <dd>{formatPrice(subtotal)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-black/60">
+              <dt className="text-ink/70">
                 Frete{!freeShipping && selectedShipping ? ` · ${selectedShipping.company}` : ''}
               </dt>
               <dd>{shipping === 0 ? 'Grátis' : formatPrice(shipping)}</dd>
@@ -515,9 +523,9 @@ export default function CheckoutPage() {
               </div>
             )}
           </dl>
-          <div className="mt-4 flex justify-between border-t border-black/10 pt-4 text-lg font-bold">
-            <span>Total</span>
-            <span>{formatPrice(total)}</span>
+          <div className="mt-4 flex items-baseline justify-between border-t border-ink/15 pt-4">
+            <span className="eyebrow">Total</span>
+            <span className="text-xl font-black tracking-tight">{formatPrice(total)}</span>
           </div>
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
           <button type="submit" disabled={submitting} className="btn-primary mt-6 w-full disabled:opacity-60">

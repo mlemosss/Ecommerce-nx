@@ -26,36 +26,41 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
   const reviewsResult = await getProductReviews(product.id);
 
   return (
-    <div className="container-page py-10">
+    <div className="container-page py-10 sm:py-14">
       <TrackProductView productId={product.id} />
-      <nav className="mb-6 text-sm text-black/50">
-        <Link href="/" className="hover:underline">
+      <nav className="mb-8 text-[11px] uppercase tracking-[0.14em] text-ink/60">
+        <Link href="/" className="underline-offset-4 hover:underline">
           Início
         </Link>{' '}
         /{' '}
-        <Link href={`/produtos?categoria=${product.category}`} className="capitalize hover:underline">
+        <Link
+          href={`/produtos?categoria=${product.category}`}
+          className="underline-offset-4 hover:underline"
+        >
           {product.category}
         </Link>{' '}
-        / <span className="text-black">{product.name}</span>
+        / <span className="text-ink">{product.name}</span>
       </nav>
 
-      <div className="grid gap-10 lg:grid-cols-2">
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
         <ProductGallery
           category={product.category}
           gradient={product.gradient}
           images={product.images}
-          className="aspect-square w-full rounded-3xl"
-          label={product.isBestSeller ? 'Mais vendido' : product.isNew ? 'Novidade' : undefined}
+          className="aspect-square w-full"
+          label={product.isBestSeller ? 'Mais vendido' : undefined}
         />
 
         <div>
           <div className="flex items-start justify-between gap-3">
-            <p className="text-sm uppercase tracking-wide text-black/50">{product.category}</p>
+            <p className="eyebrow text-ink/50">{product.category}</p>
             <FavoriteButton productId={product.id} />
           </div>
-          <h1 className="mt-1 text-3xl font-black tracking-tight">{product.name}</h1>
+          <h1 className="mt-3 text-3xl font-black uppercase leading-[0.95] tracking-[-0.02em] sm:text-4xl">
+            {product.name}
+          </h1>
 
-          <div className="mt-6">
+          <div className="mt-8">
             <AddToCart product={product} />
           </div>
         </div>
@@ -70,10 +75,11 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
 
       {related.length > 0 && (
         <section className="mt-20">
-          <h2 className="section-title">Você também pode gostar</h2>
-          <div className="mt-8 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+          <p className="eyebrow text-ink/50">Combina com</p>
+          <h2 className="section-title mt-3">Você também pode gostar</h2>
+          <div className="mt-10 grid grid-cols-2 gap-x-2 gap-y-8 sm:gap-x-3 md:grid-cols-3 lg:grid-cols-4">
             {related.map((item) => (
-              <ProductCard key={item.id} product={item} />
+              <ProductCard key={item.id} product={item} showBadge={false} />
             ))}
           </div>
         </section>

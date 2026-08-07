@@ -21,11 +21,12 @@ export function RecentlyViewed({ excludeId }: { excludeId?: string }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="mt-16">
-      <h2 className="section-title">Vistos recentemente</h2>
-      <div className="mt-8 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+    <section className="mt-20">
+      <p className="eyebrow text-ink/50">Você viu</p>
+      <h2 className="section-title mt-3">Vistos recentemente</h2>
+      <div className="mt-10 grid grid-cols-2 gap-x-2 gap-y-8 sm:gap-x-3 md:grid-cols-3 lg:grid-cols-4">
         {items.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard key={product.id} product={product} showBadge={false} />
         ))}
       </div>
     </section>

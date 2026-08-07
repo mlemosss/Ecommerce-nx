@@ -40,7 +40,7 @@ export default function RegisterPage() {
             placeholder="Nome completo"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-full border border-black/10 px-5 py-3 text-sm focus:border-ink focus:outline-none"
+            className="w-full border border-ink/20 px-5 py-4 text-sm focus:border-ink focus:outline-none"
           />
           <input
             required
@@ -48,13 +48,13 @@ export default function RegisterPage() {
             placeholder="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-full border border-black/10 px-5 py-3 text-sm focus:border-ink focus:outline-none"
+            className="w-full border border-ink/20 px-5 py-4 text-sm focus:border-ink focus:outline-none"
           />
           <input
             placeholder="Telefone (opcional)"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full rounded-full border border-black/10 px-5 py-3 text-sm focus:border-ink focus:outline-none"
+            className="w-full border border-ink/20 px-5 py-4 text-sm focus:border-ink focus:outline-none"
           />
           <input
             required
@@ -63,7 +63,7 @@ export default function RegisterPage() {
             placeholder="Senha (mín. 6 caracteres)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-full border border-black/10 px-5 py-3 text-sm focus:border-ink focus:outline-none"
+            className="w-full border border-ink/20 px-5 py-4 text-sm focus:border-ink focus:outline-none"
           />
 
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -73,7 +73,7 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-black/60">
+        <p className="mt-6 text-center text-sm text-ink/70">
           Já tem conta?{' '}
           <Link href="/conta/entrar" className="font-semibold underline underline-offset-4">
             Entrar

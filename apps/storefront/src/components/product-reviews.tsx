@@ -7,9 +7,9 @@ import type { ProductReview } from '../lib/api';
 
 function Stars({ rating }: { rating: number }) {
   return (
-    <span aria-hidden className="text-amber-400">
+    <span aria-hidden className="tracking-[0.15em] text-ink">
       {'★'.repeat(rating)}
-      {'☆'.repeat(5 - rating)}
+      <span className="text-ink/25">{'★'.repeat(5 - rating)}</span>
     </span>
   );
 }
@@ -51,17 +51,18 @@ export function ProductReviews({
   }
 
   return (
-    <section className="mt-16 border-t border-black/5 pt-10">
+    <section className="mt-16 border-t border-line pt-12">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="section-title">Avaliações</h2>
+          <p className="eyebrow text-ink/50">Opiniões</p>
+          <h2 className="section-title mt-3">Avaliações</h2>
           {count > 0 ? (
-            <p className="mt-1 text-sm text-black/60">
+            <p className="mt-2 text-sm text-ink/70">
               <Stars rating={Math.round(average)} /> {average.toFixed(1)} de 5 ({count}{' '}
               {count === 1 ? 'avaliação' : 'avaliações'})
             </p>
           ) : (
-            <p className="mt-1 text-sm text-black/50">Ainda sem avaliações.</p>
+            <p className="mt-2 text-sm text-ink/60">Ainda sem avaliações.</p>
           )}
         </div>
 
@@ -78,13 +79,13 @@ export function ProductReviews({
       </div>
 
       {sent && (
-        <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="mt-4 bg-paper px-4 py-3 text-sm text-ink/75" role="status">
           Obrigado! Sua avaliação foi enviada e será exibida após aprovação.
         </p>
       )}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mt-4 max-w-md space-y-3 rounded-2xl border border-black/10 p-4">
+        <form onSubmit={handleSubmit} className="mt-6 max-w-md space-y-3 border border-line p-5">
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div>
             <label className="mb-1 block text-sm font-semibold">Nota</label>
@@ -94,7 +95,7 @@ export function ProductReviews({
                   key={n}
                   type="button"
                   onClick={() => setRating(n)}
-                  className={`text-2xl ${n <= rating ? 'text-amber-400' : 'text-black/15'}`}
+                  className={`text-2xl transition ${n <= rating ? 'text-ink' : 'text-ink/20'}`}
                   aria-label={`${n} estrela(s)`}
                 >
                   ★
@@ -119,10 +120,12 @@ export function ProductReviews({
 
       <div className="mt-6 space-y-4">
         {reviews.map((review) => (
-          <div key={review.id} className="border-b border-black/5 pb-4">
+          <div key={review.id} className="border-b border-line pb-4">
             <Stars rating={review.rating} />
-            <p className="mt-1 text-sm text-black/70">{review.comment}</p>
-            <p className="mt-1 text-xs text-black/40">{review.customerName}</p>
+            <p className="mt-2 text-sm leading-relaxed text-ink/75">{review.comment}</p>
+            <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-ink/60">
+              {review.customerName}
+            </p>
           </div>
         ))}
       </div>

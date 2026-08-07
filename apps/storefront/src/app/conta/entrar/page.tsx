@@ -30,7 +30,8 @@ export default function LoginPage() {
   return (
     <div className="container-page flex min-h-[70vh] flex-col items-center justify-center py-12">
       <div className="w-full max-w-sm">
-        <h1 className="section-title text-center">Entrar</h1>
+        <p className="eyebrow text-center text-ink/50">Minha conta</p>
+        <h1 className="section-title mt-3 text-center">Entrar</h1>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <input
@@ -39,7 +40,7 @@ export default function LoginPage() {
             placeholder="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-full border border-black/10 px-5 py-3 text-sm focus:border-ink focus:outline-none"
+            className="w-full border border-ink/20 px-5 py-4 text-sm focus:border-ink focus:outline-none"
           />
           <input
             required
@@ -47,7 +48,7 @@ export default function LoginPage() {
             placeholder="Senha"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-full border border-black/10 px-5 py-3 text-sm focus:border-ink focus:outline-none"
+            className="w-full border border-ink/20 px-5 py-4 text-sm focus:border-ink focus:outline-none"
           />
 
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -57,7 +58,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-black/60">
+        <p className="mt-6 text-center text-sm text-ink/70">
           Ainda não tem conta?{' '}
           <Link href="/conta/cadastro" className="font-semibold underline underline-offset-4">
             Cadastre-se
