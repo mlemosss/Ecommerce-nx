@@ -7,6 +7,7 @@ import {
   orderConfirmedTemplate,
   orderShippedTemplate,
   OrderForEmail,
+  passwordSetupTemplate,
   paymentApprovedTemplate,
   reviewRequestTemplate,
   EmailTemplate,
@@ -113,6 +114,17 @@ export class EmailService {
     const { storeName } = await this.getSender();
     const template = reviewRequestTemplate(storeName, this.getStorefrontUrl(), order);
     await this.sendIfEnabled('pedido_avaliacao', order.customerEmail, template);
+  }
+
+  /**
+   * Não passa pelo `sendIfEnabled`: os outros e-mails são marketing/aviso e o
+   * lojista pode desligar. Este é o único caminho para a pessoa concluir o
+   * cadastro — desligar deixaria o cliente sem saída.
+   */
+  async sendPasswordSetup(data: { email: string; name: string; token: string }): Promise<void> {
+    const { storeName } = await this.getSender();
+    const template = passwordSetupTemplate(storeName, this.getStorefrontUrl(), data);
+    await this.dispatch(data.email, template);
   }
 
   async sendAbandonedCartReminder(cart: AbandonedCartForEmail & { email: string }): Promise<void> {

@@ -23,7 +23,12 @@ interface CustomerAuthContextValue {
   customer: CustomerProfile | null;
   isLoaded: boolean;
   favoriteIds: Set<string>;
-  register: (input: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+  register: (input: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) => Promise<{ pendingEmailConfirmation: boolean; message?: string }>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   toggleFavorite: (productId: string) => Promise<void>;
@@ -96,11 +101,22 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
 
   const register = useCallback(
     async (input: { name: string; email: string; password: string; phone?: string }) => {
-      const data = await request<{ token: string; customer: CustomerProfile }>('/customer-auth/register', null, {
+      const data = await request<
+        | { token: string; customer: CustomerProfile }
+        | { pendingEmailConfirmation: true; message: string }
+      >('/customer-auth/register', null, {
         method: 'POST',
         body: JSON.stringify(input),
       });
+
+      // Quem já comprou sem se cadastrar não entra direto: a conta carrega CPF e
+      // endereço, então precisa confirmar o e-mail antes de definir a senha.
+      if ('pendingEmailConfirmation' in data) {
+        return { pendingEmailConfirmation: true as const, message: data.message };
+      }
+
       await applySession(data);
+      return { pendingEmailConfirmation: false as const };
     },
     [applySession]
   );

@@ -1,8 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { Public } from '../auth/public.decorator';
 import { CustomerAccessible } from '../auth/customer-accessible.decorator';
+import { LoginThrottleGuard } from '../auth/guards/login-throttle.guard';
 import { CustomerAuthService } from './customer-auth.service';
-import { RegisterCustomerDto, LoginCustomerDto, ToggleFavoriteDto } from './dto/customer-auth.dto';
+import {
+  RegisterCustomerDto,
+  LoginCustomerDto,
+  SetPasswordDto,
+  ToggleFavoriteDto,
+} from './dto/customer-auth.dto';
 
 interface CustomerRequest {
   user: { sub: string };
@@ -19,9 +25,17 @@ export class CustomerAuthController {
   }
 
   @Public()
+  @UseGuards(LoginThrottleGuard)
   @Post('login')
   login(@Body() dto: LoginCustomerDto) {
     return this.customerAuthService.login(dto);
+  }
+
+  /** Conclui a reivindicação de uma conta criada pelo checkout. */
+  @Public()
+  @Post('set-password')
+  setPassword(@Body() dto: SetPasswordDto) {
+    return this.customerAuthService.setPassword(dto);
   }
 
   @CustomerAccessible()

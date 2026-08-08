@@ -71,6 +71,43 @@ function layout(storeName: string, title: string, bodyHtml: string, storefrontUr
   </div>`;
 }
 
+/**
+ * Link para definir a senha de uma conta criada por uma compra sem cadastro.
+ * Confirmar o e-mail é o que impede que outra pessoa reivindique a conta.
+ */
+export function passwordSetupTemplate(
+  storeName: string,
+  storefrontUrl: string,
+  data: { name: string; token: string }
+): EmailTemplate {
+  const link = `${storefrontUrl.replace(/\/$/, '')}/conta/definir-senha?token=${encodeURIComponent(
+    data.token
+  )}`;
+
+  return {
+    subject: `Conclua seu cadastro na ${storeName}`,
+    html: layout(
+      storeName,
+      `Oi, ${firstName(data.name)}!`,
+      `
+      <p style="margin:0 0 16px;font-size:14px;color:#444;line-height:1.6;">
+        Você já tem pedidos com esse e-mail, então a conta já existe. Para criar sua senha e
+        acessar seus pedidos, clique no botão abaixo.
+      </p>
+      <p style="margin:0 0 24px;font-size:14px;color:#444;line-height:1.6;">
+        O link vale por <strong>1 hora</strong> e só pode ser usado uma vez.
+      </p>
+      <a href="${link}" style="display:inline-block;background:#111111;color:#ffffff;padding:14px 28px;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;text-decoration:none;">
+        Definir minha senha
+      </a>
+      <p style="margin:24px 0 0;font-size:12px;color:#777;line-height:1.6;">
+        Se não foi você que pediu, ignore este e-mail — nada muda na sua conta.
+      </p>`,
+      storefrontUrl
+    ),
+  };
+}
+
 export function orderConfirmedTemplate(
   storeName: string,
   storefrontUrl: string,

@@ -13,14 +13,20 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [pendingMessage, setPendingMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+    setPendingMessage('');
     setSubmitting(true);
     try {
-      await register({ name, email, password, phone: phone || undefined });
+      const result = await register({ name, email, password, phone: phone || undefined });
+      if (result.pendingEmailConfirmation) {
+        setPendingMessage(result.message ?? 'Enviamos um link para o seu e-mail.');
+        return;
+      }
       router.push('/conta');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar conta');
@@ -29,10 +35,27 @@ export default function RegisterPage() {
     }
   }
 
+  if (pendingMessage) {
+    return (
+      <div className="container-page flex flex-col items-center gap-4 py-24 text-center">
+        <p className="eyebrow text-ink/50">Quase lá</p>
+        <h1 className="section-title">Confira seu e-mail</h1>
+        <p className="max-w-md text-sm leading-relaxed text-ink/70">{pendingMessage}</p>
+        <p className="max-w-md text-xs text-ink/60">
+          O link vale por 1 hora. Se não chegar, veja a caixa de spam.
+        </p>
+        <Link href="/produtos" className="btn-secondary mt-2">
+          Continuar comprando
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="container-page flex min-h-[70vh] flex-col items-center justify-center py-12">
       <div className="w-full max-w-sm">
-        <h1 className="section-title text-center">Criar conta</h1>
+        <p className="eyebrow text-center text-ink/50">Minha conta</p>
+        <h1 className="section-title mt-3 text-center">Criar conta</h1>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <input

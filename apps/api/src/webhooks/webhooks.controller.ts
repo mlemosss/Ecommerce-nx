@@ -1,4 +1,4 @@
-import { Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Headers, Logger, Post, UnauthorizedException } from '@nestjs/common';
 import { Public } from '../auth/public.decorator';
 import { OrdersService } from '../orders/orders.service';
 
@@ -16,6 +16,8 @@ interface AsaasWebhookBody {
 
 @Controller('webhooks')
 export class WebhooksController {
+  private readonly logger = new Logger(WebhooksController.name);
+
   constructor(private readonly ordersService: OrdersService) {}
 
   @Public()
@@ -24,8 +26,18 @@ export class WebhooksController {
     @Headers('asaas-access-token') token: string | undefined,
     @Body() body: AsaasWebhookBody
   ) {
+    // Falha fechada. Antes, sem a variável definida a validação era pulada
+    // inteira e qualquer um podia marcar pedido como pago — o que hoje também
+    // movimenta estoque. Sem token configurado, ninguém entra.
     const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN;
-    if (expectedToken && token !== expectedToken) {
+    if (!expectedToken) {
+      this.logger.error(
+        'ASAAS_WEBHOOK_TOKEN não configurada: webhook do Asaas recusado. ' +
+          'Defina a variável na API e o mesmo valor no painel do Asaas.'
+      );
+      throw new UnauthorizedException('Webhook não configurado');
+    }
+    if (token !== expectedToken) {
       throw new UnauthorizedException('Token de webhook inválido');
     }
 

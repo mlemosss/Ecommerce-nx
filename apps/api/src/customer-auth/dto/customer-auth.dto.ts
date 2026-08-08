@@ -24,6 +24,15 @@ export class LoginCustomerDto {
   password!: string;
 }
 
+export class SetPasswordDto {
+  @IsString()
+  token!: string;
+
+  @IsString()
+  @MinLength(8, { message: 'A senha precisa ter pelo menos 8 caracteres.' })
+  password!: string;
+}
+
 export class ToggleFavoriteDto {
   @IsString()
   productId!: string;

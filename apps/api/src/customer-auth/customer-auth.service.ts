@@ -1,9 +1,14 @@
 import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
-import { RegisterCustomerDto, LoginCustomerDto } from './dto/customer-auth.dto';
+import { EmailService } from '../email/email.service';
+import { RegisterCustomerDto, LoginCustomerDto, SetPasswordDto } from './dto/customer-auth.dto';
 import { parseImages, toPublicImageUrls } from '../products/product-images';
+
+/** Uma hora é bastante para clicar no link e curto para um token vazado. */
+const TOKEN_TTL_MS = 60 * 60 * 1000;
 
 function safeCustomer(customer: { id: string; name: string; email: string | null; phone: string | null }) {
   return { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone };
@@ -19,7 +24,8 @@ function withParsedImages<T extends { id: string; images: string }>(
 export class CustomerAuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly email: EmailService
   ) {}
 
   private sign(customer: { id: string; email: string | null; name: string }) {
@@ -32,17 +38,71 @@ export class CustomerAuthService {
       throw new ConflictException('Já existe uma conta com esse e-mail. Faça login.');
     }
 
+    // Registro já existe sem senha: foi criado por uma compra feita sem cadastro,
+    // e carrega CPF, telefone, endereço e histórico. Deixar definir a senha aqui
+    // entregaria a conta a quem apenas soubesse o e-mail. Só por confirmação.
+    if (existing) {
+      await this.sendPasswordSetupLink(existing.id, existing.email, existing.name);
+      return {
+        pendingEmailConfirmation: true,
+        message:
+          'Você já tem pedidos com esse e-mail. Enviamos um link para concluir o cadastro e definir sua senha.',
+      };
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const customer = existing
-      ? await this.prisma.customer.update({
-          where: { id: existing.id },
-          data: { name: dto.name, passwordHash, phone: dto.phone ?? existing.phone },
-        })
-      : await this.prisma.customer.create({
-          data: { name: dto.name, email: dto.email, passwordHash, phone: dto.phone },
-        });
+    const customer = await this.prisma.customer.create({
+      data: { name: dto.name, email: dto.email, passwordHash, phone: dto.phone },
+    });
 
     return { token: this.sign(customer), customer: safeCustomer(customer) };
+  }
+
+  /** Gera o token de uso único e manda o link por e-mail. */
+  private async sendPasswordSetupLink(
+    customerId: string,
+    email: string | null,
+    name: string
+  ): Promise<void> {
+    if (!email) return;
+
+    const token = randomBytes(32).toString('hex');
+    await this.prisma.customer.update({
+      where: { id: customerId },
+      data: {
+        passwordSetToken: token,
+        passwordSetTokenExpiresAt: new Date(Date.now() + TOKEN_TTL_MS),
+      },
+    });
+
+    await this.email.sendPasswordSetup({ email, name, token });
+  }
+
+  /** Conclui a reivindicação: valida o token e grava a senha. */
+  async setPassword(dto: SetPasswordDto) {
+    const customer = await this.prisma.customer.findUnique({
+      where: { passwordSetToken: dto.token },
+    });
+
+    if (
+      !customer ||
+      !customer.passwordSetTokenExpiresAt ||
+      customer.passwordSetTokenExpiresAt.getTime() < Date.now()
+    ) {
+      throw new UnauthorizedException('Link inválido ou expirado. Peça um novo cadastro.');
+    }
+
+    const updated = await this.prisma.customer.update({
+      where: { id: customer.id },
+      data: {
+        passwordHash: await bcrypt.hash(dto.password, 10),
+        // Token é de uso único.
+        passwordSetToken: null,
+        passwordSetTokenExpiresAt: null,
+      },
+    });
+
+    return { token: this.sign(updated), customer: safeCustomer(updated) };
   }
 
   async login(dto: LoginCustomerDto) {
