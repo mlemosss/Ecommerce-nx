@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { parseImages, toPublicImageUrls } from '../products/product-images';
+import { effectivePrice } from '../products/pricing';
 
 const NEW_WINDOW_DAYS = 14;
 
@@ -22,7 +23,7 @@ function toCatalogProduct(product: {
     color: v.color,
     size: v.size,
     stock: v.stock,
-    price: v.price ?? product.price,
+    price: effectivePrice(product, v.price),
   }));
   const colors = Array.from(new Set(variants.map((v) => v.color)));
   const sizes = Array.from(new Set(variants.map((v) => v.size)));

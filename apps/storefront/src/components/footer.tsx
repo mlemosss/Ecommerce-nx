@@ -59,6 +59,14 @@ export function Footer({ settings }: { settings: StoreSettings }) {
                 Minha conta
               </Link>
             </li>
+            <li>
+              <Link
+                href="/quem-somos"
+                className="underline-offset-4 transition hover:text-white hover:underline"
+              >
+                Quem somos
+              </Link>
+            </li>
             {settings.contactEmail && (
               <li>
                 <a

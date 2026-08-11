@@ -44,6 +44,8 @@ export default function SettingsPage() {
         contactWhatsapp: settings.contactWhatsapp || undefined,
         shippingFee: settings.shippingFee,
         freeShippingThreshold: settings.freeShippingThreshold,
+        aboutHeadline: settings.aboutHeadline || undefined,
+        aboutBody: settings.aboutBody || undefined,
         shippingOriginZip: settings.shippingOriginZip || undefined,
         packageHeightCm: settings.packageHeightCm,
         packageWidthCm: settings.packageWidthCm,
@@ -395,6 +397,38 @@ export default function SettingsPage() {
             Assim que preenchidos, os scripts do GTM e do Meta Pixel são carregados automaticamente em
             todas as páginas da loja.
           </p>
+        </section>
+
+        <section className="card space-y-4">
+          <div>
+            <h2 className="text-lg font-bold">Quem somos</h2>
+            <p className="mt-1 text-sm text-black/60">
+              Aparece na página <span className="font-semibold">/quem-somos</span> da loja. Deixe em
+              branco para manter o texto padrão.
+            </p>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Título</label>
+            <input
+              placeholder="Somos a Isabella e a Layane."
+              value={settings.aboutHeadline ?? ''}
+              onChange={(e) => update('aboutHeadline', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Texto</label>
+            <textarea
+              rows={6}
+              placeholder="Conte a história de vocês. Deixe uma linha em branco entre os parágrafos."
+              value={settings.aboutBody ?? ''}
+              onChange={(e) => update('aboutBody', e.target.value)}
+              className="input-field w-full"
+            />
+            <p className="mt-1 text-xs text-black/60">
+              Uma linha em branco separa parágrafos na página.
+            </p>
+          </div>
         </section>
 
         <button type="submit" disabled={saving} className="btn-primary w-full">

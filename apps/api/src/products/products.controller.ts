@@ -9,7 +9,13 @@ import {
   Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductDto, ReplaceCatalogDto, UpdateProductDto, UpdateStockDto } from './dto/product.dto';
+import {
+  CreateProductDto,
+  ReplaceCatalogDto,
+  SetSaleDto,
+  UpdateProductDto,
+  UpdateStockDto,
+} from './dto/product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -48,6 +54,12 @@ export class ProductsController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     return this.productsService.update(id, dto);
+  }
+
+  /** Coloca em promoção (salePrice) ou tira dela (salePrice nulo). */
+  @Patch(':id/sale')
+  setSale(@Param('id') id: string, @Body() dto: SetSaleDto) {
+    return this.productsService.setSale(id, dto.salePrice ?? null);
   }
 
   @Delete(':id')

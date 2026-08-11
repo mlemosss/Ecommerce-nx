@@ -171,25 +171,35 @@ export default async function HomePage() {
         </div>
 
         <div className="mt-10 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-6">
-          {categories.map((category) => (
-            <Link
-              key={category.value}
-              href={`/produtos?categoria=${category.value}`}
-              className="group relative overflow-hidden bg-ink"
-            >
-              <ProductImage
-                category={category.value}
-                gradient={['#18181b', '#3a3a42']}
-                photo={photoOfCategory(products, category.value)}
-                className="aspect-[3/4] w-full transition duration-700 group-hover:scale-105"
-              />
-              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink via-ink/70 to-transparent px-3 pb-3 pt-10">
-                <span className="block text-xs font-bold uppercase tracking-[0.12em] text-white">
-                  {category.label}
+          {categories.map((category) => {
+            // Categoria sem peça cadastrada não manda o cliente para uma vitrine
+            // vazia: vai para a página "Em breve" e se anuncia como tal.
+            const hasProducts = products.some((p) => p.category === category.value);
+            return (
+              <Link
+                key={category.value}
+                href={hasProducts ? `/produtos?categoria=${category.value}` : '/em-breve'}
+                className="group relative overflow-hidden bg-ink"
+              >
+                <ProductImage
+                  category={category.value}
+                  gradient={['#18181b', '#3a3a42']}
+                  photo={photoOfCategory(products, category.value)}
+                  className="aspect-[3/4] w-full transition duration-700 group-hover:scale-105"
+                />
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink via-ink/70 to-transparent px-3 pb-3 pt-10">
+                  <span className="block text-xs font-bold uppercase tracking-[0.12em] text-white">
+                    {category.label}
+                  </span>
+                  {!hasProducts && (
+                    <span className="mt-0.5 block text-[10px] uppercase tracking-[0.12em] text-white/55">
+                      Em breve
+                    </span>
+                  )}
                 </span>
-              </span>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
 

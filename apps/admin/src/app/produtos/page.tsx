@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TopBar } from '../../components/top-bar';
+import { SaleButton, fullPrice, isOnSale } from '../../components/sale-button';
 import { api, resolveMediaUrl } from '../../lib/api';
 import { colorSwatch } from '../../lib/colors';
 import { formatPrice } from '../../lib/format';
@@ -13,12 +14,14 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api
       .get<Product[]>('/products')
       .then(setProducts)
       .catch((err) => setError(err.message ?? 'Erro ao carregar produtos'));
   }, []);
+
+  useEffect(load, [load]);
 
   const filtered = useMemo(() => {
     if (!products) return [];
@@ -86,10 +89,10 @@ export default function ProductsPage() {
                 const minPrice = prices.length ? Math.min(...prices) : product.price;
                 const maxPrice = prices.length ? Math.max(...prices) : product.price;
                 return (
+                  <div key={product.id} className="rounded-2xl bg-neutral-100 p-3">
                   <Link
-                    key={product.id}
                     href={`/produtos/${product.id}`}
-                    className="flex items-center gap-3 rounded-2xl bg-neutral-100 p-3"
+                    className="flex items-center gap-3"
                   >
                     {product.images[0] ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -106,11 +109,20 @@ export default function ProductsPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">{product.name}</p>
-                      <p className="text-sm">
-                        {minPrice === maxPrice
-                          ? formatPrice(minPrice)
-                          : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`}
-                      </p>
+                      {isOnSale(product) ? (
+                        <p className="text-sm">
+                          <span className="text-black/60 line-through">
+                            {formatPrice(fullPrice(product))}
+                          </span>{' '}
+                          <span className="font-bold">{formatPrice(product.price)}</span>
+                        </p>
+                      ) : (
+                        <p className="text-sm">
+                          {minPrice === maxPrice
+                            ? formatPrice(minPrice)
+                            : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`}
+                        </p>
+                      )}
                       <p className="text-xs text-black/50">Custo: {formatPrice(product.costPrice)}</p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -137,6 +149,11 @@ export default function ProductsPage() {
                       </div>
                     </div>
                   </Link>
+
+                  <div className="mt-3 border-t border-black/10 pt-3">
+                    <SaleButton product={product} onDone={load} />
+                  </div>
+                  </div>
                 );
               })}
             </div>

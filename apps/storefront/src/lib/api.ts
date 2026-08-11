@@ -28,6 +28,9 @@ export interface StoreSettings {
   valueProps: ValueProp[];
   gtmId: string | null;
   metaPixelId: string | null;
+  /** Página "Quem somos" — editável em Configurações. */
+  aboutHeadline: string | null;
+  aboutBody: string | null;
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -64,6 +67,8 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   ],
   gtmId: null,
   metaPixelId: null,
+  aboutHeadline: null,
+  aboutBody: null,
 };
 
 export async function getSettings(): Promise<StoreSettings> {

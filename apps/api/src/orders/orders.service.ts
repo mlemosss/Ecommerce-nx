@@ -10,6 +10,7 @@ import { AsaasService } from '../asaas/asaas.service';
 import { CouponsService } from '../coupons/coupons.service';
 import { EmailService } from '../email/email.service';
 import { AbandonedCartService } from '../abandoned-cart/abandoned-cart.service';
+import { effectivePrice } from '../products/pricing';
 import { CreateOrderDto, FindOrdersQueryDto, UpdateOrderStatusDto } from './dto/order.dto';
 
 const BILLING_TYPE: Record<CreateOrderDto['paymentMethod'], 'PIX' | 'CREDIT_CARD' | 'BOLETO'> = {
@@ -201,7 +202,7 @@ export class OrdersService {
         select: {
           stock: true,
           price: true,
-          product: { select: { name: true, price: true, active: true } },
+          product: { select: { name: true, price: true, compareAtPrice: true, active: true } },
         },
       });
 
@@ -241,8 +242,9 @@ export class OrdersService {
         size: item.size,
         color: item.color,
         quantity: item.quantity,
-        // Mesma regra do catálogo: preço da variação quando existe.
-        unitPrice: variant.price ?? variant.product.price,
+        // Mesma função que o catálogo usa: em promoção vale o preço promocional
+        // do produto; fora dela, o preço da variação quando existe.
+        unitPrice: effectivePrice(variant.product, variant.price),
       });
     }
 

@@ -7,10 +7,21 @@ import { useCart } from '../lib/cart-context';
 import { useCustomerAuth } from '../lib/customer-auth-context';
 import { categories } from '../lib/products';
 
+// Só entram no menu as categorias que têm produto. Camisetas, jaquetas e
+// acessórios ainda estão vazias: mandar o cliente para uma vitrine sem nada é
+// pior do que não ter a aba. Elas viram a página "Em breve".
+const NAV_CATEGORIES = ['leggings', 'tops', 'shorts'];
+
+// "Início" saiu do menu: o logo já leva para a home, e o espaço rende mais com
+// Sale e Quem somos.
 const navLinks = [
-  { href: '/', label: 'Início' },
-  { href: '/produtos', label: 'Todos os produtos' },
-  ...categories.slice(0, 4).map((c) => ({ href: `/produtos?categoria=${c.value}`, label: c.label })),
+  { href: '/produtos', label: 'Produtos' },
+  ...categories
+    .filter((c) => NAV_CATEGORIES.includes(c.value))
+    .map((c) => ({ href: `/produtos?categoria=${c.value}`, label: c.label })),
+  { href: '/sale', label: 'Sale' },
+  { href: '/em-breve', label: 'Em breve' },
+  { href: '/quem-somos', label: 'Quem somos' },
 ];
 
 export function Header() {

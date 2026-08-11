@@ -95,6 +95,14 @@ export class UpdateSettingsDto {
   @Type(() => ValuePropDto)
   valueProps?: ValuePropDto[];
 
+  @IsOptional()
+  @IsString()
+  aboutHeadline?: string;
+
+  @IsOptional()
+  @IsString()
+  aboutBody?: string;
+
   /** CEP de onde a loja despacha. Vazio = usa a env MELHOR_ENVIO_FROM_CEP. */
   @IsOptional()
   @IsString()

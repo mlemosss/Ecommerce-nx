@@ -1,6 +1,12 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateProductDto, ReplaceCatalogDto, UpdateProductDto, UpdateStockDto } from './dto/product.dto';
+import {
+  CreateProductDto,
+  ReplaceCatalogDto,
+  SetSaleDto,
+  UpdateProductDto,
+  UpdateStockDto,
+} from './dto/product.dto';
 import { parseImages, toPublicImageUrls, toStoredImages } from './product-images';
 
 function slugify(text: string): string {
@@ -156,6 +162,47 @@ export class ProductsService {
 
     await this.prisma.product.delete({ where: { id } });
     return { success: true };
+  }
+
+  /**
+   * Coloca a peça em promoção ou tira dela.
+   *
+   * Entrar: o preço atual vira o preço "de" (`compareAtPrice`) e o promocional
+   * vira o preço de venda. Sair: o preço "de" volta a ser o preço e o campo é
+   * limpo — nada se perde no caminho.
+   */
+  async setSale(id: string, salePrice: number | null | undefined) {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      select: { price: true, compareAtPrice: true },
+    });
+    if (!product) throw new NotFoundException('Produto não encontrado');
+
+    const onSale = product.compareAtPrice != null && product.compareAtPrice > product.price;
+    // Preço cheio: se já está em promoção, é o "de" guardado; senão, o atual.
+    const fullPrice = onSale ? (product.compareAtPrice as number) : product.price;
+
+    if (salePrice == null) {
+      const updated = await this.prisma.product.update({
+        where: { id },
+        data: { price: fullPrice, compareAtPrice: null },
+        include: { variants: true },
+      });
+      return withParsedImages(updated);
+    }
+
+    if (salePrice >= fullPrice) {
+      throw new BadRequestException(
+        `O preço promocional precisa ser menor que ${fullPrice.toFixed(2).replace('.', ',')}.`
+      );
+    }
+
+    const updated = await this.prisma.product.update({
+      where: { id },
+      data: { price: salePrice, compareAtPrice: fullPrice },
+      include: { variants: true },
+    });
+    return withParsedImages(updated);
   }
 
   async updateVariantStock(variantId: string, dto: UpdateStockDto) {

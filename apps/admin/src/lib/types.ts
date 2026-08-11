@@ -183,6 +183,9 @@ export interface StoreSettings {
   contactWhatsapp: string | null;
   shippingFee: number;
   freeShippingThreshold: number;
+  /** Página "Quem somos" da loja. */
+  aboutHeadline: string | null;
+  aboutBody: string | null;
   /** CEP de onde a loja despacha; base da cotação do Melhor Envio. */
   shippingOriginZip: string | null;
   packageHeightCm: number;

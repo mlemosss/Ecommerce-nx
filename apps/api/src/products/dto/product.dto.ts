@@ -114,6 +114,14 @@ export class UpdateProductDto {
   variants?: VariantDto[];
 }
 
+export class SetSaleDto {
+  /** Preço promocional. `null` tira a peça da promoção. */
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  salePrice?: number | null;
+}
+
 export class UpdateStockDto {
   @IsNumber()
   @Min(0)
