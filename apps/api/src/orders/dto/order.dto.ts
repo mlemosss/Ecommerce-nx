@@ -32,6 +32,29 @@ export class CreateOrderItemDto {
   unitPrice!: number;
 }
 
+/**
+ * Dados do cartão no checkout transparente.
+ *
+ * Trafegam por HTTPS, são repassados ao Asaas na mesma requisição e **nunca são
+ * gravados nem registrados em log**. Nenhum campo daqui vai para o banco.
+ */
+export class CreditCardDto {
+  @IsString()
+  holderName!: string;
+
+  @IsString()
+  number!: string;
+
+  @IsString()
+  expiryMonth!: string;
+
+  @IsString()
+  expiryYear!: string;
+
+  @IsString()
+  ccv!: string;
+}
+
 export class CreateOrderDto {
   @IsString()
   customerName!: string;
@@ -89,6 +112,18 @@ export class CreateOrderDto {
 
   @IsIn(['pix', 'cartao', 'boleto'])
   paymentMethod!: 'pix' | 'cartao' | 'boleto';
+
+  /** Só no cartão: quando vem, a cobrança é feita sem sair da loja. */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreditCardDto)
+  creditCard?: CreditCardDto;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  installmentCount?: number;
 }
 
 /**

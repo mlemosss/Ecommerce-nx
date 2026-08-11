@@ -172,11 +172,22 @@ export interface CreateOrderInput {
   couponCode?: string;
   total: number;
   paymentMethod: 'pix' | 'cartao' | 'boleto';
+  /** Cartão: vai por HTTPS direto para a API e de lá para o Asaas. Nada é guardado. */
+  creditCard?: {
+    holderName: string;
+    number: string;
+    expiryMonth: string;
+    expiryYear: string;
+    ccv: string;
+  };
+  installmentCount?: number;
 }
 
 export interface CreateOrderResult {
   order: { id: string; orderNumber: string };
   paymentUrl: string | null;
+  /** Cartão aprovado na hora: não precisa mandar o cliente para a fatura. */
+  paid?: boolean;
   paymentWarning: string | null;
 }
 

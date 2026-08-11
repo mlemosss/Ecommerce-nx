@@ -18,6 +18,24 @@ interface AsaasCustomer {
   id: string;
 }
 
+export interface AsaasCreditCard {
+  holderName: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+}
+
+export interface AsaasCreditCardHolderInfo {
+  name: string;
+  email: string;
+  cpfCnpj: string;
+  postalCode: string;
+  addressNumber: string;
+  phone?: string;
+  mobilePhone?: string;
+}
+
 interface AsaasPaymentPayload {
   customer: string;
   billingType: AsaasBillingType;
@@ -25,6 +43,13 @@ interface AsaasPaymentPayload {
   dueDate: string;
   description?: string;
   externalReference?: string;
+  installmentCount?: number;
+  totalValue?: number;
+  /** Checkout transparente: dados do cartão, repassados e nunca guardados. */
+  creditCard?: AsaasCreditCard;
+  creditCardHolderInfo?: AsaasCreditCardHolderInfo;
+  /** O Asaas exige o IP de quem está pagando, não o do servidor. */
+  remoteIp?: string;
 }
 
 interface AsaasPayment {
@@ -33,6 +58,9 @@ interface AsaasPayment {
   invoiceUrl: string;
   bankSlipUrl?: string;
 }
+
+/** Status em que o Asaas considera o pagamento resolvido. */
+export const ASAAS_PAID_STATUSES = new Set(['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH']);
 
 @Injectable()
 export class AsaasService {

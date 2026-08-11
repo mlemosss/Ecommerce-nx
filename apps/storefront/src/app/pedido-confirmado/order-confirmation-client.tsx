@@ -11,6 +11,7 @@ export function OrderConfirmationClient() {
   const total = totalParam ? Number(totalParam) : null;
   const paymentUrl = searchParams.get('pagamento');
   const warning = searchParams.get('aviso');
+  const paid = searchParams.get('pago') === '1';
 
   return (
     <div className="container-page flex flex-col items-center gap-4 py-24 text-center">
@@ -39,7 +40,12 @@ export function OrderConfirmationClient() {
         </p>
       )}
 
-      {paymentUrl ? (
+      {paid ? (
+        <p className="max-w-md text-ink/70">
+          <span className="font-semibold text-ink">Pagamento aprovado.</span> Já estamos preparando
+          seu pedido — você recebe o código de rastreio por e-mail assim que ele for postado.
+        </p>
+      ) : paymentUrl ? (
         <>
           <p className="max-w-md text-ink/70">
             Falta só o pagamento. Clique abaixo para concluir numa página segura.

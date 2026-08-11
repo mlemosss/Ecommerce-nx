@@ -38,6 +38,12 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [payment, setPayment] = useState<PaymentMethod>('pix');
+  // Dados do cartão: vivem só no estado desta tela e vão embora com ela.
+  const [cardHolder, setCardHolder] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCcv, setCardCcv] = useState('');
+  const [installments, setInstallments] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -193,9 +199,36 @@ export default function CheckoutPage() {
     };
   }, [zipCode]);
 
+  /** "12/28" e "12/2028" viram 2028. */
+  function expiryYearFull(value: string): string {
+    const year = value.split('/')[1]?.trim() ?? '';
+    return year.length === 2 ? `20${year}` : year;
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (payment === 'cartao') {
+      const digits = cardNumber.replace(/\D/g, '');
+      if (digits.length < 13) {
+        setError('Confira o número do cartão.');
+        return;
+      }
+      if (!/^\d{2}\/\d{2}(\d{2})?$/.test(cardExpiry.trim())) {
+        setError('Informe a validade no formato MM/AA.');
+        return;
+      }
+      if (cardCcv.trim().length < 3) {
+        setError('Confira o código de segurança (CVV).');
+        return;
+      }
+      if (cardHolder.trim().length < 3) {
+        setError('Informe o nome como está impresso no cartão.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const result = await createOrder({
@@ -225,6 +258,18 @@ export default function CheckoutPage() {
         couponCode: appliedCode ?? undefined,
         total,
         paymentMethod: payment,
+        ...(payment === 'cartao'
+          ? {
+              creditCard: {
+                holderName: cardHolder.trim(),
+                number: cardNumber.replace(/\D/g, ''),
+                expiryMonth: cardExpiry.slice(0, 2),
+                expiryYear: expiryYearFull(cardExpiry),
+                ccv: cardCcv.trim(),
+              },
+              installmentCount: installments,
+            }
+          : {}),
       });
 
       clearCart();
@@ -232,7 +277,9 @@ export default function CheckoutPage() {
         pedido: result.order.orderNumber,
         total: total.toFixed(2),
       });
-      if (result.paymentUrl) params.set('pagamento', result.paymentUrl);
+      // Cartão aprovado na hora não precisa da fatura do Asaas.
+      if (result.paymentUrl && !result.paid) params.set('pagamento', result.paymentUrl);
+      if (result.paid) params.set('pago', '1');
       if (result.paymentWarning) params.set('aviso', result.paymentWarning);
       router.push(`/pedido-confirmado?${params.toString()}`);
     } catch (err) {
@@ -440,9 +487,106 @@ export default function CheckoutPage() {
             </div>
 
             {payment === 'cartao' && (
-              <p className="mt-4 text-sm text-ink/70">
-                Você vai inserir os dados do cartão numa página segura, depois de confirmar o pedido.
-              </p>
+              <div className="mt-5 space-y-4">
+                <div>
+                  <label htmlFor="card-number" className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em]">
+                    Número do cartão
+                  </label>
+                  <input
+                    id="card-number"
+                    inputMode="numeric"
+                    autoComplete="cc-number"
+                    placeholder="0000 0000 0000 0000"
+                    maxLength={23}
+                    value={cardNumber}
+                    onChange={(e) =>
+                      setCardNumber(
+                        e.target.value
+                          .replace(/\D/g, '')
+                          .slice(0, 19)
+                          .replace(/(\d{4})(?=\d)/g, '$1 ')
+                      )
+                    }
+                    className="input-field w-full"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="card-holder" className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em]">
+                    Nome impresso no cartão
+                  </label>
+                  <input
+                    id="card-holder"
+                    autoComplete="cc-name"
+                    value={cardHolder}
+                    onChange={(e) => setCardHolder(e.target.value)}
+                    className="input-field w-full"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="card-expiry" className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em]">
+                      Validade
+                    </label>
+                    <input
+                      id="card-expiry"
+                      inputMode="numeric"
+                      autoComplete="cc-exp"
+                      placeholder="MM/AA"
+                      maxLength={5}
+                      value={cardExpiry}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setCardExpiry(
+                          digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits
+                        );
+                      }}
+                      className="input-field w-full"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="card-ccv" className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em]">
+                      CVV
+                    </label>
+                    <input
+                      id="card-ccv"
+                      inputMode="numeric"
+                      autoComplete="cc-csc"
+                      placeholder="000"
+                      maxLength={4}
+                      value={cardCcv}
+                      onChange={(e) => setCardCcv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      className="input-field w-full"
+                    />
+                  </div>
+                </div>
+
+                {settings.maxInstallments > 1 && (
+                  <div>
+                    <label htmlFor="card-installments" className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em]">
+                      Parcelas
+                    </label>
+                    <select
+                      id="card-installments"
+                      value={installments}
+                      onChange={(e) => setInstallments(Number(e.target.value))}
+                      className="input-field w-full bg-white"
+                    >
+                      {Array.from({ length: settings.maxInstallments }, (_, i) => i + 1).map((n) => (
+                        <option key={n} value={n}>
+                          {n}x de {formatPrice(total / n)} sem juros
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <p className="text-xs leading-relaxed text-ink/60">
+                  Os dados do cartão são enviados por conexão segura direto para a Asaas, nossa
+                  processadora de pagamentos, e não ficam guardados na loja.
+                </p>
+              </div>
             )}
             {payment === 'pix' && (
               <p className="mt-4 text-sm text-ink/70">

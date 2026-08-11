@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { Public } from '../auth/public.decorator';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto, FindOrdersQueryDto, UpdateOrderStatusDto } from './dto/order.dto';
@@ -9,8 +9,17 @@ export class OrdersController {
 
   @Public()
   @Post()
-  create(@Body() dto: CreateOrderDto) {
-    return this.ordersService.create(dto);
+  create(
+    @Body() dto: CreateOrderDto,
+    @Req() req: { headers: Record<string, string | string[] | undefined>; ip?: string }
+  ) {
+    // O Asaas exige o IP do comprador no cartão. Atrás da Vercel, o IP real
+    // está no x-forwarded-for; req.ip seria o do proxy.
+    const forwarded = req.headers['x-forwarded-for'];
+    const remoteIp =
+      (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0].trim() || req.ip;
+
+    return this.ordersService.create(dto, remoteIp);
   }
 
   @Get()

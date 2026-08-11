@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { AsaasService } from '../asaas/asaas.service';
+import { ASAAS_PAID_STATUSES, AsaasService } from '../asaas/asaas.service';
 import { CouponsService } from '../coupons/coupons.service';
 import { EmailService } from '../email/email.service';
 import { AbandonedCartService } from '../abandoned-cart/abandoned-cart.service';
@@ -265,7 +265,8 @@ export class OrdersService {
     return order;
   }
 
-  async create(dto: CreateOrderDto) {
+  /** `remoteIp` é o IP de quem está comprando — o Asaas exige no cartão. */
+  async create(dto: CreateOrderDto, remoteIp?: string) {
     const customer = await this.prisma.customer.upsert({
       where: { email: dto.customerEmail },
       update: {
@@ -328,10 +329,12 @@ export class OrdersService {
       });
     }, { timeout: 15000 });
 
-    await this.emailService.sendOrderConfirmed(order);
     await this.abandonedCart.markRecovered(dto.customerEmail);
 
+    const payingWithCard = dto.paymentMethod === 'cartao' && Boolean(dto.creditCard);
+
     if (!this.asaas.isConfigured()) {
+      await this.emailService.sendOrderConfirmed(order);
       return {
         order,
         paymentUrl: null,
@@ -359,27 +362,74 @@ export class OrdersService {
         dueDate: dueDate.toISOString().slice(0, 10),
         description: `Pedido ${order.orderNumber}`,
         externalReference: order.id,
+        // Parcelamento: a loja anuncia 3x, então precisa pedir ao Asaas.
+        ...(dto.paymentMethod === 'cartao' && dto.installmentCount && dto.installmentCount > 1
+          ? { installmentCount: dto.installmentCount, totalValue: order.total }
+          : {}),
+        // Checkout transparente. Estes campos não são gravados em lugar nenhum.
+        ...(payingWithCard
+          ? {
+              creditCard: dto.creditCard,
+              creditCardHolderInfo: {
+                name: dto.customerName,
+                email: dto.customerEmail,
+                cpfCnpj: onlyDigits(dto.customerDocument),
+                postalCode: onlyDigits(dto.zipCode),
+                addressNumber: dto.number,
+                mobilePhone: onlyDigits(dto.customerPhone),
+              },
+              remoteIp,
+            }
+          : {}),
       });
 
-      const updated = await this.prisma.order.update({
-        where: { id: order.id },
-        data: {
-          asaasCustomerId: customer.id,
-          asaasPaymentId: payment.id,
-          asaasInvoiceUrl: payment.invoiceUrl,
-        },
-        include: { items: true },
+      const paidNow = ASAAS_PAID_STATUSES.has(payment.status);
+
+      let updated = await this.prisma.$transaction(async (tx) => {
+        // Cartão aprovado na hora já sai do estoque: não faz sentido esperar o
+        // webhook para um pagamento que a resposta já confirmou.
+        if (paidNow) await this.syncStock(tx, order, 'pago');
+        return tx.order.update({
+          where: { id: order.id },
+          data: {
+            asaasCustomerId: customer.id,
+            asaasPaymentId: payment.id,
+            asaasInvoiceUrl: payment.invoiceUrl,
+            ...(paidNow ? { status: 'pago' } : {}),
+          },
+          include: { items: true },
+        });
       });
 
-      return { order: updated, paymentUrl: payment.invoiceUrl, paymentWarning: null };
-    } catch (err) {
-      // O pedido já foi criado; devolve aviso mas não derruba o checkout do cliente.
+      await this.emailService.sendOrderConfirmed(updated);
+      if (paidNow) {
+        await this.emailService.sendPaymentApproved(updated);
+        updated = await this.findOne(updated.id);
+      }
+
       return {
-        order,
-        paymentUrl: null,
-        paymentWarning:
-          err instanceof Error ? err.message : 'Não foi possível gerar o link de pagamento agora.',
+        order: updated,
+        paymentUrl: payment.invoiceUrl,
+        paid: paidNow,
+        paymentWarning: null,
       };
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Não foi possível processar o pagamento agora.';
+
+      // Cartão recusado: o pedido não pode ficar pendurado como se fosse acontecer.
+      // Cancela e devolve o motivo para o cliente tentar de novo.
+      if (payingWithCard) {
+        await this.prisma.order.update({
+          where: { id: order.id },
+          data: { status: 'cancelado' },
+        });
+        throw new BadRequestException(message);
+      }
+
+      // Pix/boleto: o pedido vale, só o link falhou. Avisa sem derrubar a compra.
+      await this.emailService.sendOrderConfirmed(order);
+      return { order, paymentUrl: null, paid: false, paymentWarning: message };
     }
   }
 
