@@ -67,6 +67,14 @@ export function Footer({ settings }: { settings: StoreSettings }) {
                 Quem somos
               </Link>
             </li>
+            <li>
+              <Link
+                href="/privacidade"
+                className="underline-offset-4 transition hover:text-white hover:underline"
+              >
+                Privacidade e cookies
+              </Link>
+            </li>
             {settings.contactEmail && (
               <li>
                 <a

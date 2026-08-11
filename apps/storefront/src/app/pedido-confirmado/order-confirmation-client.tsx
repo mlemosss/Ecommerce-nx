@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { formatPrice } from '../../lib/format';
+import { PurchaseEvent } from '../../components/purchase-event';
 
 export function OrderConfirmationClient() {
   const searchParams = useSearchParams();
@@ -15,6 +16,9 @@ export function OrderConfirmationClient() {
 
   return (
     <div className="container-page flex flex-col items-center gap-4 py-24 text-center">
+      {orderNumber && total !== null && (
+        <PurchaseEvent orderNumber={orderNumber} total={total} />
+      )}
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ink text-white">
         <svg
           viewBox="0 0 24 24"
