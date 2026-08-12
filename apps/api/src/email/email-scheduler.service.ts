@@ -37,6 +37,8 @@ export class EmailSchedulerService {
 
     const abandonedCarts = await this.prisma.abandonedCart.findMany({
       where: {
+        // Só quem pediu para receber.
+        optIn: true,
         recovered: false,
         remindedAt: null,
         updatedAt: {

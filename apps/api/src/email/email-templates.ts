@@ -197,7 +197,9 @@ export function reviewRequestTemplate(
 export function abandonedCartTemplate(
   storeName: string,
   storefrontUrl: string,
-  cart: AbandonedCartForEmail
+  // `id` alimenta o link de descadastro: e-mail de marketing sem saída de um
+  // clique não respeita o direito de oposição do titular.
+  cart: AbandonedCartForEmail & { id?: string }
 ): EmailTemplate {
   let items: OrderItemLike[] = [];
   try {
@@ -212,9 +214,19 @@ export function abandonedCartTemplate(
     </p>
     ${itemsTable(items)}
     <div style="margin-top:16px;font-size:14px;color:#333;font-weight:700;">Total: ${money(cart.total)}</div>
-    <a href="${storefrontUrl}/checkout" style="display:inline-block;margin-top:20px;background:#111;color:#fff;padding:12px 20px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;">
+    <a href="${storefrontUrl}/checkout" style="display:inline-block;margin-top:20px;background:#111;color:#fff;padding:14px 28px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;text-decoration:none;">
       Finalizar compra
-    </a>`;
+    </a>
+    ${
+      cart.id
+        ? `<p style="margin-top:28px;font-size:11px;color:#888;line-height:1.6;">
+             Não quer mais receber este lembrete?
+             <a href="${storefrontUrl}/descadastro?c=${encodeURIComponent(cart.id)}" style="color:#888;">
+               Descadastre-se aqui
+             </a>.
+           </p>`
+        : ''
+    }`;
   return {
     subject: `Você esqueceu algo no carrinho — ${storeName}`,
     html: layout(storeName, 'Seu carrinho está te esperando', body, storefrontUrl),

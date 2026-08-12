@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsEmail, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 export class AbandonedCartItemDto {
   @IsString()
@@ -37,4 +47,9 @@ export class TrackAbandonedCartDto {
   @IsNumber()
   @Min(0)
   total!: number;
+
+  /** Só grava se o cliente marcou "quero receber um lembrete". */
+  @IsOptional()
+  @IsBoolean()
+  optIn?: boolean;
 }

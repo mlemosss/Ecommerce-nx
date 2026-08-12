@@ -301,6 +301,9 @@ model EmailFlowStep {
 model AbandonedCart {
   id         String    @id @default(cuid())
   email      String    @unique
+  // Consentimento explícito para receber o lembrete. Sem `true` aqui, nada é
+  // enviado: e-mail de recuperação é marketing, e marketing exige opt-in.
+  optIn      Boolean   @default(false)
   name       String?
   itemsJson  String
   total      Float

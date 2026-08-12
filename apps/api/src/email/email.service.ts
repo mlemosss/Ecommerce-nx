@@ -130,7 +130,9 @@ export class EmailService {
     await this.dispatch(data.email, template);
   }
 
-  async sendAbandonedCartReminder(cart: AbandonedCartForEmail & { email: string }): Promise<void> {
+  async sendAbandonedCartReminder(
+    cart: AbandonedCartForEmail & { email: string; id?: string }
+  ): Promise<void> {
     const { storeName } = await this.getSender();
     const template = abandonedCartTemplate(storeName, this.getStorefrontUrl(), cart);
     await this.sendIfEnabled('carrinho_abandonado', cart.email, template);

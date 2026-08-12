@@ -209,6 +209,8 @@ export class OrderError extends Error {}
 export interface TrackAbandonedCartInput {
   email: string;
   name?: string;
+  /** Sem isto o servidor descarta: lembrete de carrinho exige opt-in. */
+  optIn?: boolean;
   items: CreateOrderItemInput[];
   total: number;
 }

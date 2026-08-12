@@ -45,6 +45,8 @@ export default function CheckoutPage() {
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCcv, setCardCcv] = useState('');
   const [installments, setInstallments] = useState(1);
+  // Desmarcado por padrão: consentimento pré-marcado não vale.
+  const [wantsReminder, setWantsReminder] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -99,11 +101,14 @@ export default function CheckoutPage() {
   const total = Math.max(0, subtotal + shipping - discount);
 
   useEffect(() => {
-    if (!isValidEmail(email) || items.length === 0) return;
+    // Sem o aceite explícito, o e-mail não sai daqui. Antes ele era enviado
+    // 1,5s depois de ser digitado, sem o cliente clicar em nada.
+    if (!wantsReminder || !isValidEmail(email) || items.length === 0) return;
     const timeout = setTimeout(() => {
       void trackAbandonedCart({
         email,
         name: name || undefined,
+        optIn: true,
         items: items.map((item) => {
           const product = products.find((p) => p.id === item.productId);
           return {
@@ -119,7 +124,7 @@ export default function CheckoutPage() {
       });
     }, 1500);
     return () => clearTimeout(timeout);
-  }, [email, name, items, products, total]);
+  }, [wantsReminder, email, name, items, products, total]);
 
   async function handleApplyCoupon() {
     if (!couponCode.trim()) return;
@@ -372,6 +377,19 @@ export default function CheckoutPage() {
               />
             </div>
           </fieldset>
+
+          <label className="flex cursor-pointer items-start gap-3 border border-line p-5 text-sm">
+            <input
+              type="checkbox"
+              checked={wantsReminder}
+              onChange={(e) => setWantsReminder(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-ink"
+            />
+            <span className="leading-relaxed text-ink/75">
+              Se eu não finalizar agora, quero receber um lembrete deste carrinho por e-mail. Você
+              pode sair da lista com um clique, no próprio e-mail.
+            </span>
+          </label>
 
           <fieldset className="border border-line p-6 sm:p-7">
             <legend className="px-2 text-[11px] font-bold uppercase tracking-[0.18em]">Endereço de entrega</legend>
