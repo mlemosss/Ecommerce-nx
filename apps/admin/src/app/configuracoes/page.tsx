@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { ChangePasswordForm } from '../../components/change-password-form';
+import { PromoSettings } from '../../components/promo-settings';
 import { TopBar } from '../../components/top-bar';
 import { api, ApiError } from '../../lib/api';
 import type { StoreSettings } from '../../lib/types';
@@ -437,7 +438,8 @@ export default function SettingsPage() {
         </button>
       </form>
 
-      {/* Fora do formulário acima: a troca de senha tem envio próprio. */}
+      {/* Fora do formulário acima: promoção e senha têm envio próprio. */}
+      <PromoSettings settings={settings} />
       <ChangePasswordForm />
     </div>
   );

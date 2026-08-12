@@ -8,6 +8,7 @@ import { useProducts } from '../../lib/products-context';
 import { useCustomerAuth } from '../../lib/customer-auth-context';
 import { getVariantPrice } from '../../lib/products';
 import { formatPrice } from '../../lib/format';
+import { discountPercentFor, parseTiers } from '../../lib/progressive-discount';
 import {
   createOrder,
   DEFAULT_SETTINGS,
@@ -85,7 +86,17 @@ export default function CheckoutPage() {
   const freeShipping = subtotal >= settings.freeShippingThreshold;
   const selectedShipping = shippingOptions.find((o) => o.id === selectedShippingId) ?? null;
   const shipping = freeShipping ? 0 : selectedShipping ? selectedShipping.price : settings.shippingFee;
-  const total = Math.max(0, subtotal + shipping - appliedDiscount);
+
+  // Desconto progressivo por quantidade de peças. Não soma com cupom: vale o
+  // maior dos dois — a mesma regra que o servidor aplica ao cobrar.
+  const tiers = parseTiers(settings.progressiveDiscount);
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const progressivePercent = discountPercentFor(totalItems, tiers);
+  const progressiveDiscount = Math.round(((subtotal * progressivePercent) / 100) * 100) / 100;
+  const discount = Math.min(subtotal, Math.max(progressiveDiscount, appliedDiscount));
+  const usingProgressive = progressiveDiscount >= appliedDiscount && progressiveDiscount > 0;
+
+  const total = Math.max(0, subtotal + shipping - discount);
 
   useEffect(() => {
     if (!isValidEmail(email) || items.length === 0) return;
@@ -254,7 +265,7 @@ export default function CheckoutPage() {
         }),
         subtotal,
         shipping,
-        discount: appliedDiscount,
+        discount,
         couponCode: appliedCode ?? undefined,
         total,
         paymentMethod: payment,
@@ -669,10 +680,13 @@ export default function CheckoutPage() {
               </dt>
               <dd>{shipping === 0 ? 'Grátis' : formatPrice(shipping)}</dd>
             </div>
-            {appliedDiscount > 0 && (
-              <div className="flex justify-between text-green-700">
-                <dt>Desconto</dt>
-                <dd>-{formatPrice(appliedDiscount)}</dd>
+            {discount > 0 && (
+              <div className="flex justify-between font-semibold">
+                <dt>
+                  Desconto
+                  {usingProgressive ? ` · ${progressivePercent}% por ${totalItems} peças` : ''}
+                </dt>
+                <dd>-{formatPrice(discount)}</dd>
               </div>
             )}
           </dl>

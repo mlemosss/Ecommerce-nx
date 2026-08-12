@@ -5,6 +5,7 @@ import { CustomerAuthProvider } from '../lib/customer-auth-context';
 import { Analytics } from '../components/analytics';
 import { AnnouncementBar } from '../components/announcement-bar';
 import { CookieBanner } from '../components/cookie-banner';
+import { PromoBanner } from '../components/promo-banner';
 import { Header } from '../components/header';
 import { Footer } from '../components/footer';
 import { getSettings } from '../lib/api';
@@ -36,6 +37,11 @@ export default async function RootLayout({
         <ProductsProvider>
           <CustomerAuthProvider>
             <CartProvider>
+              <PromoBanner
+                text={settings.promoBannerText}
+                endsAt={settings.promoBannerEndsAt}
+                progressiveDiscount={settings.progressiveDiscount}
+              />
               <AnnouncementBar
                 freeShippingThreshold={settings.freeShippingThreshold}
                 maxInstallments={settings.maxInstallments}

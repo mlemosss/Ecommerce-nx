@@ -6,6 +6,7 @@ import { useCart } from '../../lib/cart-context';
 import { useProducts } from '../../lib/products-context';
 import { getVariantPrice } from '../../lib/products';
 import { formatPrice } from '../../lib/format';
+import { discountPercentFor, nextTier, parseTiers } from '../../lib/progressive-discount';
 import { ProductImage } from '../../components/product-image';
 import { DEFAULT_SETTINGS, getSettings } from '../../lib/api';
 
@@ -40,7 +41,14 @@ export default function CartPage() {
   }
 
   const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
-  const total = subtotal + shipping;
+
+  const tiers = parseTiers(settings.progressiveDiscount);
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const percent = discountPercentFor(totalItems, tiers);
+  const discount = Math.round(((subtotal * percent) / 100) * 100) / 100;
+  const upcoming = nextTier(totalItems, tiers);
+
+  const total = Math.max(0, subtotal + shipping - discount);
 
   return (
     <div className="container-page py-14 sm:py-16">
@@ -128,10 +136,23 @@ export default function CartPage() {
               <dt className="text-ink/60">Subtotal</dt>
               <dd>{formatPrice(subtotal)}</dd>
             </div>
+            {discount > 0 && (
+              <div className="flex justify-between font-semibold">
+                <dt>Desconto {percent}%</dt>
+                <dd>-{formatPrice(discount)}</dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-ink/60">Frete</dt>
               <dd>{shipping === 0 ? 'Grátis' : formatPrice(shipping)}</dd>
             </div>
+            {upcoming && (
+              <p className="border-t border-ink/10 pt-3 text-xs leading-relaxed text-ink">
+                Leve mais {upcoming.minItems - totalItems}{' '}
+                {upcoming.minItems - totalItems === 1 ? 'peça' : 'peças'} e ganhe{' '}
+                <span className="font-bold">{upcoming.percent}% de desconto</span>.
+              </p>
+            )}
             {shipping > 0 && (
               <p className="pt-1 text-xs text-ink/60">
                 Falta {formatPrice(settings.freeShippingThreshold - subtotal)} para frete grátis.

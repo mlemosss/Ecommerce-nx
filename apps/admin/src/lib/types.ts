@@ -186,6 +186,13 @@ export interface StoreSettings {
   /** Página "Quem somos" da loja. */
   aboutHeadline: string | null;
   aboutBody: string | null;
+  /** JSON: [{ minItems, percent }] do desconto progressivo. */
+  progressiveDiscount: string;
+  promoBannerText: string | null;
+  promoBannerEndsAt: string | null;
+  sizeGuide: string;
+  googleAdsId: string | null;
+  googleAdsConversionLabel: string | null;
   /** CEP de onde a loja despacha; base da cotação do Melhor Envio. */
   shippingOriginZip: string | null;
   packageHeightCm: number;
