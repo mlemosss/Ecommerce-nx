@@ -7,6 +7,10 @@ const CANCELLED_EVENTS = new Set([
   'PAYMENT_REFUNDED',
   'PAYMENT_DELETED',
   'PAYMENT_CHARGEBACK_REQUESTED',
+  // Boleto/Pix vencido sem pagamento. Sem isto o pedido ficava em "aguardando
+  // pagamento" para sempre, sujando o painel. Se o cliente pagar em atraso, o
+  // evento de recebimento chega depois e devolve o pedido para "pago".
+  'PAYMENT_OVERDUE',
 ]);
 
 interface AsaasWebhookBody {

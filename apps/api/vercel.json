@@ -4,5 +4,5 @@
   "buildCommand": "npx prisma migrate deploy --schema prisma/schema.prisma && npx nx run api:build-serverless",
   "outputDirectory": "dist-serverless",
   "rewrites": [{ "source": "/:path*", "destination": "/api" }],
-  "crons": [{ "path": "/api/email-flow/run-scheduled", "schedule": "0 13 * * *" }]
+  "crons": [{ "path": "/api/email-flow/run-scheduled", "schedule": "*/30 * * * *" }]
 }

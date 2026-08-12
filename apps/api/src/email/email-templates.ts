@@ -111,13 +111,23 @@ export function passwordSetupTemplate(
 export function orderConfirmedTemplate(
   storeName: string,
   storefrontUrl: string,
-  order: OrderForEmail
+  order: OrderForEmail,
+  // Cartão aprovado na hora: em vez de mandar dois e-mails quase iguais em
+  // segundos, este já sai dizendo que o pagamento passou.
+  options: { paid?: boolean } = {}
 ): EmailTemplate {
   const body = `
     <p style="color:#333;font-size:14px;line-height:1.6;">
       Oi, ${firstName(order.customerName)}! Recebemos o seu pedido <strong>#${order.orderNumber}</strong> e já
       estamos preparando tudo.
     </p>
+    ${
+      options.paid
+        ? `<p style="color:#111;font-size:14px;line-height:1.6;font-weight:700;">
+             Pagamento aprovado. Você recebe o código de rastreio assim que o pedido for postado.
+           </p>`
+        : ''
+    }
     ${itemsTable(order.items)}
     <div style="margin-top:16px;font-size:14px;color:#333;">
       <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>${money(order.subtotal)}</span></div>

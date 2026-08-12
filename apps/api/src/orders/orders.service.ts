@@ -273,11 +273,21 @@ export class OrdersService {
     const progressive = round2((subtotal * percent) / 100);
 
     let coupon = 0;
+    let couponCode: string | null = null;
     if (code?.trim()) {
       const result = await this.coupons.validate({ code, orderTotal: subtotal });
       if ('discountAmount' in result && result.valid) {
         coupon = round2(Math.min(subtotal, result.discountAmount));
+        couponCode = result.code;
       }
+    }
+
+    // Só conta uso quando o cupom foi de fato o desconto aplicado. Sem isto o
+    // `usageLimit` era decorativo: o mesmo cupom rodava infinitas vezes.
+    if (couponCode && coupon > 0 && coupon >= progressive) {
+      await this.prisma.coupon
+        .update({ where: { code: couponCode }, data: { usageCount: { increment: 1 } } })
+        .catch(() => undefined);
     }
 
     return Math.min(subtotal, Math.max(progressive, coupon));
@@ -409,7 +419,7 @@ export class OrdersService {
 
       const paidNow = ASAAS_PAID_STATUSES.has(payment.status);
 
-      let updated = await this.prisma.$transaction(async (tx) => {
+      const updated = await this.prisma.$transaction(async (tx) => {
         // Cartão aprovado na hora já sai do estoque: não faz sentido esperar o
         // webhook para um pagamento que a resposta já confirmou.
         if (paidNow) await this.syncStock(tx, order, 'pago');
@@ -425,11 +435,10 @@ export class OrdersService {
         });
       });
 
-      await this.emailService.sendOrderConfirmed(updated);
-      if (paidNow) {
-        await this.emailService.sendPaymentApproved(updated);
-        updated = await this.findOne(updated.id);
-      }
+      // Um e-mail só. Quando o cartão é aprovado na hora, a confirmação já
+      // avisa que o pagamento passou — mandar "pagamento aprovado" em seguida
+      // seria a segunda mensagem quase idêntica em segundos.
+      await this.emailService.sendOrderConfirmed(updated, { paid: paidNow });
 
       // Pix: traz o QR Code para a loja exibir na própria tela de confirmação,
       // em vez de mandar o cliente para a fatura do Asaas. Se falhar, o link

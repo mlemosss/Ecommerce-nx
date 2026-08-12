@@ -92,9 +92,12 @@ export class EmailService {
     }
   }
 
-  async sendOrderConfirmed(order: OrderForEmail & { customerEmail: string }): Promise<void> {
+  async sendOrderConfirmed(
+    order: OrderForEmail & { customerEmail: string },
+    options: { paid?: boolean } = {}
+  ): Promise<void> {
     const { storeName } = await this.getSender();
-    const template = orderConfirmedTemplate(storeName, this.getStorefrontUrl(), order);
+    const template = orderConfirmedTemplate(storeName, this.getStorefrontUrl(), order, options);
     await this.sendIfEnabled('pedido_confirmado', order.customerEmail, template);
   }
 
