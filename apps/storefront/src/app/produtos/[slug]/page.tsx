@@ -9,10 +9,49 @@ import { RecentlyViewed } from '../../../components/recently-viewed';
 import { FavoriteButton } from '../../../components/favorite-button';
 import { ProductReviews } from '../../../components/product-reviews';
 import { getProductReviews } from '../../../lib/api';
+import { formatPrice } from '../../../lib/format';
 
+const STOREFRONT_URL = (
+  process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://www.noexcusenx.com.br'
+).replace(/\/$/, '');
+
+/**
+ * Sem Open Graph, um link de produto colado no WhatsApp ou no Instagram chega
+ * sem foto, sem nome e sem preço — e esses são os principais canais da loja.
+ */
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const product = await getProductBySlug(params.slug);
-  return { title: product ? `${product.name} — NO EXCUSE` : 'Produto — NO EXCUSE' };
+  if (!product) return { title: 'Produto — NO EXCUSE' };
+
+  const title = `${product.name} — NO EXCUSE`;
+  const description =
+    product.description?.trim() ||
+    `${product.name} por ${formatPrice(product.price)}. ${product.colors.length > 1 ? `${product.colors.length} cores` : product.colors[0] ?? ''}${
+      product.sizes.length ? ` · tamanhos ${product.sizes.join(', ')}` : ''
+    }. Frete para todo o Brasil.`;
+  const url = `${STOREFRONT_URL}/produtos/${product.slug}`;
+  const image = product.images?.[0];
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'website',
+      siteName: 'NO EXCUSE',
+      locale: 'pt_BR',
+      ...(image ? { images: [{ url: image, width: 1200, height: 1500, alt: product.name }] } : {}),
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
+  };
 }
 
 export default async function ProductDetailPage({ params }: { params: { slug: string } }) {

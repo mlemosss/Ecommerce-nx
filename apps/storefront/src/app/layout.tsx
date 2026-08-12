@@ -10,10 +10,27 @@ import { Header } from '../components/header';
 import { Footer } from '../components/footer';
 import { getSettings } from '../lib/api';
 
+const STOREFRONT_URL = (
+  process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://www.noexcusenx.com.br'
+).replace(/\/$/, '');
+
 export const metadata = {
+  metadataBase: new URL(STOREFRONT_URL),
+  // Sem `template`: as páginas já trazem o sufixo no próprio título, e o
+  // template somaria um segundo ("Sale — NO EXCUSE — NO EXCUSE").
   title: 'NO EXCUSE — Roupas de Academia',
   description:
-    'Loja de roupas e acessórios para academia: leggings, tops, shorts, camisetas, jaquetas e acessórios.',
+    'Leggings, tops e shorts de academia com compressão certa e caimento que aguenta o treino. Frete para todo o Brasil.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    siteName: 'NO EXCUSE',
+    locale: 'pt_BR',
+    url: STOREFRONT_URL,
+    title: 'NO EXCUSE — Roupas de Academia',
+    description:
+      'Leggings, tops e shorts de academia com compressão certa e caimento que aguenta o treino.',
+  },
 };
 
 export default async function RootLayout({

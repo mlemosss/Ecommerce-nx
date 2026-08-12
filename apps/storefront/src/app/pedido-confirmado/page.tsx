@@ -4,6 +4,8 @@ import { OrderConfirmationClient } from './order-confirmation-client';
 
 export const metadata = {
   title: 'Pedido confirmado — NO EXCUSE',
+  // Traz número de pedido e link de pagamento na URL: não pode ser indexada.
+  robots: { index: false, follow: false },
 };
 
 export default async function OrderConfirmationPage() {
