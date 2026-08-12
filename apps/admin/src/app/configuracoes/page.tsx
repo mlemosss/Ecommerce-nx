@@ -367,9 +367,10 @@ export default function SettingsPage() {
               className="input-field"
             />
           </div>
-          <p className="text-xs text-black/40">
-            Pra usar um e-mail com o domínio da loja (ex: pedidos@noexcuse.com.br), o domínio precisa estar
-            verificado na sua conta Resend. Até lá, “onboarding@resend.dev” funciona pra testes.
+          <p className="text-xs text-black/60">
+            É este o remetente que o cliente vê em todos os e-mails da loja. Usar um endereço do
+            domínio da loja (ex.: vendas@noexcusenx.com.br) exige o domínio verificado na conta do
+            Resend — o que já está feito.
           </p>
         </section>
 

@@ -97,7 +97,12 @@ export class ShippingService {
           Accept: 'application/json',
           'Content-Type': 'application/json',
           Authorization: `Bearer ${process.env.MELHOR_ENVIO_TOKEN}`,
-          'User-Agent': 'NO EXCUSE (contato@noexcuse.com.br)',
+          // O Melhor Envio pede um contato aqui. Vem das Configurações para não
+          // repetir o erro de deixar endereço chumbado — e ainda por cima num
+          // domínio que não é o da loja.
+          'User-Agent': `NO EXCUSE (${
+            settings?.emailFromAddress || settings?.contactEmail || 'vendas@noexcusenx.com.br'
+          })`,
         },
         body: JSON.stringify(body),
       });
