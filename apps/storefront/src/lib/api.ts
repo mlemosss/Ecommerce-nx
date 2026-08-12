@@ -32,6 +32,8 @@ export interface StoreSettings {
   googleAdsConversionLabel: string | null;
   /** JSON: [{ minItems, percent }] do desconto progressivo. */
   progressiveDiscount: string;
+  /** JSON: [{ category, size, bust, waist, hip }] da tabela de medidas. */
+  sizeGuide: string;
   promoBannerText: string | null;
   promoBannerEndsAt: string | null;
   /** Página "Quem somos" — editável em Configurações. */
@@ -76,6 +78,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   googleAdsId: null,
   googleAdsConversionLabel: null,
   progressiveDiscount: '[]',
+  sizeGuide: '[]',
   promoBannerText: null,
   promoBannerEndsAt: null,
   aboutHeadline: null,

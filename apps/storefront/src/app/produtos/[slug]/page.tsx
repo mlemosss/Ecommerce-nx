@@ -8,7 +8,7 @@ import { TrackProductView } from '../../../components/track-product-view';
 import { RecentlyViewed } from '../../../components/recently-viewed';
 import { FavoriteButton } from '../../../components/favorite-button';
 import { ProductReviews } from '../../../components/product-reviews';
-import { getProductReviews } from '../../../lib/api';
+import { getProductReviews, getSettings } from '../../../lib/api';
 import { formatPrice } from '../../../lib/format';
 
 const STOREFRONT_URL = (
@@ -63,6 +63,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
 
   const related = await getRelatedProducts(product);
   const reviewsResult = await getProductReviews(product.id);
+  const settings = await getSettings();
 
   return (
     <div className="container-page py-10 sm:py-14">
@@ -100,7 +101,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           </h1>
 
           <div className="mt-8">
-            <AddToCart product={product} />
+            <AddToCart product={product} sizeGuide={settings.sizeGuide} />
           </div>
         </div>
       </div>

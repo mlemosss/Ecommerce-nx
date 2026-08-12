@@ -6,8 +6,9 @@ import type { Product } from '../lib/types';
 import { useCart } from '../lib/cart-context';
 import { getVariantPrice } from '../lib/products';
 import { formatInstallments, formatPrice } from '../lib/format';
+import { SizeGuide } from './size-guide';
 
-export function AddToCart({ product }: { product: Product }) {
+export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?: string }) {
   const { addItem } = useCart();
   const [size, setSize] = useState(product.sizes[0]);
   const [color, setColor] = useState(product.colors[0]);
@@ -52,7 +53,10 @@ export function AddToCart({ product }: { product: Product }) {
       )}
 
       <div>
-        <p className="eyebrow mb-3 text-ink/50">Tamanho</p>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="eyebrow text-ink/50">Tamanho</p>
+          {sizeGuide && <SizeGuide category={product.category} sizeGuide={sizeGuide} />}
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {product.sizes.map((s) => (
             <OptionButton
