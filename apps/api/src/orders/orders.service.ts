@@ -407,10 +407,23 @@ export class OrdersService {
         updated = await this.findOne(updated.id);
       }
 
+      // Pix: traz o QR Code para a loja exibir na própria tela de confirmação,
+      // em vez de mandar o cliente para a fatura do Asaas. Se falhar, o link
+      // continua valendo — não é motivo para derrubar a compra.
+      let pix: { encodedImage: string; payload: string; expirationDate?: string } | null = null;
+      if (dto.paymentMethod === 'pix' && !paidNow) {
+        try {
+          pix = await this.asaas.getPixQrCode(payment.id);
+        } catch {
+          pix = null;
+        }
+      }
+
       return {
         order: updated,
         paymentUrl: payment.invoiceUrl,
         paid: paidNow,
+        pix,
         paymentWarning: null,
       };
     } catch (err) {

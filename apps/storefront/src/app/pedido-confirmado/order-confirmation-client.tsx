@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { formatPrice } from '../../lib/format';
 import { PurchaseEvent } from '../../components/purchase-event';
+import { PixPayment } from '../../components/pix-payment';
 
 export function OrderConfirmationClient() {
   const searchParams = useSearchParams();
@@ -43,6 +44,8 @@ export function OrderConfirmationClient() {
           Total: <span className="font-semibold text-ink">{formatPrice(total)}</span>
         </p>
       )}
+
+      {!paid && <PixPayment />}
 
       {paid ? (
         <p className="max-w-md text-ink/70">

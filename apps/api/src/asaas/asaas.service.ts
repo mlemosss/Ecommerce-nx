@@ -59,6 +59,14 @@ interface AsaasPayment {
   bankSlipUrl?: string;
 }
 
+export interface AsaasPixQrCode {
+  /** PNG do QR Code em base64, sem o prefixo data:. */
+  encodedImage: string;
+  /** O "copia e cola". */
+  payload: string;
+  expirationDate?: string;
+}
+
 /** Status em que o Asaas considera o pagamento resolvido. */
 export const ASAAS_PAID_STATUSES = new Set(['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH']);
 
@@ -120,5 +128,15 @@ export class AsaasService {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  /**
+   * QR Code de uma cobrança Pix já criada, para exibir dentro da própria loja
+   * em vez de mandar o cliente para a fatura do Asaas.
+   *
+   * O GET precisa ir sem corpo — com corpo, a API responde 403.
+   */
+  getPixQrCode(paymentId: string): Promise<AsaasPixQrCode> {
+    return this.request<AsaasPixQrCode>(`/payments/${paymentId}/pixQrCode`);
   }
 }

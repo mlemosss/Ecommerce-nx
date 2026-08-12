@@ -273,6 +273,15 @@ export default function CheckoutPage() {
       });
 
       clearCart();
+
+      // O QR Code é grande demais para a URL: vai pela sessão da aba, que a
+      // tela de confirmação lê em seguida.
+      if (result.pix) {
+        window.sessionStorage.setItem('no-excuse:pix', JSON.stringify(result.pix));
+      } else {
+        window.sessionStorage.removeItem('no-excuse:pix');
+      }
+
       const params = new URLSearchParams({
         pedido: result.order.orderNumber,
         total: total.toFixed(2),

@@ -188,6 +188,8 @@ export interface CreateOrderResult {
   paymentUrl: string | null;
   /** Cartão aprovado na hora: não precisa mandar o cliente para a fatura. */
   paid?: boolean;
+  /** Pix: QR Code para pagar sem sair da loja. */
+  pix?: { encodedImage: string; payload: string; expirationDate?: string } | null;
   paymentWarning: string | null;
 }
 
