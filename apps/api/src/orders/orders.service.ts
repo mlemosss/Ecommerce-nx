@@ -11,6 +11,8 @@ import { CouponsService } from '../coupons/coupons.service';
 import { EmailService } from '../email/email.service';
 import { AbandonedCartService } from '../abandoned-cart/abandoned-cart.service';
 import { effectivePrice } from '../products/pricing';
+import { discountPercentFor, parseTiers } from '../products/progressive-discount';
+import { SettingsService } from '../settings/settings.service';
 import { CreateOrderDto, FindOrdersQueryDto, UpdateOrderStatusDto } from './dto/order.dto';
 
 const BILLING_TYPE: Record<CreateOrderDto['paymentMethod'], 'PIX' | 'CREDIT_CARD' | 'BOLETO'> = {
@@ -81,6 +83,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly asaas: AsaasService,
     private readonly coupons: CouponsService,
+    private readonly settings: SettingsService,
     private readonly emailService: EmailService,
     private readonly abandonedCart: AbandonedCartService
   ) {}
@@ -251,12 +254,33 @@ export class OrdersService {
     return priced;
   }
 
-  /** Revalida o cupom no servidor; cupom inválido simplesmente não desconta. */
-  private async resolveDiscount(code: string | undefined, subtotal: number): Promise<number> {
-    if (!code?.trim()) return 0;
-    const result = await this.coupons.validate({ code, orderTotal: subtotal });
-    if (!('discountAmount' in result) || !result.valid) return 0;
-    return round2(Math.min(subtotal, result.discountAmount));
+  /**
+   * Desconto do pedido, calculado aqui e não aceito do cliente.
+   *
+   * O progressivo (por quantidade de peças) e o cupom **não se somam**: vale o
+   * maior dos dois. Somar os dois abriria a porta para 30% + cupom, o que come
+   * a margem sem ninguém decidir por isso.
+   */
+  private async resolveDiscount(
+    code: string | undefined,
+    subtotal: number,
+    items: { quantity: number }[]
+  ): Promise<number> {
+    const settings = await this.settings.get().catch(() => null);
+    const tiers = parseTiers(settings?.progressiveDiscount);
+    const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
+    const percent = discountPercentFor(totalItems, tiers);
+    const progressive = round2((subtotal * percent) / 100);
+
+    let coupon = 0;
+    if (code?.trim()) {
+      const result = await this.coupons.validate({ code, orderTotal: subtotal });
+      if ('discountAmount' in result && result.valid) {
+        coupon = round2(Math.min(subtotal, result.discountAmount));
+      }
+    }
+
+    return Math.min(subtotal, Math.max(progressive, coupon));
   }
 
   async findOne(id: string) {
@@ -298,7 +322,7 @@ export class OrdersService {
       // pessoa comprar qualquer peça pelo valor que quisesse.
       const items = await this.priceItems(tx, dto.items);
       const subtotal = round2(items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0));
-      const discount = await this.resolveDiscount(dto.couponCode, subtotal);
+      const discount = await this.resolveDiscount(dto.couponCode, subtotal, items);
       // O frete é o único valor que legitimamente vem do cliente (é a cotação
       // que ele escolheu no checkout); aqui só se garante que não é negativo.
       const shipping = Math.max(0, dto.shipping ?? 0);

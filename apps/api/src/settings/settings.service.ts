@@ -28,12 +28,16 @@ export class SettingsService {
 
   async update(dto: UpdateSettingsDto) {
     await this.get();
-    const { valueProps, ...rest } = dto;
+    const { valueProps, promoBannerEndsAt, ...rest } = dto;
     const updated = await this.prisma.storeSettings.update({
       where: { id: SETTINGS_ID },
       data: {
         ...rest,
         ...(valueProps !== undefined ? { valueProps: JSON.stringify(valueProps) } : {}),
+        // String vazia = tirar a data, e não gravar uma data inválida.
+        ...(promoBannerEndsAt !== undefined
+          ? { promoBannerEndsAt: promoBannerEndsAt ? new Date(promoBannerEndsAt) : null }
+          : {}),
       },
     });
     return withParsedValueProps(updated);

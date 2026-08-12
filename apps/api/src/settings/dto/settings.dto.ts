@@ -95,6 +95,34 @@ export class UpdateSettingsDto {
   @Type(() => ValuePropDto)
   valueProps?: ValuePropDto[];
 
+  /** Tag do Google Ads, no formato AW-0000000000. */
+  @IsOptional()
+  @IsString()
+  googleAdsId?: string;
+
+  /** Rótulo da ação de conversão de compra, do painel do Google Ads. */
+  @IsOptional()
+  @IsString()
+  googleAdsConversionLabel?: string;
+
+  /** JSON: [{ minItems, percent }]. */
+  @IsOptional()
+  @IsString()
+  progressiveDiscount?: string;
+
+  /** JSON: [{ category, size, bust, waist, hip }]. */
+  @IsOptional()
+  @IsString()
+  sizeGuide?: string;
+
+  @IsOptional()
+  @IsString()
+  promoBannerText?: string;
+
+  @IsOptional()
+  @IsString()
+  promoBannerEndsAt?: string;
+
   @IsOptional()
   @IsString()
   aboutHeadline?: string;

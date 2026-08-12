@@ -28,6 +28,12 @@ export interface StoreSettings {
   valueProps: ValueProp[];
   gtmId: string | null;
   metaPixelId: string | null;
+  googleAdsId: string | null;
+  googleAdsConversionLabel: string | null;
+  /** JSON: [{ minItems, percent }] do desconto progressivo. */
+  progressiveDiscount: string;
+  promoBannerText: string | null;
+  promoBannerEndsAt: string | null;
   /** Página "Quem somos" — editável em Configurações. */
   aboutHeadline: string | null;
   aboutBody: string | null;
@@ -67,6 +73,11 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   ],
   gtmId: null,
   metaPixelId: null,
+  googleAdsId: null,
+  googleAdsConversionLabel: null,
+  progressiveDiscount: '[]',
+  promoBannerText: null,
+  promoBannerEndsAt: null,
   aboutHeadline: null,
   aboutBody: null,
 };

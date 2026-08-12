@@ -6,7 +6,13 @@ import { formatPrice } from '../../lib/format';
 import { PurchaseEvent } from '../../components/purchase-event';
 import { PixPayment } from '../../components/pix-payment';
 
-export function OrderConfirmationClient() {
+export function OrderConfirmationClient({
+  googleAdsId,
+  googleAdsConversionLabel,
+}: {
+  googleAdsId?: string | null;
+  googleAdsConversionLabel?: string | null;
+}) {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get('pedido');
   const totalParam = searchParams.get('total');
@@ -18,7 +24,12 @@ export function OrderConfirmationClient() {
   return (
     <div className="container-page flex flex-col items-center gap-4 py-24 text-center">
       {orderNumber && total !== null && (
-        <PurchaseEvent orderNumber={orderNumber} total={total} />
+        <PurchaseEvent
+          orderNumber={orderNumber}
+          total={total}
+          googleAdsId={googleAdsId}
+          googleAdsConversionLabel={googleAdsConversionLabel}
+        />
       )}
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ink text-white">
         <svg

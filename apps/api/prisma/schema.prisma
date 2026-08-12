@@ -247,6 +247,17 @@ model StoreSettings {
   newsletterTitle        String   @default("Ganhe 10% na primeira compra")
   newsletterSubtitle     String   @default("Cadastre seu e-mail e receba um cupom exclusivo, além de novidades de lançamentos.")
   valueProps             String   @default("[{\"title\":\"Troca grátis em 30 dias\",\"description\":\"Não serviu ou não gostou? Trocamos sem burocracia.\"},{\"title\":\"Entrega para todo o Brasil\",\"description\":\"Envio rastreado com prazos exibidos no checkout.\"},{\"title\":\"Tecido testado em treino real\",\"description\":\"Compressão, respirabilidade e durabilidade validadas por atletas.\"},{\"title\":\"Pagamento seguro\",\"description\":\"Pix, cartão em até 3x sem juros ou boleto.\"}]")
+  // Tabela de medidas, em JSON: [{ category, size, bust, waist, hip }].
+  // Alimenta a tabela e o provador na página de produto.
+  sizeGuide              String   @default("[]")
+  // Google Ads: ID da tag (AW-...) e rótulo da ação de conversão de compra.
+  googleAdsId            String?
+  googleAdsConversionLabel String?
+  // Desconto progressivo, em JSON: [{ minItems, percent }]. Vazio = desligado.
+  progressiveDiscount    String   @default("[]")
+  // Faixa de promoção no topo. Sem texto, não aparece; passada a data, some sozinha.
+  promoBannerText        String?
+  promoBannerEndsAt      DateTime?
   // Página "Quem somos". Texto livre, editável pelo painel.
   aboutHeadline          String?
   aboutBody              String?

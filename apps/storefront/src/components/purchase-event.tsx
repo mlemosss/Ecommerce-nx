@@ -7,6 +7,7 @@ declare global {
   interface Window {
     dataLayer?: Record<string, unknown>[];
     fbq?: (...args: unknown[]) => void;
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
@@ -17,7 +18,17 @@ declare global {
  * consegue medir conversão e o Meta não tem evento de compra para otimizar. O
  * evento respeita o consentimento — sem aceite, nada é enviado.
  */
-export function PurchaseEvent({ orderNumber, total }: { orderNumber: string; total: number }) {
+export function PurchaseEvent({
+  orderNumber,
+  total,
+  googleAdsId,
+  googleAdsConversionLabel,
+}: {
+  orderNumber: string;
+  total: number;
+  googleAdsId?: string | null;
+  googleAdsConversionLabel?: string | null;
+}) {
   const sent = useRef(false);
 
   useEffect(() => {
@@ -39,7 +50,18 @@ export function PurchaseEvent({ orderNumber, total }: { orderNumber: string; tot
     });
 
     window.fbq?.('track', 'Purchase', { value: total, currency: 'BRL' });
-  }, [orderNumber, total]);
+
+    // Conversão do Google Ads. A tag base sozinha só mede visita: é este evento,
+    // com o rótulo da ação de conversão, que registra a venda.
+    if (googleAdsId && googleAdsConversionLabel) {
+      window.gtag?.('event', 'conversion', {
+        send_to: `${googleAdsId}/${googleAdsConversionLabel}`,
+        value: total,
+        currency: 'BRL',
+        transaction_id: orderNumber,
+      });
+    }
+  }, [orderNumber, total, googleAdsId, googleAdsConversionLabel]);
 
   return null;
 }

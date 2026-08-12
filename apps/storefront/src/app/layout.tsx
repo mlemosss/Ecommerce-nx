@@ -28,7 +28,11 @@ export default async function RootLayout({
         {/* Os scripts de medição vivem aqui dentro, atrás do consentimento.
             O fallback <noscript> foi retirado de propósito: ele dispararia sem
             passar pelo banner, e é exatamente isso que não pode acontecer. */}
-        <Analytics gtmId={settings.gtmId} metaPixelId={settings.metaPixelId} />
+        <Analytics
+          gtmId={settings.gtmId}
+          metaPixelId={settings.metaPixelId}
+          googleAdsId={settings.googleAdsId}
+        />
         <ProductsProvider>
           <CustomerAuthProvider>
             <CartProvider>
