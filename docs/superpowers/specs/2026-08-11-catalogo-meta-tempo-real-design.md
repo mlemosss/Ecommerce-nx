@@ -91,10 +91,10 @@ próxima mudança dele. É esse buraco que a reconciliação fecha.
 Disponível no botão que já existe em `/admin/meta` desde o primeiro dia, e depois
 num agendamento.
 
-**Dependência externa:** a frequência do agendamento depende do plano da Vercel.
-No Hobby, cron roda uma vez por dia — suficiente para reconciliação. No Pro, dá
-para rodar de hora em hora. Configurar frequência acima do permitido faz o
-**deploy falhar**, então o plano precisa ser confirmado antes.
+**Frequência:** o projeto está no plano **Pro** da Vercel, confirmado em
+11/08/2026, então a reconciliação roda **de hora em hora** (`0 * * * *`). No
+Hobby seria uma vez por dia — configurar acima do permitido faz o deploy falhar,
+por isso o plano precisava ser confirmado antes.
 
 ## Visibilidade no painel
 
@@ -133,3 +133,13 @@ Não há suíte de testes neste repositório; a verificação é manual:
 - Ambos no projeto `noexcuse-api` da Vercel, com redeploy
 - Fotos nas 3 peças sem imagem (Legging, Top Básico, Top Costas), senão elas não
   entram no catálogo
+
+## Nota lateral
+
+O plano Pro também destrava o cron de e-mails, que hoje roda uma vez por dia às
+13h UTC. O lembrete de carrinho abandonado é disparado "2 horas depois", mas na
+prática só sai na próxima execução diária — um carrinho abandonado às 11h recebe
+o e-mail quase 24h depois, quando a pessoa já comprou em outro lugar. Passar
+para `*/30 * * * *` faz o lembrete chegar na janela em que ele ainda converte.
+Mudança de uma linha em `apps/api/vercel.json`, fora do escopo deste design mas
+já acordada.
