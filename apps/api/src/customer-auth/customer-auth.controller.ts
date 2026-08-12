@@ -50,6 +50,20 @@ export class CustomerAuthController {
     return this.customerAuthService.myOrders(req.user.sub);
   }
 
+  /** Baixar meus dados (LGPD art. 18, V). */
+  @CustomerAccessible()
+  @Get('me/export')
+  exportData(@Req() req: CustomerRequest) {
+    return this.customerAuthService.exportData(req.user.sub);
+  }
+
+  /** Excluir minha conta (LGPD art. 18, VI). */
+  @CustomerAccessible()
+  @Delete('me')
+  deleteAccount(@Req() req: CustomerRequest) {
+    return this.customerAuthService.deleteAccount(req.user.sub);
+  }
+
   @CustomerAccessible()
   @Get('me/favorites')
   listFavorites(@Req() req: CustomerRequest) {

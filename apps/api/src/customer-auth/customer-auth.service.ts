@@ -156,4 +156,72 @@ export class CustomerAuthService {
     await this.prisma.favorite.deleteMany({ where: { customerId, productId } });
     return { success: true };
   }
+
+  /**
+   * Portabilidade (LGPD art. 18, V): devolve tudo que a loja guarda sobre a
+   * pessoa, num JSON que ela baixa pela própria conta.
+   */
+  async exportData(customerId: string) {
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: customerId },
+      include: {
+        orders: { include: { items: true }, orderBy: { createdAt: 'desc' } },
+        favorites: { include: { product: { select: { name: true, slug: true } } } },
+      },
+    });
+    if (!customer) throw new NotFoundException('Cliente não encontrado');
+
+    const reviews = await this.prisma.productReview.findMany({
+      where: { customerId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // A senha nunca sai, nem em hash.
+    const { passwordHash, passwordSetToken, passwordSetTokenExpiresAt, ...cadastro } = customer;
+    void passwordHash;
+    void passwordSetToken;
+    void passwordSetTokenExpiresAt;
+
+    return {
+      geradoEm: new Date().toISOString(),
+      cadastro,
+      avaliacoes: reviews,
+    };
+  }
+
+  /**
+   * Exclusão (LGPD art. 18, VI). O pedido em si não é apagado — a legislação
+   * fiscal exige guardá-lo —, mas os dados pessoais dele são substituídos por
+   * marcadores, de forma que o histórico de vendas continua correto e a pessoa
+   * deixa de estar identificada.
+   */
+  async deleteAccount(customerId: string) {
+    const customer = await this.prisma.customer.findUnique({ where: { id: customerId } });
+    if (!customer) throw new NotFoundException('Cliente não encontrado');
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.favorite.deleteMany({ where: { customerId } });
+      await tx.productReview.deleteMany({ where: { customerId } });
+      if (customer.email) {
+        await tx.abandonedCart.deleteMany({ where: { email: customer.email } });
+      }
+
+      await tx.order.updateMany({
+        where: { customerId },
+        data: {
+          customerName: 'Cliente removido',
+          customerEmail: `removido+${customer.id}@noexcusenx.com.br`,
+          customerPhone: '',
+          customerDocument: '',
+          street: 'removido',
+          number: '-',
+          complement: null,
+        },
+      });
+
+      await tx.customer.delete({ where: { id: customerId } });
+    });
+
+    return { success: true };
+  }
 }

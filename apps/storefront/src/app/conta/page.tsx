@@ -7,6 +7,7 @@ import { useCustomerAuth } from '../../lib/customer-auth-context';
 import { useProducts } from '../../lib/products-context';
 import { formatPrice } from '../../lib/format';
 import { ProductCard } from '../../components/product-card';
+import { PrivacyActions } from '../../components/privacy-actions';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 const TOKEN_KEY = 'no-excuse:customer-token';
@@ -137,6 +138,8 @@ export default function AccountPage() {
           </div>
         )}
       </section>
+
+      <PrivacyActions />
     </div>
   );
 }
