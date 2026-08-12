@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
@@ -13,6 +14,7 @@ import { AbandonedCartService } from '../abandoned-cart/abandoned-cart.service';
 import { effectivePrice } from '../products/pricing';
 import { discountPercentFor, parseTiers } from '../products/progressive-discount';
 import { SettingsService } from '../settings/settings.service';
+import { ShippingService } from '../shipping/shipping.service';
 import { CreateOrderDto, FindOrdersQueryDto, UpdateOrderStatusDto } from './dto/order.dto';
 
 const BILLING_TYPE: Record<CreateOrderDto['paymentMethod'], 'PIX' | 'CREDIT_CARD' | 'BOLETO'> = {
@@ -79,11 +81,14 @@ function endOfDayIfDateOnly(value: string): Date {
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly asaas: AsaasService,
     private readonly coupons: CouponsService,
     private readonly settings: SettingsService,
+    private readonly shipping: ShippingService,
     private readonly emailService: EmailService,
     private readonly abandonedCart: AbandonedCartService
   ) {}
@@ -255,6 +260,59 @@ export class OrdersService {
   }
 
   /**
+   * Confere o frete que veio do checkout contra uma cotação nova.
+   *
+   * O valor chega do cliente porque é a transportadora que ele escolheu. Aceitar
+   * sem conferir deixava forçar frete zero. A regra: acima do valor de frete
+   * grátis, zero; senão, o valor só passa se bater com alguma opção cotada
+   * agora — caso contrário vale a mais barata.
+   *
+   * Se a cotação falhar (token vencido, transportadora fora do ar), aceita o que
+   * veio: serviço externo indisponível não pode impedir a venda.
+   */
+  private async resolveShipping(
+    dto: CreateOrderDto,
+    subtotal: number,
+    items: { quantity: number; unitPrice: number; productId: string }[]
+  ): Promise<number> {
+    const informed = Math.max(0, dto.shipping ?? 0);
+
+    const settings = await this.settings.get().catch(() => null);
+    if (settings && subtotal >= settings.freeShippingThreshold) return 0;
+
+    try {
+      const products = await this.prisma.product.findMany({
+        where: { id: { in: items.map((i) => i.productId) } },
+        select: { id: true, category: true },
+      });
+      const categoryOf = new Map(products.map((p) => [p.id, p.category]));
+
+      const quote = await this.shipping.quote({
+        toZipCode: dto.zipCode,
+        subtotal,
+        items: items.map((item) => ({
+          category: categoryOf.get(item.productId),
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+      });
+
+      if (!quote.configured || quote.options.length === 0) return informed;
+
+      const matches = quote.options.some((option) => Math.abs(option.price - informed) < 0.01);
+      if (matches) return informed;
+
+      const cheapest = Math.min(...quote.options.map((o) => o.price));
+      this.logger.warn(
+        `Frete informado (${informed}) não bate com nenhuma cotação; aplicando a mais barata (${cheapest}).`
+      );
+      return round2(cheapest);
+    } catch {
+      return informed;
+    }
+  }
+
+  /**
    * Desconto do pedido, calculado aqui e não aceito do cliente.
    *
    * O progressivo (por quantidade de peças) e o cupom **não se somam**: vale o
@@ -333,9 +391,7 @@ export class OrdersService {
       const items = await this.priceItems(tx, dto.items);
       const subtotal = round2(items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0));
       const discount = await this.resolveDiscount(dto.couponCode, subtotal, items);
-      // O frete é o único valor que legitimamente vem do cliente (é a cotação
-      // que ele escolheu no checkout); aqui só se garante que não é negativo.
-      const shipping = Math.max(0, dto.shipping ?? 0);
+      const shipping = await this.resolveShipping(dto, subtotal, items);
       const total = round2(Math.max(0, subtotal + shipping - discount));
 
       return tx.order.create({
