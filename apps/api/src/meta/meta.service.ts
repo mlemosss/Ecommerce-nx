@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { parseImages, toPublicImageUrls } from '../products/product-images';
+import { effectivePrice, isOnSale } from '../products/pricing';
 
 const GRAPH_API_VERSION = 'v21.0';
 const GRAPH_BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
@@ -80,27 +82,53 @@ export class MetaService {
       include: { variants: true },
     });
 
-    const requests = products.flatMap((product) =>
-      product.variants.map((variant) => ({
-        method: 'UPDATE',
-        data: {
-          id: variant.id,
-          item_group_id: product.id,
-          title: product.name,
-          description: product.description || product.name,
-          availability: variant.stock > 0 ? 'in stock' : 'out of stock',
-          condition: 'new',
-          price: `${product.price.toFixed(2)} BRL`,
-          link: `${config.storefrontUrl}/produtos/${product.slug}`,
-          brand: 'No Excuse',
-          color: variant.color,
-          size: variant.size,
-        },
-      }))
-    );
+    // O Meta rejeita item sem imagem. Produto sem foto é separado e reportado,
+    // em vez de fazer o lote inteiro voltar com erro.
+    const withoutImage: string[] = [];
+
+    const requests = products.flatMap((product) => {
+      const images = toPublicImageUrls(product.id, parseImages(product.images));
+      if (images.length === 0) {
+        withoutImage.push(product.name);
+        return [];
+      }
+
+      const onSale = isOnSale(product);
+      // Em promoção, o Meta espera o preço cheio em `price` e o promocional em
+      // `sale_price` — é assim que ele mostra o "de/por" no anúncio.
+      const fullPrice = onSale ? (product.compareAtPrice as number) : product.price;
+
+      return product.variants.map((variant) => {
+        const unitPrice = effectivePrice(product, variant.price);
+        return {
+          method: 'UPDATE',
+          data: {
+            id: variant.id,
+            item_group_id: product.id,
+            title: product.name,
+            description: product.description || product.name,
+            availability: variant.stock > 0 ? 'in stock' : 'out of stock',
+            inventory: variant.stock,
+            condition: 'new',
+            price: `${(onSale ? fullPrice : unitPrice).toFixed(2)} BRL`,
+            ...(onSale ? { sale_price: `${unitPrice.toFixed(2)} BRL` } : {}),
+            link: `${config.storefrontUrl}/produtos/${product.slug}`,
+            image_link: images[0],
+            ...(images.length > 1 ? { additional_image_link: images.slice(1, 10).join(',') } : {}),
+            brand: 'No Excuse',
+            color: variant.color,
+            size: variant.size,
+          },
+        };
+      });
+    });
 
     if (requests.length === 0) {
-      throw new BadRequestException('Nenhum produto ativo para sincronizar.');
+      throw new BadRequestException(
+        withoutImage.length > 0
+          ? `Nenhum produto pôde ser enviado: todos estão sem foto (${withoutImage.join(', ')}). O Meta não aceita item sem imagem.`
+          : 'Nenhum produto ativo para sincronizar.'
+      );
     }
 
     const url = `${GRAPH_BASE_URL}/${config.catalogId}/items_batch`;
@@ -125,6 +153,8 @@ export class MetaService {
 
     return {
       itemsSent: requests.length,
+      /** Produtos deixados de fora por não terem foto. */
+      skippedWithoutImage: withoutImage,
       handle: body.handles?.[0] ?? null,
       raw: body,
     };

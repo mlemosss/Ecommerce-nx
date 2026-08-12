@@ -35,7 +35,21 @@ export function AddToCart({ product }: { product: Product }) {
         <p className="mt-1 text-sm text-ink/60">{formatInstallments(price)}</p>
       </div>
 
-      <p className="text-sm leading-relaxed text-ink/75">{product.description}</p>
+      {/* Descrição vem das Configurações do produto. Linha em branco separa
+          parágrafos; vazia, a seção nem aparece (em vez de deixar um buraco). */}
+      {product.description?.trim() && (
+        <div className="space-y-3 border-t border-line pt-6">
+          <p className="eyebrow text-ink/50">Descrição</p>
+          {product.description
+            .split(/\n{2,}/)
+            .filter(Boolean)
+            .map((paragraph, index) => (
+              <p key={index} className="text-sm leading-relaxed text-ink/75">
+                {paragraph}
+              </p>
+            ))}
+        </div>
+      )}
 
       <div>
         <p className="eyebrow mb-3 text-ink/50">Tamanho</p>
