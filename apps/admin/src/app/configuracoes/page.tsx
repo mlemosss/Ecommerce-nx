@@ -69,6 +69,8 @@ export default function SettingsPage() {
         valueProps: settings.valueProps,
         gtmId: settings.gtmId || undefined,
         metaPixelId: settings.metaPixelId || undefined,
+        googleAdsId: settings.googleAdsId || undefined,
+        googleAdsConversionLabel: settings.googleAdsConversionLabel || undefined,
         emailFromName: settings.emailFromName,
         emailFromAddress: settings.emailFromAddress,
       });
@@ -396,9 +398,36 @@ export default function SettingsPage() {
               className="input-field"
             />
           </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Google Ads (ID da tag)</label>
+            <input
+              placeholder="AW-0000000000"
+              value={settings.googleAdsId ?? ''}
+              onChange={(e) => update('googleAdsId', e.target.value.trim())}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">
+              Google Ads (rótulo da conversão de compra)
+            </label>
+            <input
+              placeholder="AbC-D_efGhIjKlMnOp"
+              value={settings.googleAdsConversionLabel ?? ''}
+              onChange={(e) => update('googleAdsConversionLabel', e.target.value.trim())}
+              className="input-field"
+            />
+          </div>
           <p className="text-xs text-black/40">
-            Assim que preenchidos, os scripts do GTM e do Meta Pixel são carregados automaticamente em
-            todas as páginas da loja.
+            Assim que preenchidos, os scripts do GTM, do Meta Pixel e do Google Ads são carregados
+            automaticamente em todas as páginas da loja — sempre depois do aceite de cookies.
+          </p>
+          <p className="text-xs text-black/40">
+            Os dois campos do Google Ads vêm juntos: no painel do Google Ads, em Objetivos →
+            Conversões → sua ação de compra → &quot;Instalar a tag manualmente&quot;, aparece a linha{' '}
+            <span className="font-mono">send_to: &apos;AW-0000000000/AbC-D_efGhIjKlMnOp&apos;</span>. O
+            que está antes da barra é o ID da tag; o que está depois é o rótulo. Sem o rótulo, a tag
+            mede visita mas <span className="font-semibold">não registra a venda</span>.
           </p>
         </section>
 
