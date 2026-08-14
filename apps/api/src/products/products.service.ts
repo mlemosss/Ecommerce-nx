@@ -18,6 +18,24 @@ function slugify(text: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
+/** Cor e tamanho identificam a variação; o banco tem @@unique nos dois. */
+function variantKey(v: { color: string; size: string }): string {
+  return `${v.color.trim().toLowerCase()}|${v.size.trim().toLowerCase()}`;
+}
+
+/** Duas linhas com a mesma cor e tamanho batem no @@unique e viravam 500. */
+function assertNoDuplicateVariants(variants: { color: string; size: string }[]): void {
+  const seen = new Set<string>();
+  for (const v of variants) {
+    if (seen.has(variantKey(v))) {
+      throw new BadRequestException(
+        `A variação ${v.color} / ${v.size} está repetida. Deixe uma linha por cor e tamanho.`
+      );
+    }
+    seen.add(variantKey(v));
+  }
+}
+
 /** Sai com as fotos como URL pública, nunca como base64 (ver product-images.ts). */
 function withParsedImages<T extends { id: string; images: string }>(
   product: T
@@ -73,6 +91,7 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto) {
+    assertNoDuplicateVariants(dto.variants);
     const slug = await this.uniqueSlug(dto.name);
     const product = await this.prisma.product.create({
       data: {
@@ -115,7 +134,7 @@ export class ProductsService {
         : undefined;
 
     if (dto.variants) {
-      await this.prisma.productVariant.deleteMany({ where: { productId: id } });
+      await this.syncVariants(id, dto.variants);
     }
 
     const product = await this.prisma.product.update({
@@ -129,23 +148,63 @@ export class ProductsService {
         ...(dto.compareAtPrice !== undefined ? { compareAtPrice: dto.compareAtPrice } : {}),
         ...(images !== undefined ? { images: JSON.stringify(images) } : {}),
         ...(dto.active !== undefined ? { active: dto.active } : {}),
-        ...(dto.variants
-          ? {
-              variants: {
-                create: dto.variants.map((v) => ({
-                  color: v.color,
-                  size: v.size,
-                  stock: v.stock,
-                  price: v.price,
-                  costPrice: v.costPrice,
-                })),
-              },
-            }
-          : {}),
       },
       include: { variants: true },
     });
     return withParsedImages(product);
+  }
+
+  /**
+   * Acerta as variações do produto sem apagar e recriar.
+   *
+   * Apagar era o caminho curto, e quebrava: a variação vendida é referenciada
+   * por `sale_items`, o banco recusa o delete e o painel só via "Internal
+   * server error" — mesmo quando a edição era só o texto da descrição. Agora a
+   * variação que continua no formulário é *atualizada* (mantém o id e o
+   * histórico), a nova é criada e some só a que saiu do formulário.
+   */
+  private async syncVariants(
+    productId: string,
+    incoming: NonNullable<UpdateProductDto['variants']>
+  ) {
+    assertNoDuplicateVariants(incoming);
+    const seen = new Set(incoming.map(variantKey));
+
+    const existing = await this.prisma.productVariant.findMany({
+      where: { productId },
+      select: { id: true, color: true, size: true, _count: { select: { saleItems: true } } },
+    });
+    const byKey = new Map(existing.map((v) => [variantKey(v), v]));
+
+    // Sem histórico de venda, a variação removida vai embora. Com histórico,
+    // apagar levaria junto o item da venda: melhor recusar e explicar.
+    const removed = existing.filter((v) => !seen.has(variantKey(v)));
+    const sold = removed.find((v) => v._count.saleItems > 0);
+    if (sold) {
+      throw new ConflictException(
+        `A variação ${sold.color} / ${sold.size} já tem vendas registradas e não pode ser removida. ` +
+          'Deixe o estoque em 0 para tirá-la da loja sem perder o histórico.'
+      );
+    }
+
+    await this.prisma.$transaction([
+      ...(removed.length
+        ? [this.prisma.productVariant.deleteMany({ where: { id: { in: removed.map((v) => v.id) } } })]
+        : []),
+      ...incoming.map((v) => {
+        const match = byKey.get(variantKey(v));
+        const data = {
+          color: v.color,
+          size: v.size,
+          stock: v.stock,
+          price: v.price ?? null,
+          costPrice: v.costPrice ?? null,
+        };
+        return match
+          ? this.prisma.productVariant.update({ where: { id: match.id }, data })
+          : this.prisma.productVariant.create({ data: { productId, ...data } });
+      }),
+    ]);
   }
 
   async remove(id: string) {

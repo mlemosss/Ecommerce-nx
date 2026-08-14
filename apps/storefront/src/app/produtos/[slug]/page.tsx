@@ -10,6 +10,7 @@ import { FavoriteButton } from '../../../components/favorite-button';
 import { ProductReviews } from '../../../components/product-reviews';
 import { getProductReviews, getSettings } from '../../../lib/api';
 import { formatPrice } from '../../../lib/format';
+import { summarizeDescription } from '../../../lib/description';
 
 const STOREFRONT_URL = (
   process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://www.noexcusenx.com.br'
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   const title = `${product.name} — NO EXCUSE`;
   const description =
-    product.description?.trim() ||
+    (product.description?.trim() && summarizeDescription(product.description)) ||
     `${product.name} por ${formatPrice(product.price)}. ${product.colors.length > 1 ? `${product.colors.length} cores` : product.colors[0] ?? ''}${
       product.sizes.length ? ` · tamanhos ${product.sizes.join(', ')}` : ''
     }. Frete para todo o Brasil.`;

@@ -6,6 +6,7 @@ import type { Product } from '../lib/types';
 import { useCart } from '../lib/cart-context';
 import { getVariantPrice } from '../lib/products';
 import { formatInstallments, formatPrice } from '../lib/format';
+import { describeBlocks } from '../lib/description';
 import { SizeGuide } from './size-guide';
 
 export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?: string }) {
@@ -36,19 +37,49 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
         <p className="mt-1 text-sm text-ink/60">{formatInstallments(price)}</p>
       </div>
 
-      {/* Descrição vem das Configurações do produto. Linha em branco separa
-          parágrafos; vazia, a seção nem aparece (em vez de deixar um buraco). */}
+      {/* Descrição vem do cadastro do produto; vazia, a seção nem aparece.
+          O texto é lido por blocos, para a ficha técnica sair como lista e não
+          como parágrafo corrido:
+            • linha iniciada por -, • ou * vira item de lista (basta uma quebra
+              de linha entre os itens, não precisa de linha em branco);
+            • linha curta terminada em ":" vira título de seção;
+            • o resto é parágrafo.
+          A leitura está em lib/description.ts, porque a meta description da
+          página do produto usa o mesmo parser. */}
       {product.description?.trim() && (
-        <div className="space-y-3 border-t border-line pt-6">
+        <div className="space-y-4 border-t border-line pt-6">
           <p className="eyebrow text-ink/50">Descrição</p>
-          {product.description
-            .split(/\n{2,}/)
-            .filter(Boolean)
-            .map((paragraph, index) => (
+          {describeBlocks(product.description).map((block, index) => {
+            if (block.kind === 'list') {
+              return (
+                <ul key={index} className="space-y-1.5">
+                  {block.items.map((item, i) => (
+                    <li
+                      key={i}
+                      className="flex gap-2 text-sm leading-relaxed text-ink/75"
+                    >
+                      <span aria-hidden className="text-ink/30">
+                        —
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              );
+            }
+            if (block.kind === 'heading') {
+              return (
+                <p key={index} className="eyebrow pt-2 text-ink/50">
+                  {block.text}
+                </p>
+              );
+            }
+            return (
               <p key={index} className="text-sm leading-relaxed text-ink/75">
-                {paragraph}
+                {block.text}
               </p>
-            ))}
+            );
+          })}
         </div>
       )}
 

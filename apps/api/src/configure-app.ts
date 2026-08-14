@@ -1,6 +1,8 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 import { json, urlencoded } from 'express';
 import { requestContextMiddleware } from './common/request-context';
+import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 
 export function configureApp(app: INestApplication): void {
   app.setGlobalPrefix('api');
@@ -14,4 +16,6 @@ export function configureApp(app: INestApplication): void {
   app.use(json({ limit: '15mb' }));
   app.use(urlencoded({ extended: true, limit: '15mb' }));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  // Restrição do banco vira mensagem legível em vez de "Internal server error".
+  app.useGlobalFilters(new PrismaExceptionFilter(app.get(HttpAdapterHost)));
 }

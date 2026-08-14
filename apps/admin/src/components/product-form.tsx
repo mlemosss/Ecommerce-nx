@@ -162,12 +162,18 @@ export function ProductForm({ product }: ProductFormProps) {
 
       <div>
         <label className="mb-1 block text-sm font-semibold">Descrição</label>
+        {/* 14 linhas e redimensionável: a descrição real tem vários parágrafos e
+            uma caixa de 3 linhas obrigava a rolar às cegas para conferir o texto. */}
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          className="input-field"
+          rows={14}
+          className="input-field resize-y"
         />
+        <p className="mt-1 text-xs text-black/40">
+          Deixe uma <span className="font-semibold">linha em branco</span> entre os parágrafos: é ela
+          que separa os blocos na loja. Quebra de linha simples vira espaço e o texto sai grudado.
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
