@@ -15,6 +15,10 @@ module.exports = {
         line: '#e4e4e1',
         mist: '#d4d4d8',
         steel: '#a1a1aa',
+        // Maré: só na página inicial. `foam` é o claro que substituiu os blocos
+        // pretos; `tide` é a água da hero, usada pelo SVG do fundo.
+        foam: '#eef5f6',
+        tide: '#bcd8dd',
         // Nomes antigos: `volt` prometia um neon e sempre entregou cinza.
         // Mantidos como apelido para não quebrar telas que ainda os usam;
         // em código novo, use `mist`/`steel`.

@@ -3,6 +3,8 @@ import { categories, getProducts } from '../lib/products';
 import { ProductCard } from '../components/product-card';
 import { ProductImage } from '../components/product-image';
 import { NewsletterForm } from '../components/newsletter-form';
+import { SeaBackdrop } from '../components/sea-backdrop';
+import { SaleIntro } from '../components/sale-intro';
 import { TestimonialsSection } from '../components/testimonials-section';
 import { getSettings, getTestimonials } from '../lib/api';
 import { formatPrice } from '../lib/format';
@@ -32,6 +34,17 @@ export default async function HomePage() {
   const testimonials = await getTestimonials();
 
   const featured = products.slice(0, 8);
+
+  // Mesmo critério do selo de -X% no card e da página /sale: sem isso a
+  // abertura poderia anunciar um desconto que a vitrine não mostra.
+  const onSale = products.filter(
+    (p) => !p.priceRange && p.compareAtPrice && p.compareAtPrice > p.price
+  );
+  const biggestDiscount = onSale.reduce((max, p) => {
+    const off = Math.round((1 - p.price / (p.compareAtPrice as number)) * 100);
+    return off > max ? off : max;
+  }, 0);
+
   const showcase = products.filter((p) => p.images?.[0]);
   const [heroProduct, secondProduct] = showcase;
   const variantCount = products.reduce((sum, p) => sum + (p.variants?.length ?? 0), 0);
@@ -47,33 +60,42 @@ export default async function HomePage() {
 
   return (
     <div>
+      {/* Sem peça em promoção a abertura nem é montada: anunciar oferta que não
+          existe queima a credibilidade da próxima. */}
+      {biggestDiscount > 0 && (
+        <SaleIntro discount={biggestDiscount} itemCount={onSale.length} />
+      )}
+
       {/* ---------------- HERO ---------------- */}
-      <section className="bg-ink text-white">
-        <div className="container-page grid items-center gap-14 py-20 sm:py-24 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:py-28">
+      {/* Fundo de mar em vez do preto de antes: a primeira dobra era a parte
+          mais pesada da página e é justamente a que decide se a pessoa fica. */}
+      <section className="relative isolate text-ink">
+        <SeaBackdrop />
+        <div className="container-page relative grid items-center gap-14 py-20 sm:py-24 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:py-28">
           <div>
-            <p className="eyebrow flex items-center gap-4 text-white/60">
-              <span aria-hidden className="h-px w-10 bg-white/30" />
+            <p className="eyebrow flex items-center gap-4 text-ink/55">
+              <span aria-hidden className="h-px w-10 bg-ink/25" />
               {settings.heroTag}
             </p>
 
             <h1 className="display mt-8">
-              <span className="block text-white/45">{settings.heroTitleLine1}</span>
+              <span className="block text-ink/40">{settings.heroTitleLine1}</span>
               <span className="block">{settings.heroTitleHighlight}</span>
             </h1>
 
-            <p className="mt-8 max-w-md leading-relaxed text-white/70">{settings.heroSubtitle}</p>
+            <p className="mt-8 max-w-md leading-relaxed text-ink/70">{settings.heroSubtitle}</p>
 
             <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-              <Link href="/produtos" className="btn-invert">
+              <Link href="/produtos" className="btn-primary">
                 {settings.heroPrimaryButtonLabel}
               </Link>
-              <Link href="/produtos?categoria=leggings" className="link-ghost text-white">
+              <Link href="/produtos?categoria=leggings" className="link-ghost">
                 {settings.heroSecondaryButtonLabel}
                 <span aria-hidden>→</span>
               </Link>
             </div>
 
-            <p className="mt-10 border-t border-white/10 pt-6 text-xs uppercase tracking-[0.2em] text-white/50">
+            <p className="mt-10 border-t border-ink/10 pt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
               Frete grátis acima de {formatPrice(settings.freeShippingThreshold)}
             </p>
           </div>
@@ -94,11 +116,11 @@ export default async function HomePage() {
                 />
               </div>
               {heroProduct && (
-                <span className="mt-4 flex items-baseline justify-between gap-3 border-t border-white/15 pt-4">
+                <span className="mt-4 flex items-baseline justify-between gap-3 border-t border-ink/15 pt-4">
                   <span className="truncate text-sm font-semibold group-hover:underline">
                     {heroProduct.name}
                   </span>
-                  <span className="shrink-0 text-sm text-white/60">
+                  <span className="shrink-0 text-sm text-ink/60">
                     {formatPrice(heroProduct.price)}
                   </span>
                 </span>
@@ -118,9 +140,11 @@ export default async function HomePage() {
                 />
               </Link>
 
-              <div className="flex flex-1 flex-col justify-end border border-white/15 p-4">
+              {/* Fundo próprio: sem ele o cartão fica transparente sobre a
+                  onda e o número perde legibilidade justo no meio do azul. */}
+              <div className="flex flex-1 flex-col justify-end border border-ink/10 bg-white/70 p-4 backdrop-blur-sm">
                 <p className="text-3xl font-black leading-none tracking-tight">{variantCount}</p>
-                <p className="eyebrow mt-2 text-white/50">
+                <p className="eyebrow mt-2 text-ink/50">
                   variações
                   <br />
                   prontas p/ envio
@@ -224,26 +248,28 @@ export default async function HomePage() {
       </section>
 
       {/* ---------------- MANIFESTO + VANTAGENS ---------------- */}
-      <section className="bg-ink py-20 text-white sm:py-24">
+      {/* Era o segundo bloco preto da página. Em maré clara ele continua
+          separando a vitrine do resto, sem devolver o peso à rolagem. */}
+      <section className="border-y border-line bg-foam py-20 sm:py-24">
         <div className="container-page grid gap-14 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
           <div>
-            <p className="eyebrow text-white/50">Por que No Excuse</p>
+            <p className="eyebrow text-ink/50">Por que No Excuse</p>
             <h2 className="display-sm mt-6">
               Feito para o treino
               <br />
-              <span className="text-white/45">que você faz de verdade.</span>
+              <span className="text-ink/40">que você faz de verdade.</span>
             </h2>
           </div>
 
-          <ol className="border-t border-white/10">
+          <ol className="border-t border-ink/10">
             {settings.valueProps.map((item, index) => (
-              <li key={item.title} className="flex gap-6 border-b border-white/10 py-6">
-                <span className="eyebrow shrink-0 pt-1 text-white/40">
+              <li key={item.title} className="flex gap-6 border-b border-ink/10 py-6">
+                <span className="eyebrow shrink-0 pt-1 text-ink/35">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wide">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-white/60">{item.description}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-ink/60">{item.description}</p>
                 </div>
               </li>
             ))}

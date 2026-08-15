@@ -33,6 +33,17 @@ body {
   }
 }
 
+/* Entrada da abertura de promoção. Fica fora de @layer para o utilitário
+   `motion-safe:animate-[fadeIn_...]` encontrar o nome. */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @layer components {
   /* Botões: o hover sempre AUMENTA o peso visual (sombra + leve elevação).
      O padrão antigo clareava o botão no hover, deixando o CTA principal com
