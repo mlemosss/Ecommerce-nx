@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { parseImages, toPublicImageUrls } from '../products/product-images';
-import { effectivePrice, isOnSale } from '../products/pricing';
+import { buildCatalogItems, toCsv, type CatalogItem } from './catalog-item';
 
 const GRAPH_API_VERSION = 'v21.0';
 const GRAPH_BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
@@ -18,6 +17,17 @@ interface MetaConfig {
 export class MetaService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * URL pública da loja, usada no campo `link` de cada item.
+   *
+   * O padrão é o domínio real e não `localhost`: o feed é buscado pelo Meta a
+   * partir da internet, e um link para localhost reprovaria o catálogo inteiro
+   * sem deixar pista do motivo.
+   */
+  private storefrontUrl(): string {
+    return (process.env.STOREFRONT_URL || 'https://www.noexcusenx.com.br').replace(/\/$/, '');
+  }
+
   private getConfig(): MetaConfig | null {
     const accessToken = process.env.META_ACCESS_TOKEN;
     const catalogId = process.env.META_CATALOG_ID;
@@ -28,8 +38,45 @@ export class MetaService {
       catalogId,
       appId: process.env.META_APP_ID,
       appSecret: process.env.META_APP_SECRET,
-      storefrontUrl: process.env.STOREFRONT_URL || 'http://localhost:3000',
+      storefrontUrl: this.storefrontUrl(),
     };
+  }
+
+  /**
+   * Itens do catálogo a partir dos produtos ativos.
+   *
+   * Produto sem foto é separado e reportado por nome: o Meta rejeita item sem
+   * imagem, e um lote inteiro voltando com erro não diz qual peça faltou.
+   */
+  private async collectItems(): Promise<{ items: CatalogItem[]; withoutImage: string[] }> {
+    const products = await this.prisma.product.findMany({
+      where: { active: true },
+      include: { variants: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const withoutImage: string[] = [];
+    const storefrontUrl = this.storefrontUrl();
+
+    const items = products.flatMap((product) => {
+      const built = buildCatalogItems(product, storefrontUrl);
+      if (built.length === 0 && product.variants.length > 0) withoutImage.push(product.name);
+      return built;
+    });
+
+    return { items, withoutImage };
+  }
+
+  /**
+   * Feed CSV que o Meta busca sozinho, sem token nenhum.
+   *
+   * É o caminho que dispensa credencial: em vez de a loja empurrar por Graph
+   * API, o Commerce Manager agenda uma busca nesta URL e relê o catálogo de
+   * hora em hora. Estoque e promoção acompanham sem ninguém clicar em nada.
+   */
+  async feedCsv(): Promise<string> {
+    const { items } = await this.collectItems();
+    return toCsv(items);
   }
 
   isConfigured(): boolean {
@@ -77,51 +124,14 @@ export class MetaService {
       );
     }
 
-    const products = await this.prisma.product.findMany({
-      where: { active: true },
-      include: { variants: true },
-    });
+    const { items, withoutImage } = await this.collectItems();
 
-    // O Meta rejeita item sem imagem. Produto sem foto é separado e reportado,
-    // em vez de fazer o lote inteiro voltar com erro.
-    const withoutImage: string[] = [];
-
-    const requests = products.flatMap((product) => {
-      const images = toPublicImageUrls(product.id, parseImages(product.images));
-      if (images.length === 0) {
-        withoutImage.push(product.name);
-        return [];
-      }
-
-      const onSale = isOnSale(product);
-      // Em promoção, o Meta espera o preço cheio em `price` e o promocional em
-      // `sale_price` — é assim que ele mostra o "de/por" no anúncio.
-      const fullPrice = onSale ? (product.compareAtPrice as number) : product.price;
-
-      return product.variants.map((variant) => {
-        const unitPrice = effectivePrice(product, variant.price);
-        return {
-          method: 'UPDATE',
-          data: {
-            id: variant.id,
-            item_group_id: product.id,
-            title: product.name,
-            description: product.description || product.name,
-            availability: variant.stock > 0 ? 'in stock' : 'out of stock',
-            inventory: variant.stock,
-            condition: 'new',
-            price: `${(onSale ? fullPrice : unitPrice).toFixed(2)} BRL`,
-            ...(onSale ? { sale_price: `${unitPrice.toFixed(2)} BRL` } : {}),
-            link: `${config.storefrontUrl}/produtos/${product.slug}`,
-            image_link: images[0],
-            ...(images.length > 1 ? { additional_image_link: images.slice(1, 10).join(',') } : {}),
-            brand: 'No Excuse',
-            color: variant.color,
-            size: variant.size,
-          },
-        };
-      });
-    });
+    // Campo vazio é omitido: mandar `sale_price: ""` para um item fora de
+    // promoção faz o Meta interpretar como preço promocional inválido.
+    const requests = items.map((item) => ({
+      method: 'UPDATE',
+      data: Object.fromEntries(Object.entries(item).filter(([, value]) => value !== '')),
+    }));
 
     if (requests.length === 0) {
       throw new BadRequestException(

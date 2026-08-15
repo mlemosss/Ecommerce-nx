@@ -45,9 +45,7 @@ export default async function SalePage() {
           </h1>
           {onSale.length > 0 && (
             <p className="mt-8 max-w-md leading-relaxed text-white/70">
-              {onSale.length === 1
-                ? '1 peça selecionada, enquanto durar o estoque.'
-                : `${onSale.length} peças selecionadas, enquanto durar o estoque.`}
+              Últimas peças, aproveite! Promoção enquanto durar o estoque.
             </p>
           )}
         </div>
