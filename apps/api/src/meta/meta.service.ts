@@ -5,6 +5,9 @@ import { buildCatalogItems, toCsv, type CatalogItem } from './catalog-item';
 const GRAPH_API_VERSION = 'v21.0';
 const GRAPH_BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
+/** Domínio canônico da loja — o mesmo que o storefront declara na tag `canonical`. */
+const CANONICAL_STOREFRONT_URL = 'https://www.noexcusenx.com.br';
+
 interface MetaConfig {
   accessToken: string;
   catalogId: string;
@@ -23,9 +26,17 @@ export class MetaService {
    * O padrão é o domínio real e não `localhost`: o feed é buscado pelo Meta a
    * partir da internet, e um link para localhost reprovaria o catálogo inteiro
    * sem deixar pista do motivo.
+   *
+   * Hosts de deploy da Vercel são trocados pelo domínio canônico. `STOREFRONT_URL`
+   * na produção ainda aponta para `no-excuse-storefront.vercel.app`, que responde
+   * mas não é o domínio da marca: mandaria o tráfego do anúncio para um endereço
+   * que a própria loja declara como não-canônico na tag `canonical`, e o Meta
+   * cruza as duas coisas. Trocar a variável na Vercel continua sendo o certo —
+   * isto aqui só garante que o feed não saia errado enquanto isso não acontece.
    */
   private storefrontUrl(): string {
-    return (process.env.STOREFRONT_URL || 'https://www.noexcusenx.com.br').replace(/\/$/, '');
+    const configured = (process.env.STOREFRONT_URL || CANONICAL_STOREFRONT_URL).replace(/\/$/, '');
+    return /(^|\/\/)([^/]*\.)?vercel\.app$/i.test(configured) ? CANONICAL_STOREFRONT_URL : configured;
   }
 
   private getConfig(): MetaConfig | null {
