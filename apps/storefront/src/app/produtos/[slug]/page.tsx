@@ -88,6 +88,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           category={product.category}
           gradient={product.gradient}
           images={product.images}
+          productName={product.name}
           className="aspect-square w-full"
           label={product.isBestSeller ? 'Mais vendido' : undefined}
         />

@@ -9,11 +9,14 @@ interface ProductGalleryProps {
   category: Category;
   gradient: [string, string];
   images?: string[];
+  /** Nome do produto, para o texto alternativo das fotos. */
+  productName?: string;
   label?: string;
   className?: string;
 }
 
-export function ProductGallery({ category, gradient, images, label, className = '' }: ProductGalleryProps) {
+export function ProductGallery({ category, gradient, images, productName, label, className = '' }: ProductGalleryProps) {
+  const alt = productName ? `${productName} — NO EXCUSE` : undefined;
   const [active, setActive] = useState(0);
 
   if (!images || images.length === 0) {
@@ -26,6 +29,7 @@ export function ProductGallery({ category, gradient, images, label, className = 
         category={category}
         gradient={gradient}
         photo={images[active]}
+        alt={alt}
         label={label}
         className={className}
         fit="contain"
@@ -42,7 +46,7 @@ export function ProductGallery({ category, gradient, images, label, className = 
               }`}
               aria-label={`Ver foto ${index + 1}`}
             >
-              <Image src={src} alt="" fill sizes="64px" className="object-cover" />
+              <Image src={src} alt={productName ? `${productName}: foto ${index + 1}` : ''} fill sizes="64px" className="object-cover" />
             </button>
           ))}
         </div>

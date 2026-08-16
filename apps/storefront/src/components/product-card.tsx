@@ -42,6 +42,7 @@ export function ProductCard({
             category={product.category}
             gradient={product.gradient}
             photo={product.images?.[0]}
+            alt={`${product.name} — NO EXCUSE`}
             className="aspect-[4/5] w-full transition duration-700 group-hover:scale-[1.04]"
             label={discount === null ? badge : undefined}
           />

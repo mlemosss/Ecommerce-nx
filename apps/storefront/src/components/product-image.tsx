@@ -24,6 +24,13 @@ interface ProductImageProps {
   /** 'cover' recorta para preencher (padrão, usado nos cards); 'contain' mostra a foto
    * inteira enquadrada, sem zoom/corte (usado na página de produto). */
   fit?: 'cover' | 'contain';
+  /**
+   * Texto alternativo. Foto de produto NAO e decorativa: com alt vazio o
+   * crawler e o leitor de tela sao instruidos a ignorar, e uma loja de moda
+   * perde a busca por imagem inteira. Fica opcional porque o mesmo componente
+   * desenha o icone de categoria quando nao ha foto — ai vazio e o certo.
+   */
+  alt?: string;
   /** Carrega na frente da fila. Use só na foto do topo da página (o LCP). */
   priority?: boolean;
 }
@@ -34,6 +41,7 @@ export function ProductImage({
   className = '',
   label,
   photo,
+  alt,
   fit = 'cover',
   priority = false,
 }: ProductImageProps) {
@@ -42,7 +50,7 @@ export function ProductImage({
       {photo ? (
         <Image
           src={photo}
-          alt=""
+          alt={alt ?? ''}
           fill
           priority={priority}
           sizes="(max-width: 768px) 50vw, 25vw"

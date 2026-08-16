@@ -1,35 +1,34 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { categories } from '../../lib/products';
-import { useProducts } from '../../lib/products-context';
-import type { Category } from '../../lib/types';
+import type { Category, Product } from '../../lib/types';
 import { ProductCard } from '../../components/product-card';
 import { RecentlyViewed } from '../../components/recently-viewed';
 
 type SortOption = 'relevancia' | 'menor-preco' | 'maior-preco';
 
-export function ProductsPageClient() {
-  const { products } = useProducts();
-  const searchParams = useSearchParams();
+/**
+ * Os produtos chegam prontos do servidor, já filtrados pela categoria da URL.
+ * Antes esta tela buscava o catálogo sozinha e o robô do Google recebia
+ * "Carregando…". Aqui sobrou o que precisa mesmo ser interativo: a ordenação.
+ */
+export function ProductsPageClient({
+  products,
+  categoria: categoriaParam,
+}: {
+  products: Product[];
+  categoria: Category | null;
+}) {
   const router = useRouter();
-  const categoriaParam = searchParams.get('categoria') as Category | null;
   const [sort, setSort] = useState<SortOption>('relevancia');
 
   const filtered = useMemo(() => {
-    let list = categoriaParam
-      ? products.filter((p) => p.category === categoriaParam)
-      : products;
-
-    if (sort === 'menor-preco') {
-      list = [...list].sort((a, b) => a.price - b.price);
-    } else if (sort === 'maior-preco') {
-      list = [...list].sort((a, b) => b.price - a.price);
-    }
-
-    return list;
-  }, [categoriaParam, sort, products]);
+    if (sort === 'menor-preco') return [...products].sort((a, b) => a.price - b.price);
+    if (sort === 'maior-preco') return [...products].sort((a, b) => b.price - a.price);
+    return products;
+  }, [sort, products]);
 
   // Selo em todo card não distingue nada (o catálogo inteiro é recente).
   const everythingIsNew = filtered.length > 0 && filtered.every((p) => p.isNew);

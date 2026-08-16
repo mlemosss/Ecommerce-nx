@@ -21,7 +21,11 @@ export const metadata = {
   title: 'NO EXCUSE — Roupas de Academia',
   description:
     'Leggings, tops e shorts de academia com compressão certa e caimento que aguenta o treino. Frete para todo o Brasil.',
-  alternates: { canonical: '/' },
+  // Sem `alternates` aqui de propósito. Um canonical no layout vale para toda
+  // página que não sobrescreva — e só a página de produto sobrescrevia. O
+  // resultado era /produtos, /sale e /quem-somos declarando ao Google que são
+  // a home, o que é um pedido explícito para desindexá-las. Cada página traz o
+  // seu; sem canonical, o Google usa a própria URL, que é o certo.
   openGraph: {
     type: 'website',
     siteName: 'NO EXCUSE',
