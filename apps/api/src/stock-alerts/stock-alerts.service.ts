@@ -252,6 +252,20 @@ export class StockAlertsService {
   }
 
   /**
+   * Apaga um pedido de aviso.
+   *
+   * A lista alimenta a decisão do que produzir, então precisa poder ser
+   * limpa: cadastro de teste, e-mail digitado errado ou pedido que a pessoa
+   * desistiu contaminam a contagem se ficarem lá.
+   */
+  async remove(id: string) {
+    const alerta = await this.prisma.stockAlert.findUnique({ where: { id } });
+    if (!alerta) throw new NotFoundException('Pedido de aviso não encontrado');
+    await this.prisma.stockAlert.delete({ where: { id } });
+    return { success: true };
+  }
+
+  /**
    * A mesma lista, com a marca de quais combinações não existem no cadastro.
    * Fica separado da consulta acima para não fazer um SELECT por linha quando
    * a informação não for usada.

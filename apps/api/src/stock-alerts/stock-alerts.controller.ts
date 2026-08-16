@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { Public } from '../auth/public.decorator';
 import { StockAlertsService } from './stock-alerts.service';
 import { CreateStockAlertDto } from './dto/stock-alert.dto';
@@ -28,5 +28,11 @@ export class StockAlertsController {
   @Get()
   list() {
     return this.stockAlerts.listWithGaps();
+  }
+
+  /** Remove um pedido de aviso. Admin. */
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.stockAlerts.remove(id);
   }
 }

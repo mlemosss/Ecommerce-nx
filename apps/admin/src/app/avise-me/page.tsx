@@ -26,6 +26,22 @@ export default function AviseMePage() {
   const [alertas, setAlertas] = useState<StockAlert[] | null>(null);
   const [aba, setAba] = useState<Aba>('esperando');
   const [erro, setErro] = useState('');
+  const [excluindo, setExcluindo] = useState<string | null>(null);
+
+  async function excluir(a: StockAlert) {
+    if (!window.confirm(`Excluir o pedido de ${a.email} para ${a.productName} ${a.color}/${a.size}?`)) {
+      return;
+    }
+    setExcluindo(a.id);
+    try {
+      await api.delete(`/stock-alerts/${a.id}`);
+      setAlertas((prev) => (prev ?? []).filter((x) => x.id !== a.id));
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível excluir.');
+    } finally {
+      setExcluindo(null);
+    }
+  }
 
   useEffect(() => {
     api
@@ -175,9 +191,23 @@ export default function AviseMePage() {
                       · {a.color} · {a.size}
                     </p>
                   </div>
-                  <span className="shrink-0 text-[11px] text-black/40">
-                    {formatDate(a.notifiedAt ?? a.createdAt)}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <span className="text-[11px] text-black/40">
+                      {formatDate(a.notifiedAt ?? a.createdAt)}
+                    </span>
+                    {/* Sem isto, cadastro de teste ou e-mail digitado errado
+                        fica para sempre inflando a contagem de reposição. */}
+                    <button
+                      type="button"
+                      onClick={() => excluir(a)}
+                      disabled={excluindo === a.id}
+                      className="text-lg leading-none text-red-500 disabled:opacity-40"
+                      aria-label={`Excluir o pedido de ${a.email}`}
+                      title="Excluir"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
