@@ -491,7 +491,7 @@ export class OrdersService {
     const payingWithCard = dto.paymentMethod === 'cartao' && Boolean(dto.creditCard);
 
     if (!this.asaas.isConfigured()) {
-      await this.emailService.sendOrderConfirmed(order);
+      await this.emailService.sendOrderAwaitingPayment(order);
       return {
         order,
         paymentUrl: null,
@@ -558,10 +558,15 @@ export class OrdersService {
         });
       });
 
-      // Um e-mail só. Quando o cartão é aprovado na hora, a confirmação já
-      // avisa que o pagamento passou — mandar "pagamento aprovado" em seguida
-      // seria a segunda mensagem quase idêntica em segundos.
-      await this.emailService.sendOrderConfirmed(updated, { paid: paidNow });
+      // "Pedido confirmado" só sai quando existe pagamento. Enquanto não há, o
+      // e-mail é o de cobrança, com o caminho para pagar — dizer "confirmado"
+      // sem um centavo pago fazia a cliente achar que tinha terminado e a
+      // lojista achar que tinha vendido.
+      if (paidNow) {
+        await this.emailService.sendOrderConfirmed(updated, { paid: true });
+      } else {
+        await this.emailService.sendOrderAwaitingPayment(updated);
+      }
 
       // Pix: traz o QR Code para a loja exibir na própria tela de confirmação,
       // em vez de mandar o cliente para a fatura do Asaas. Se falhar, o link
@@ -596,8 +601,10 @@ export class OrdersService {
         throw new BadRequestException(message);
       }
 
-      // Pix/boleto: o pedido vale, só o link falhou. Avisa sem derrubar a compra.
-      await this.emailService.sendOrderConfirmed(order);
+      // Pix/boleto: o pedido vale, só o link falhou. Avisa sem derrubar a
+      // compra — e manda para Meus Pedidos, onde a segunda via é gerada na
+      // hora em que a pessoa abrir.
+      await this.emailService.sendOrderAwaitingPayment(order);
       return { order, paymentUrl: null, paid: false, paymentWarning: message };
     }
   }
@@ -641,6 +648,79 @@ export class OrdersService {
    * estoque. Com o update condicional, só a primeira encontra o pedido no
    * status anterior; a segunda vê `count === 0` e desiste sem efeito nenhum.
    */
+  /**
+   * Garante que um pedido em aberto tenha cobrança no Asaas, criando uma se
+   * faltar.
+   *
+   * Um pedido chega aqui sem cobrança por dois caminhos, os dois de propósito:
+   * a loja rodou sem `ASAAS_API_KEY`, ou a chamada ao Asaas falhou no checkout
+   * e o pedido foi mantido — no Pix e no boleto a compra vale, só o link
+   * falhou. O que faltava era a volta: o cliente abria "Pagar este pedido" e
+   * não havia nada para mostrar.
+   *
+   * A segunda via sai como UNDEFINED: os dados do cartão não são guardados em
+   * lugar nenhum, então não dá para repetir a forma original — e a fatura do
+   * Asaas com tipo indefinido é justamente a tela onde a pessoa escolhe entre
+   * Pix, boleto e cartão.
+   *
+   * Falha do Asaas não é erro para quem pediu: devolve o pedido como está e
+   * quem chamou mostra o caminho do WhatsApp.
+   */
+  async ensureOpenPayment(orderId: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Pedido não encontrado');
+
+    const semCobranca = !order.asaasPaymentId;
+    if (order.status !== 'aguardando_pagamento' || !semCobranca) return order;
+    if (!this.asaas.isConfigured()) {
+      this.logger.warn(
+        `Pedido ${order.orderNumber} está sem cobrança e o Asaas não está configurado.`
+      );
+      return order;
+    }
+
+    try {
+      const asaasCustomerId =
+        order.asaasCustomerId ??
+        (
+          await this.asaas.createCustomer({
+            name: order.customerName,
+            cpfCnpj: onlyDigits(order.customerDocument),
+            email: order.customerEmail,
+            mobilePhone: onlyDigits(order.customerPhone),
+          })
+        ).id;
+
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + PAYMENT_DUE_DAYS);
+
+      const payment = await this.asaas.createPayment({
+        customer: asaasCustomerId,
+        billingType: 'UNDEFINED',
+        value: order.total,
+        dueDate: dueDate.toISOString().slice(0, 10),
+        description: `Pedido ${order.orderNumber}`,
+        externalReference: order.id,
+      });
+
+      this.logger.log(`Segunda via de cobrança criada para o pedido ${order.orderNumber}.`);
+
+      return this.prisma.order.update({
+        where: { id: order.id },
+        data: {
+          asaasCustomerId,
+          asaasPaymentId: payment.id,
+          asaasInvoiceUrl: payment.invoiceUrl,
+        },
+      });
+    } catch (err) {
+      this.logger.error(
+        `Não foi possível criar a segunda via do pedido ${order.orderNumber}: ${err}`
+      );
+      return order;
+    }
+  }
+
   async markPaidByAsaasPaymentId(asaasPaymentId: string) {
     const order = await this.prisma.order.findFirst({
       where: { asaasPaymentId },

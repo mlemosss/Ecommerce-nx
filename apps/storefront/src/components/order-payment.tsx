@@ -119,10 +119,15 @@ export function OrderPaymentPanel({
                 </div>
               )}
 
+              {/* A API tenta gerar uma segunda via antes de responder, então
+                  chegar aqui significa que o meio de pagamento não respondeu.
+                  O pedido continua guardado — é isso que a pessoa precisa
+                  ouvir antes de achar que perdeu a compra. */}
               {!dados.pix && !dados.asaasInvoiceUrl && (
                 <p className="text-sm text-ink/70">
-                  Não encontramos um pagamento em aberto para este pedido. Fale com a gente pelo
-                  WhatsApp que a gente resolve.
+                  Não conseguimos gerar o pagamento agora. Seu pedido está guardado: tente de novo
+                  em alguns minutos ou chame a gente no WhatsApp, no botão verde aqui do lado, que a
+                  gente resolve na hora.
                 </p>
               )}
             </div>

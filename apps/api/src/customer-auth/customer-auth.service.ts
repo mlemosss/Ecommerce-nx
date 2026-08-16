@@ -11,7 +11,13 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { AsaasService } from '../asaas/asaas.service';
-import { RegisterCustomerDto, LoginCustomerDto, SetPasswordDto } from './dto/customer-auth.dto';
+import { OrdersService } from '../orders/orders.service';
+import {
+  RegisterCustomerDto,
+  LoginCustomerDto,
+  SetPasswordDto,
+  UpdateProfileDto,
+} from './dto/customer-auth.dto';
 import { parseImages, toPublicImageUrls } from '../products/product-images';
 
 /** Uma hora é bastante para clicar no link e curto para um token vazado. */
@@ -35,7 +41,10 @@ export class CustomerAuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly email: EmailService,
-    private readonly asaas: AsaasService
+    private readonly asaas: AsaasService,
+    // Segunda via de cobrança é regra de pedido, não de conta: quem sabe falar
+    // com o Asaas é o OrdersService.
+    private readonly orders: OrdersService
   ) {}
 
   private sign(customer: { id: string; email: string | null; name: string }) {
@@ -133,6 +142,70 @@ export class CustomerAuthService {
     return safeCustomer(customer);
   }
 
+  /**
+   * Cadastro completo de quem está logado, para a tela "Meus dados".
+   *
+   * Separado de `me()` porque `me()` alimenta o cabeçalho e o contexto do site
+   * inteiro — carregar endereço em toda página só para escrever "Olá, Isa" é
+   * mandar dado pessoal para uma tela que não vai usar.
+   */
+  async profile(customerId: string) {
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: customerId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        documentNumber: true,
+        zipCode: true,
+        street: true,
+        number: true,
+        complement: true,
+        neighborhood: true,
+        city: true,
+        state: true,
+      },
+    });
+    if (!customer) throw new NotFoundException('Cliente não encontrado');
+    return customer;
+  }
+
+  /**
+   * Atualiza o próprio cadastro.
+   *
+   * `where: { id: customerId }` vem do token, nunca do corpo — é o que impede
+   * alguém de mandar o id de outra pessoa e reescrever o endereço dela.
+   *
+   * Campo ausente fica como está; campo em branco vira null, para a pessoa
+   * conseguir apagar um complemento que não usa mais. E-mail e CPF não passam
+   * por aqui: os pedidos antigos guardam a própria cópia dos dois, então
+   * mudança aqui não reescreve nota nenhuma já emitida.
+   */
+  async updateProfile(customerId: string, dto: UpdateProfileDto) {
+    const limpo = <T extends string>(v?: string): string | null | undefined =>
+      v === undefined ? undefined : v.trim() === '' ? null : (v.trim() as T);
+
+    await this.prisma.customer.update({
+      where: { id: customerId },
+      data: {
+        // Nome em branco derrubaria a saudação e o rótulo dos pedidos; se veio
+        // vazio, mantém o que estava.
+        ...(dto.name?.trim() ? { name: dto.name.trim() } : {}),
+        phone: limpo(dto.phone),
+        zipCode: limpo(dto.zipCode),
+        street: limpo(dto.street),
+        number: limpo(dto.number),
+        complement: limpo(dto.complement),
+        neighborhood: limpo(dto.neighborhood),
+        city: limpo(dto.city),
+        state: limpo(dto.state),
+      },
+    });
+
+    return this.profile(customerId);
+  }
+
   async myOrders(customerId: string) {
     return this.prisma.order.findMany({
       where: { customerId },
@@ -153,7 +226,20 @@ export class CustomerAuthService {
    * ao pagamento de qualquer pedido da loja.
    */
   async orderPayment(customerId: string, orderId: string) {
-    const order = await this.prisma.order.findFirst({
+    const encontrado = await this.prisma.order.findFirst({
+      where: { id: orderId, customerId },
+      select: { id: true, status: true },
+    });
+    if (!encontrado) throw new NotFoundException('Pedido não encontrado');
+
+    // Pedido em aberto sem cobrança ganha uma segunda via aqui. Sem isso o
+    // painel abria vazio — foi o que aconteceu com quem comprou enquanto o
+    // Asaas não respondia.
+    if (encontrado.status === 'aguardando_pagamento') {
+      await this.orders.ensureOpenPayment(encontrado.id);
+    }
+
+    const order = await this.prisma.order.findFirstOrThrow({
       where: { id: orderId, customerId },
       select: {
         id: true,
@@ -165,16 +251,17 @@ export class CustomerAuthService {
         asaasInvoiceUrl: true,
       },
     });
-    if (!order) throw new NotFoundException('Pedido não encontrado');
 
     if (order.status !== 'aguardando_pagamento') {
       return { ...order, pix: null, alreadyPaid: order.status !== 'cancelado' };
     }
 
-    // Só Pix tem QR. Boleto e cartão seguem pela fatura do Asaas, que é onde a
-    // pessoa também consegue trocar a forma de pagamento.
+    // O QR é tentado em qualquer cobrança aberta, não só nas que nasceram Pix:
+    // a segunda via sai com tipo indefinido, e o Asaas serve Pix para ela
+    // também. Cobrança que não aceita Pix simplesmente devolve erro, e aí
+    // sobra o link da fatura.
     let pix: { encodedImage: string; payload: string; expirationDate?: string } | null = null;
-    if (order.paymentMethod === 'pix' && order.asaasPaymentId) {
+    if (order.asaasPaymentId) {
       try {
         pix = await this.asaas.getPixQrCode(order.asaasPaymentId);
       } catch (err) {

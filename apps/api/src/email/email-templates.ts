@@ -142,16 +142,73 @@ export function orderConfirmedTemplate(
   };
 }
 
-export function paymentApprovedTemplate(
+/**
+ * Pedido registrado, pagamento ainda não.
+ *
+ * Antes saía "Pedido confirmado!" no instante em que o pedido era gravado,
+ * mesmo sem um centavo pago. Quem não concluía o Pix ficava com um e-mail
+ * dizendo que estava tudo certo, e a lojista com um pedido parado que a cliente
+ * achava que já tinha comprado.
+ *
+ * O botão leva para Meus Pedidos, e não para uma fatura fixa: o link do Asaas
+ * vence, o da conta não, e é lá que a pessoa escolhe entre Pix, boleto e
+ * cartão. Se ela não tiver senha, a própria tela oferece o caminho.
+ */
+export function orderAwaitingPaymentTemplate(
   storeName: string,
   storefrontUrl: string,
   order: OrderForEmail
 ): EmailTemplate {
   const body = `
     <p style="color:#333;font-size:14px;line-height:1.6;">
+      Oi, ${firstName(order.customerName)}! Separamos o seu pedido
+      <strong>#${order.orderNumber}</strong>, mas ele ainda não está fechado: falta o pagamento.
+    </p>
+    <p style="color:#333;font-size:14px;line-height:1.6;">
+      É só clicar no botão abaixo, abrir o pedido em <strong>Meus Pedidos</strong> e escolher como
+      quer pagar — <strong>Pix, boleto ou cartão</strong>. O Pix cai na hora.
+    </p>
+    <p style="margin:24px 0;">
+      <a href="${storefrontUrl}/conta"
+         style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;
+                padding:14px 28px;font-size:12px;font-weight:bold;letter-spacing:2px;
+                text-transform:uppercase;">Pagar meu pedido</a>
+    </p>
+    ${itemsTable(order.items)}
+    <div style="margin-top:16px;font-size:14px;color:#333;">
+      <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>${money(order.subtotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>Frete</span><span>${money(order.shipping)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:8px;"><span>Total</span><span>${money(order.total)}</span></div>
+    </div>
+    <p style="color:#888;font-size:12px;line-height:1.6;margin-top:20px;">
+      As peças ficam guardadas para você, mas só saem do estoque quando o pagamento é confirmado.
+      Qualquer dúvida, chama a gente no WhatsApp.
+    </p>`;
+
+  return {
+    subject: `Seu pedido está quase finalizado — falta o pagamento`,
+    html: layout(storeName, 'Falta pouco!', body, storefrontUrl),
+  };
+}
+
+export function paymentApprovedTemplate(
+  storeName: string,
+  storefrontUrl: string,
+  order: OrderForEmail
+): EmailTemplate {
+  // Leva a nota do pedido: agora que a confirmação só sai depois do pagamento,
+  // este é o e-mail que a cliente vai guardar como comprovante do que comprou.
+  const body = `
+    <p style="color:#333;font-size:14px;line-height:1.6;">
       Boa, ${firstName(order.customerName)}! O pagamento do pedido <strong>#${order.orderNumber}</strong> foi
       confirmado e ele já entrou em preparação. Assim que sair pra entrega, avisamos por aqui.
-    </p>`;
+    </p>
+    ${itemsTable(order.items)}
+    <div style="margin-top:16px;font-size:14px;color:#333;">
+      <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>${money(order.subtotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>Frete</span><span>${money(order.shipping)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:8px;"><span>Total pago</span><span>${money(order.total)}</span></div>
+    </div>`;
   return {
     subject: `Pagamento aprovado — pedido #${order.orderNumber}`,
     html: layout(storeName, 'Pagamento aprovado', body, storefrontUrl),

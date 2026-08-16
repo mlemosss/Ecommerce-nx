@@ -8,6 +8,7 @@ import {
   stockAlertWelcomeTemplate,
   boletoExpiredTemplate,
   orderConfirmedTemplate,
+  orderAwaitingPaymentTemplate,
   orderShippedTemplate,
   OrderForEmail,
   passwordSetupTemplate,
@@ -110,6 +111,20 @@ export class EmailService {
   ): Promise<void> {
     const { storeName } = await this.getSender();
     const template = orderConfirmedTemplate(storeName, this.getStorefrontUrl(), order, options);
+    await this.sendIfEnabled('pedido_confirmado', order.customerEmail, template);
+  }
+
+  /**
+   * "Falta o pagamento" — substitui a confirmação enquanto ninguém pagou.
+   *
+   * Usa a mesma preferência de `pedido_confirmado`: para a lojista é o mesmo
+   * aviso de pedido novo, só que na etapa em que ele de fato está.
+   */
+  async sendOrderAwaitingPayment(
+    order: OrderForEmail & { customerEmail: string }
+  ): Promise<void> {
+    const { storeName } = await this.getSender();
+    const template = orderAwaitingPaymentTemplate(storeName, this.getStorefrontUrl(), order);
     await this.sendIfEnabled('pedido_confirmado', order.customerEmail, template);
   }
 

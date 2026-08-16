@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { Public } from '../auth/public.decorator';
 import { CustomerAccessible } from '../auth/customer-accessible.decorator';
 import { LoginThrottleGuard } from '../auth/guards/login-throttle.guard';
@@ -8,6 +8,7 @@ import {
   LoginCustomerDto,
   SetPasswordDto,
   ToggleFavoriteDto,
+  UpdateProfileDto,
 } from './dto/customer-auth.dto';
 
 interface CustomerRequest {
@@ -42,6 +43,19 @@ export class CustomerAuthController {
   @Get('me')
   me(@Req() req: CustomerRequest) {
     return this.customerAuthService.me(req.user.sub);
+  }
+
+  /** Meus dados, com endereço — a tela onde a pessoa confere e corrige. */
+  @CustomerAccessible()
+  @Get('me/profile')
+  profile(@Req() req: CustomerRequest) {
+    return this.customerAuthService.profile(req.user.sub);
+  }
+
+  @CustomerAccessible()
+  @Patch('me/profile')
+  updateProfile(@Req() req: CustomerRequest, @Body() dto: UpdateProfileDto) {
+    return this.customerAuthService.updateProfile(req.user.sub, dto);
   }
 
   @CustomerAccessible()

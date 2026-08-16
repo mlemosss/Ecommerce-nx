@@ -1,6 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
-type AsaasBillingType = 'PIX' | 'CREDIT_CARD' | 'BOLETO';
+/**
+ * UNDEFINED deixa a escolha da forma de pagamento com o cliente, na fatura do
+ * Asaas. É o tipo certo para uma segunda via: sem os dados do cartão, que nunca
+ * são guardados, não dá para repetir a cobrança original.
+ */
+type AsaasBillingType = 'PIX' | 'CREDIT_CARD' | 'BOLETO' | 'UNDEFINED';
 
 interface AsaasConfig {
   apiKey: string;
