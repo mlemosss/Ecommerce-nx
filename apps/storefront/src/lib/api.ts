@@ -146,12 +146,21 @@ export interface CouponValidationResult {
   discountAmount?: number;
 }
 
-export async function validateCoupon(code: string, orderTotal: number): Promise<CouponValidationResult> {
+/**
+ * `customerDocument` só é usado pelos cupons de primeira compra, para conferir
+ * se o CPF já tem pedido. Vai vazio quando o campo ainda não foi preenchido — a
+ * API responde pedindo o CPF em vez de aprovar às cegas.
+ */
+export async function validateCoupon(
+  code: string,
+  orderTotal: number,
+  customerDocument?: string
+): Promise<CouponValidationResult> {
   try {
     const res = await fetch(`${API_URL}/coupons/validate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, orderTotal }),
+      body: JSON.stringify({ code, orderTotal, customerDocument }),
     });
     if (!res.ok) return { valid: false, message: 'Não foi possível validar o cupom agora.' };
     return await res.json();

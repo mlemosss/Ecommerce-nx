@@ -168,6 +168,10 @@ model Coupon {
   minOrderValue  Float?
   usageLimit     Int?
   usageCount     Int       @default(0)
+  // Cupom de estreia: vale uma vez por CPF. A checagem é pelo documento, não
+  // pelo e-mail nem pela conta — criar e-mail novo custa segundos, e o cupom
+  // de primeira compra viraria desconto permanente para quem descobrisse.
+  firstPurchaseOnly Boolean @default(false)
   active         Boolean   @default(true)
   startsAt       DateTime?
   expiresAt      DateTime?

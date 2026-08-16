@@ -30,6 +30,11 @@ export class CreateCouponDto {
   @Min(1)
   usageLimit?: number;
 
+  /** Vale uma vez por CPF. Ver a checagem em coupons.service.ts. */
+  @IsOptional()
+  @IsBoolean()
+  firstPurchaseOnly?: boolean;
+
   @IsOptional()
   @IsBoolean()
   active?: boolean;
@@ -67,6 +72,11 @@ export class UpdateCouponDto {
   @Min(1)
   usageLimit?: number;
 
+  /** Vale uma vez por CPF. Ver a checagem em coupons.service.ts. */
+  @IsOptional()
+  @IsBoolean()
+  firstPurchaseOnly?: boolean;
+
   @IsOptional()
   @IsBoolean()
   active?: boolean;
@@ -87,4 +97,9 @@ export class ValidateCouponDto {
   @IsNumber()
   @Min(0)
   orderTotal!: number;
+
+  /** CPF de quem está comprando. Exigido pelos cupons de primeira compra. */
+  @IsOptional()
+  @IsString()
+  customerDocument?: string;
 }

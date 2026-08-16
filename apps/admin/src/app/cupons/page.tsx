@@ -14,6 +14,7 @@ export default function CouponsPage() {
   const [discountValue, setDiscountValue] = useState('');
   const [minOrderValue, setMinOrderValue] = useState('');
   const [usageLimit, setUsageLimit] = useState('');
+  const [firstPurchaseOnly, setFirstPurchaseOnly] = useState(false);
   const [expiresAt, setExpiresAt] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -35,12 +36,14 @@ export default function CouponsPage() {
         discountValue: Number(discountValue),
         minOrderValue: minOrderValue ? Number(minOrderValue) : undefined,
         usageLimit: usageLimit ? Number(usageLimit) : undefined,
+        firstPurchaseOnly,
         expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
       });
       setCode('');
       setDiscountValue('');
       setMinOrderValue('');
       setUsageLimit('');
+      setFirstPurchaseOnly(false);
       setExpiresAt('');
       setShowForm(false);
       load();
@@ -144,6 +147,21 @@ export default function CouponsPage() {
                 className="input-field"
               />
             </div>
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={firstPurchaseOnly}
+                onChange={(e) => setFirstPurchaseOnly(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0"
+              />
+              <span>
+                <span className="font-semibold">Só na primeira compra</span>
+                <span className="mt-0.5 block text-xs text-black/50">
+                  Vale uma vez por CPF. Quem já tem pedido na loja recebe a recusa com o motivo.
+                  Pedido cancelado não gasta a estreia.
+                </span>
+              </span>
+            </label>
             <button type="submit" disabled={submitting} className="btn-primary w-full">
               {submitting ? 'Salvando...' : 'Salvar cupom'}
             </button>
@@ -166,6 +184,7 @@ export default function CouponsPage() {
                     Usado {coupon.usageCount}
                     {coupon.usageLimit ? `/${coupon.usageLimit}` : ''} vez(es)
                     {coupon.expiresAt ? ` · expira em ${formatDate(coupon.expiresAt)}` : ''}
+                    {coupon.firstPurchaseOnly ? ' · só na 1ª compra (1 por CPF)' : ''}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

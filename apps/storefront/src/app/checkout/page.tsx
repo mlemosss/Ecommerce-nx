@@ -131,7 +131,8 @@ export default function CheckoutPage() {
     setApplyingCoupon(true);
     setCouponMessage('');
     try {
-      const result = await validateCoupon(couponCode.trim(), subtotal);
+      // O CPF vai junto porque o cupom de estreia é conferido por documento.
+      const result = await validateCoupon(couponCode.trim(), subtotal, document);
       if (result.valid && result.discountAmount !== undefined) {
         setAppliedDiscount(result.discountAmount);
         setAppliedCode(result.code ?? couponCode.trim().toUpperCase());

@@ -121,6 +121,7 @@ export interface Coupon {
   discountValue: number;
   minOrderValue: number | null;
   usageLimit: number | null;
+  firstPurchaseOnly: boolean;
   usageCount: number;
   active: boolean;
   startsAt: string | null;

@@ -28,6 +28,7 @@ export class CouponsService {
         discountValue: dto.discountValue,
         minOrderValue: dto.minOrderValue,
         usageLimit: dto.usageLimit,
+        firstPurchaseOnly: dto.firstPurchaseOnly ?? false,
         active: dto.active ?? true,
         startsAt: dto.startsAt ? new Date(dto.startsAt) : undefined,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined,
@@ -54,6 +55,7 @@ export class CouponsService {
         ...(dto.discountValue !== undefined ? { discountValue: dto.discountValue } : {}),
         ...(dto.minOrderValue !== undefined ? { minOrderValue: dto.minOrderValue } : {}),
         ...(dto.usageLimit !== undefined ? { usageLimit: dto.usageLimit } : {}),
+        ...(dto.firstPurchaseOnly !== undefined ? { firstPurchaseOnly: dto.firstPurchaseOnly } : {}),
         ...(dto.active !== undefined ? { active: dto.active } : {}),
         ...(dto.startsAt !== undefined ? { startsAt: new Date(dto.startsAt) } : {}),
         ...(dto.expiresAt !== undefined ? { expiresAt: new Date(dto.expiresAt) } : {}),
@@ -67,12 +69,49 @@ export class CouponsService {
     return { success: true };
   }
 
+  /**
+   * Já existe pedido no CPF informado?
+   *
+   * A comparação é pelo documento e não pelo e-mail: e-mail novo custa
+   * segundos, e um cupom de primeira compra viraria desconto permanente para
+   * quem percebesse. Guardamos o CPF só com dígitos, então a busca normaliza
+   * antes de comparar.
+   *
+   * Sem CPF informado, não dá para afirmar que é a primeira compra. Nesse caso
+   * o cupom é recusado — recusar quem não se identificou é chato; liberar para
+   * quem não se identificou é o buraco inteiro.
+   */
+  private async jaComprou(documentNumber: string | undefined): Promise<boolean> {
+    const documento = (documentNumber ?? '').replace(/\D/g, '');
+    if (!documento) return true;
+
+    const pedido = await this.prisma.order.findFirst({
+      where: {
+        customer: { documentNumber: documento },
+        // Pedido cancelado não gasta a estreia: quem teve o boleto vencido
+        // ou o cartão recusado não chegou a comprar.
+        status: { notIn: ['cancelado'] },
+      },
+      select: { id: true },
+    });
+    return pedido !== null;
+  }
+
   async validate(dto: ValidateCouponDto) {
     const code = dto.code.trim().toUpperCase();
     const coupon = await this.prisma.coupon.findUnique({ where: { code } });
 
     if (!coupon || !coupon.active) {
       return { valid: false, message: 'Cupom inválido ou inativo.' };
+    }
+
+    if (coupon.firstPurchaseOnly && (await this.jaComprou(dto.customerDocument))) {
+      return {
+        valid: false,
+        message: (dto.customerDocument ?? '').replace(/\D/g, '')
+          ? 'Este cupom vale só na primeira compra, e este CPF já tem pedido na loja.'
+          : 'Preencha o CPF para usar este cupom — ele vale só na primeira compra.',
+      };
     }
 
     const now = new Date();

@@ -322,7 +322,8 @@ export class OrdersService {
   private async resolveDiscount(
     code: string | undefined,
     subtotal: number,
-    items: { quantity: number }[]
+    items: { quantity: number }[],
+    customerDocument?: string
   ): Promise<number> {
     const settings = await this.settings.get().catch(() => null);
     const tiers = parseTiers(settings?.progressiveDiscount);
@@ -333,7 +334,14 @@ export class OrdersService {
     let coupon = 0;
     let couponCode: string | null = null;
     if (code?.trim()) {
-      const result = await this.coupons.validate({ code, orderTotal: subtotal });
+      // O CPF vai junto: cupom de primeira compra é conferido aqui, no
+      // servidor, e não só na tela. Sem isto bastava um POST direto para
+      // aplicar o desconto de estreia em todo pedido.
+      const result = await this.coupons.validate({
+        code,
+        orderTotal: subtotal,
+        customerDocument,
+      });
       if ('discountAmount' in result && result.valid) {
         coupon = round2(Math.min(subtotal, result.discountAmount));
         couponCode = result.code;
@@ -390,7 +398,12 @@ export class OrdersService {
       // pessoa comprar qualquer peça pelo valor que quisesse.
       const items = await this.priceItems(tx, dto.items);
       const subtotal = round2(items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0));
-      const discount = await this.resolveDiscount(dto.couponCode, subtotal, items);
+      const discount = await this.resolveDiscount(
+        dto.couponCode,
+        subtotal,
+        items,
+        dto.customerDocument
+      );
       const shipping = await this.resolveShipping(dto, subtotal, items);
       const total = round2(Math.max(0, subtotal + shipping - discount));
 
