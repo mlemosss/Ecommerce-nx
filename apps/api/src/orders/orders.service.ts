@@ -731,16 +731,34 @@ export class OrdersService {
         externalReference: order.id,
       });
 
-      this.logger.log(`Segunda via de cobrança criada para o pedido ${order.orderNumber}.`);
-
-      return this.prisma.order.update({
-        where: { id: order.id },
+      // Grava só se o pedido continuar sem cobrança.
+      //
+      // Dois cliques em "Pagar este pedido", ou duas abas, chegam juntos aqui:
+      // os dois leem `asaasPaymentId` nulo e os dois criam cobrança. Com um
+      // update simples, a segunda sobrescrevia a primeira — e se a cliente
+      // tivesse pago a que perdeu, o webhook chegaria com um id que o pedido
+      // nao tem mais e o pagamento sumiria. A condição no `where` faz a
+      // segunda achar zero linhas e desistir.
+      const { count } = await this.prisma.order.updateMany({
+        where: { id: order.id, asaasPaymentId: null },
         data: {
           asaasCustomerId,
           asaasPaymentId: payment.id,
           asaasInvoiceUrl: payment.invoiceUrl,
         },
       });
+
+      if (count === 0) {
+        // A cobrança recém-criada fica órfã e vence sozinha. É inofensiva: o
+        // link dela nunca chegou a sair daqui.
+        this.logger.warn(
+          `Cobrança concorrente no pedido ${order.orderNumber}. Mantida a que gravou primeiro.`
+        );
+      } else {
+        this.logger.log(`Segunda via de cobrança criada para o pedido ${order.orderNumber}.`);
+      }
+
+      return this.prisma.order.findUniqueOrThrow({ where: { id: order.id } });
     } catch (err) {
       this.logger.error(
         `Não foi possível criar a segunda via do pedido ${order.orderNumber}: ${err}`
