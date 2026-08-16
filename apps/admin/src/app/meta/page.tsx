@@ -109,12 +109,22 @@ export default function MetaIntegrationPage() {
           </div>
         )}
 
+        {/* O aviso anterior dizia que os produtos não tinham foto. Tinham: as
+            imagens entraram e o feed as entrega há semanas. Aviso velho é pior
+            que aviso nenhum — manda procurar problema onde não há. */}
         <div className="card mt-6 opacity-80">
-          <p className="text-xs font-semibold uppercase tracking-wide text-black/50">Importante</p>
-          <p className="mt-2 text-xs text-black/60">
-            Os produtos ainda não têm fotos reais cadastradas — o Meta pode rejeitar itens sem
-            <code> image_link</code>. Assim que houver imagens reais, elas serão incluídas
-            automaticamente na sincronização.
+          <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
+            Feed automático × envio pela API
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-black/60">
+            O Meta já busca sozinho o arquivo do catálogo no horário agendado, e é assim que ele se
+            mantém atualizado hoje. Este botão faz o contrário: <strong>empurra</strong> os produtos
+            na hora, sem esperar o próximo ciclo. Serve para quando você acabou de mudar preço ou
+            estoque e quer o anúncio certo em segundos.
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-black/60">
+            Produto sem foto fica de fora: o Meta recusa item sem <code>image_link</code>. Se algum
+            for pulado, o nome dele aparece no resultado.
           </p>
         </div>
       </div>
