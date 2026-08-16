@@ -9,6 +9,8 @@ export interface StoreSettings {
   storeName: string;
   contactEmail: string | null;
   contactWhatsapp: string | null;
+  legalName: string | null;
+  cnpj: string | null;
   shippingFee: number;
   freeShippingThreshold: number;
   pixEnabled: boolean;
@@ -45,6 +47,8 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   storeName: 'NO EXCUSE',
   contactEmail: null,
   contactWhatsapp: null,
+  legalName: null,
+  cnpj: null,
   shippingFee: 19.9,
   // Só vale se a API não responder; deve espelhar o que está em Configurações,
   // senão a loja promete um frete grátis diferente do que vai praticar.

@@ -44,6 +44,8 @@ export default function SettingsPage() {
         storeName: settings.storeName,
         contactEmail: settings.contactEmail || undefined,
         contactWhatsapp: settings.contactWhatsapp || undefined,
+        legalName: settings.legalName || undefined,
+        cnpj: settings.cnpj || undefined,
         shippingFee: settings.shippingFee,
         freeShippingThreshold: settings.freeShippingThreshold,
         aboutHeadline: settings.aboutHeadline || undefined,
@@ -129,6 +131,32 @@ export default function SettingsPage() {
               className="input-field"
             />
           </div>
+          {/* Razão social e CNPJ aparecem no rodapé do site. O Código de Defesa
+              do Consumidor exige a identificação de quem vende; e, na prática,
+              rodapé sem CNPJ derruba confiança em loja que a pessoa não conhece. */}
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Razão social</label>
+            <input
+              placeholder="No Excuse Comércio de Artigos Esportivos LTDA"
+              value={settings.legalName ?? ''}
+              onChange={(e) => update('legalName', e.target.value)}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold">CNPJ</label>
+            <input
+              placeholder="00.000.000/0001-00"
+              value={settings.cnpj ?? ''}
+              onChange={(e) => update('cnpj', e.target.value)}
+              className="input-field"
+            />
+            <p className="mt-1 text-xs text-black/45">
+              Aparece no rodapé do site. Enquanto estiver vazio, o rodapé não mostra nada — é
+              melhor não ter do que ter errado.
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-sm font-semibold">Frete (R$)</label>

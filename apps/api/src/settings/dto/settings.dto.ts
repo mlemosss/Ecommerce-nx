@@ -173,6 +173,15 @@ export class UpdateSettingsDto {
   @Min(1)
   packageLengthCm?: number;
 
+  /** Razão social e CNPJ do rodapé. Exigidos pelo CDC em loja virtual. */
+  @IsOptional()
+  @IsString()
+  legalName?: string;
+
+  @IsOptional()
+  @IsString()
+  cnpj?: string;
+
   @IsOptional()
   @IsString()
   gtmId?: string;

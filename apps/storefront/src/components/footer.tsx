@@ -155,6 +155,18 @@ export function Footer({ settings }: { settings: StoreSettings }) {
             <p className="mt-2 text-sm text-white/55">
               São Paulo/SP — nosso estoque fica em Higienópolis.
             </p>
+
+            {/* Identificação de quem vende: o CDC exige, e rodapé sem CNPJ
+                derruba a confiança em loja que a pessoa ainda não conhece.
+                Some inteiro enquanto os campos estiverem vazios — CNPJ de
+                exemplo é pior do que CNPJ nenhum. */}
+            {(settings.legalName || settings.cnpj) && (
+              <p className="mt-2 text-xs text-white/45">
+                {settings.legalName}
+                {settings.legalName && settings.cnpj ? ' · ' : ''}
+                {settings.cnpj && `CNPJ ${settings.cnpj}`}
+              </p>
+            )}
           </div>
 
           <p className="text-[11px] uppercase tracking-[0.14em] text-white/60">

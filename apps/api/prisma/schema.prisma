@@ -282,7 +282,7 @@ model OrderItem {
 
 model StoreSettings {
   id                     String   @id @default("singleton")
-  storeName              String   @default("No Excuse")
+  storeName              String   @default("NO EXCUSE")
   contactEmail           String?
   contactWhatsapp        String?
   shippingFee            Float    @default(19.9)
@@ -333,6 +333,11 @@ model StoreSettings {
   packageHeightCm        Int      @default(10)
   packageWidthCm         Int      @default(16)
   packageLengthCm        Int      @default(20)
+  // Identificacao da empresa, exigida pelo CDC no rodape de loja virtual.
+  // Ficam vazios ate a lojista preencher: mostrar um CNPJ de exemplo e pior
+  // do que nao mostrar nenhum.
+  legalName              String?
+  cnpj                   String?
   gtmId                  String?
   metaPixelId             String?
   emailFromName          String   @default("NO EXCUSE")

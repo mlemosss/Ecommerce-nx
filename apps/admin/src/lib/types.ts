@@ -184,6 +184,8 @@ export interface StoreSettings {
   storeName: string;
   contactEmail: string | null;
   contactWhatsapp: string | null;
+  legalName: string | null;
+  cnpj: string | null;
   shippingFee: number;
   freeShippingThreshold: number;
   /** Página "Quem somos" da loja. */
