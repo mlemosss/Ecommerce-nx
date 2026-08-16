@@ -195,7 +195,14 @@ export interface CreateOrderInput {
   couponCode?: string;
   total: number;
   paymentMethod: 'pix' | 'cartao' | 'boleto';
-  /** Cartão: vai por HTTPS direto para a API e de lá para o Asaas. Nada é guardado. */
+  /**
+   * Cartão: vai por HTTPS para a API da loja e de lá para o Asaas. Nada é
+   * gravado — não há campo de cartão no schema nem log com o número.
+   *
+   * Passar pelo próprio servidor coloca a loja no escopo do PCI-DSS, que é o
+   * que a tokenização no navegador existe para evitar. Enquanto isso não
+   * mudar, o texto do checkout descreve este caminho como ele é.
+   */
   creditCard?: {
     holderName: string;
     number: string;

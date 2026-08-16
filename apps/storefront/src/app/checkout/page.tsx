@@ -622,8 +622,13 @@ export default function CheckoutPage() {
                 )}
 
                 <p className="text-xs leading-relaxed text-ink/60">
-                  Os dados do cartão são enviados por conexão segura direto para a Asaas, nossa
-                  processadora de pagamentos, e não ficam guardados na loja.
+                  {/* Dizia "direto para a Asaas", e não é o que acontece: os dados
+                      passam pelo servidor da loja antes de seguir para a
+                      processadora. Não são gravados em lugar nenhum — não existe
+                      campo de cartão no banco nem em log —, mas a frase antiga
+                      descrevia um caminho que o código não faz. */}
+                  Os dados do cartão trafegam por conexão segura, são usados apenas para cobrar
+                  este pedido pela Asaas, nossa processadora de pagamentos, e não são guardados.
                 </p>
               </div>
             )}
