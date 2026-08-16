@@ -177,6 +177,38 @@ export class OrdersService {
     return DEBITED_STATUSES.has(status);
   }
 
+  /**
+   * Ajusta o uso do cupom quando a mudança de status muda se o pedido vale.
+   *
+   * A janela é a mesma do estoque (`pago`/`enviado`): enquanto o pedido segura
+   * a peça, ele também consome um uso do cupom. Antes o uso era contado na
+   * criação do pedido e nunca devolvido — e `POST /orders` é público, então
+   * qualquer pessoa queimava o `usageLimit` de um cupom criando pedidos que
+   * nunca pagaria, sem precisar de token nenhum. Um cupom de 50 usos morria em
+   * minutos com 3 vendas reais.
+   *
+   * Os três caminhos que mexem em status (webhook de pagamento, webhook de
+   * cancelamento e a tela do admin) passam por aqui, para não divergirem.
+   */
+  private async syncCouponUsage(
+    tx: Prisma.TransactionClient,
+    order: { couponCode: string | null; status: string },
+    nextStatus: string
+  ) {
+    if (!order.couponCode) return;
+
+    const before = DEBITED_STATUSES.has(order.status);
+    const after = DEBITED_STATUSES.has(nextStatus);
+    if (before === after) return;
+
+    await tx.coupon.updateMany({
+      // Na devolução, o `gt: 0` evita contagem negativa se algo já tiver
+      // zerado o contador por fora.
+      where: after ? { code: order.couponCode } : { code: order.couponCode, usageCount: { gt: 0 } },
+      data: after ? { usageCount: { increment: 1 } } : { usageCount: { decrement: 1 } },
+    });
+  }
+
   /** Ajusta o estoque quando a mudança de status muda quem segura a peça. */
   private async syncStock(
     tx: Prisma.TransactionClient,
@@ -319,12 +351,25 @@ export class OrdersService {
    * maior dos dois. Somar os dois abriria a porta para 30% + cupom, o que come
    * a margem sem ninguém decidir por isso.
    */
+  /**
+   * Desconto do pedido e qual cupom, se algum, foi de fato o aplicado.
+   *
+   * Progressivo e cupom não somam: vale o maior dos dois. O `appliedCoupon` só
+   * vem preenchido quando o cupom ganhou — antes o pedido gravava o código
+   * digitado sempre que houvesse qualquer desconto, então um cupom expirado
+   * aparecia como aplicado num pedido cujo desconto veio da faixa de peças, e
+   * qualquer relatório de eficácia de cupom ficava inutilizável.
+   *
+   * Não conta uso aqui. `POST /orders` é público: contar na criação deixava
+   * qualquer pessoa queimar o `usageLimit` criando pedidos que nunca pagaria.
+   * O uso é contado no pagamento, em `markPaidByAsaasPaymentId`.
+   */
   private async resolveDiscount(
     code: string | undefined,
     subtotal: number,
     items: { quantity: number }[],
     customerDocument?: string
-  ): Promise<number> {
+  ): Promise<{ discount: number; appliedCoupon: string | null }> {
     const settings = await this.settings.get().catch(() => null);
     const tiers = parseTiers(settings?.progressiveDiscount);
     const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
@@ -348,15 +393,11 @@ export class OrdersService {
       }
     }
 
-    // Só conta uso quando o cupom foi de fato o desconto aplicado. Sem isto o
-    // `usageLimit` era decorativo: o mesmo cupom rodava infinitas vezes.
-    if (couponCode && coupon > 0 && coupon >= progressive) {
-      await this.prisma.coupon
-        .update({ where: { code: couponCode }, data: { usageCount: { increment: 1 } } })
-        .catch(() => undefined);
-    }
-
-    return Math.min(subtotal, Math.max(progressive, coupon));
+    const couponWins = Boolean(couponCode) && coupon > 0 && coupon >= progressive;
+    return {
+      discount: Math.min(subtotal, Math.max(progressive, coupon)),
+      appliedCoupon: couponWins ? couponCode : null,
+    };
   }
 
   async findOne(id: string) {
@@ -398,7 +439,7 @@ export class OrdersService {
       // pessoa comprar qualquer peça pelo valor que quisesse.
       const items = await this.priceItems(tx, dto.items);
       const subtotal = round2(items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0));
-      const discount = await this.resolveDiscount(
+      const { discount, appliedCoupon } = await this.resolveDiscount(
         dto.couponCode,
         subtotal,
         items,
@@ -423,7 +464,9 @@ export class OrdersService {
           subtotal,
           shipping,
           discount,
-          couponCode: discount > 0 ? dto.couponCode : null,
+          // Só o cupom que de fato venceu o progressivo. Gravar `dto.couponCode`
+          // sempre que houvesse desconto registrava cupom expirado como aplicado.
+          couponCode: appliedCoupon,
           total,
           paymentMethod: dto.paymentMethod,
           items: { create: items },
@@ -552,8 +595,10 @@ export class OrdersService {
     const current = await this.findOne(id);
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      // Marcar como pago tira do estoque; cancelar devolve.
+      // Marcar como pago tira do estoque e conta o cupom; cancelar devolve os
+      // dois. Passa pelos mesmos helpers do webhook para não divergirem.
       await this.syncStock(tx, current, dto.status);
+      await this.syncCouponUsage(tx, current, dto.status);
 
       return tx.order.update({
         where: { id },
@@ -574,6 +619,17 @@ export class OrdersService {
     return updated;
   }
 
+  /**
+   * Confirma o pagamento: baixa o estoque, conta o uso do cupom e avisa o
+   * cliente.
+   *
+   * A trava de idempotência é o `updateMany` condicional, não o `if` acima
+   * dele. O Asaas dispara `PAYMENT_CONFIRMED` e `PAYMENT_RECEIVED` — no Pix
+   * quase juntos —, e em serverless os dois POSTs caem em instâncias
+   * diferentes: as duas liam "aguardando_pagamento" e as duas baixavam
+   * estoque. Com o update condicional, só a primeira encontra o pedido no
+   * status anterior; a segunda vê `count === 0` e desiste sem efeito nenhum.
+   */
   async markPaidByAsaasPaymentId(asaasPaymentId: string) {
     const order = await this.prisma.order.findFirst({
       where: { asaasPaymentId },
@@ -582,14 +638,21 @@ export class OrdersService {
     if (!order || order.status === 'pago') return order;
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      // É aqui que a peça sai do estoque de verdade.
-      await this.syncStock(tx, order, 'pago');
-      return tx.order.update({
-        where: { id: order.id },
+      const { count } = await tx.order.updateMany({
+        where: { id: order.id, status: { not: 'pago' } },
         data: { status: 'pago' },
-        include: { items: true },
       });
+      // Outro evento do mesmo pagamento chegou primeiro e já fez tudo.
+      if (count === 0) return null;
+
+      // É aqui que a peça sai do estoque e o cupom conta de verdade.
+      await this.syncStock(tx, order, 'pago');
+      await this.syncCouponUsage(tx, order, 'pago');
+
+      return tx.order.findUnique({ where: { id: order.id }, include: { items: true } });
     });
+
+    if (!updated) return order;
     await this.emailService.sendPaymentApproved(updated);
     return updated;
   }
@@ -619,7 +682,11 @@ export class OrdersService {
     }
 
     const cancelled = await this.prisma.$transaction(async (tx) => {
+      // A peça e o uso do cupom voltam juntos: cancelamento não pode ir
+      // secando o cupom com vendas desfeitas.
       await this.syncStock(tx, order, 'cancelado');
+      await this.syncCouponUsage(tx, order, 'cancelado');
+
       return tx.order.update({ where: { id: order.id }, data: { status: 'cancelado' } });
     });
 
