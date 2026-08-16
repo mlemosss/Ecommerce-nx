@@ -96,6 +96,24 @@ describe('sizesFor', () => {
     p.sizes = ['P', 'Único'];
     expect(sizesFor(p)).toEqual(['PP', 'P', 'M', 'G', 'GG', 'Único']);
   });
+
+  it('top não mostra PP: a loja não faz essa numeração em top', () => {
+    // Só legging e shorts saem em PP. Riscar o PP no top pedia aviso de um
+    // tamanho que nunca vai chegar, e enchia a lista de produção da lojista
+    // com algo que ela já sabe que não fabrica.
+    const top = { ...legging(), category: 'tops' as const, sizes: ['P', 'M'], variants: [] };
+    expect(sizesFor(top)).toEqual(['P', 'M', 'G', 'GG']);
+  });
+
+  it('mas um top que de fato tenha PP continua aparecendo, na posição certa', () => {
+    const top: Product = {
+      ...legging(),
+      category: 'tops',
+      sizes: ['PP', 'M'],
+      variants: [{ color: 'Preto', size: 'PP', stock: 2, price: 129 }],
+    };
+    expect(sizesFor(top)).toEqual(['PP', 'P', 'M', 'G', 'GG']);
+  });
 });
 
 describe('colorsFor', () => {

@@ -54,8 +54,26 @@ export function stockOf(product: Product, color: string, size: string): number {
 export const SIZE_LADDER = ['PP', 'P', 'M', 'G', 'GG'];
 
 /**
- * Tamanhos exibidos: a grade padrão, mais qualquer tamanho fora dela que o
- * produto declare (para um cadastro com "Único" ou numeração não sumir).
+ * Grades que fogem do padrão.
+ *
+ * Top não é feito em PP e não vai ser: só legging e shorts têm essa numeração.
+ * Deixar o PP riscado na página do top não ajudava ninguém — a cliente pedia
+ * aviso de um tamanho que nunca vai chegar, e a lojista recebia um pedido de
+ * fabricação que ela já sabe que não faz.
+ */
+const GRADE_POR_CATEGORIA: Record<string, string[]> = {
+  tops: ['P', 'M', 'G', 'GG'],
+};
+
+/** A grade que a categoria do produto usa. */
+export function sizeLadderFor(category: string): string[] {
+  return GRADE_POR_CATEGORIA[category] ?? SIZE_LADDER;
+}
+
+/**
+ * Tamanhos exibidos: a grade da categoria, mais qualquer tamanho que o produto
+ * de fato tenha (para um cadastro com "Único", numeração, ou um top que
+ * excepcionalmente saiu em PP não sumir da página).
  *
  * Note que isto NÃO filtra por disponibilidade — quem decide se o botão fica
  * riscado é `availabilityOf`. A lista é a mesma para toda cor, de propósito:
@@ -63,8 +81,17 @@ export const SIZE_LADDER = ['PP', 'P', 'M', 'G', 'GG'];
  * debaixo do dedo.
  */
 export function sizesFor(product: Product, _color?: string): string[] {
-  const extras = (product.sizes ?? []).filter((s) => !SIZE_LADDER.includes(s));
-  return [...SIZE_LADDER, ...extras];
+  const daCategoria = new Set(sizeLadderFor(product.category));
+  const cadastrados = new Set([
+    ...(product.sizes ?? []),
+    ...(product.variants ?? []).map((v) => v.size),
+  ]);
+
+  // A ordem sai da escada padrão, não da ordem de cadastro: um PP que exista
+  // fora da grade da categoria ainda aparece antes do P, e não no fim da fila.
+  const grade = SIZE_LADDER.filter((s) => daCategoria.has(s) || cadastrados.has(s));
+  const fora = [...cadastrados].filter((s) => !SIZE_LADDER.includes(s));
+  return [...grade, ...fora];
 }
 
 /** Mesma regra para cores. */
