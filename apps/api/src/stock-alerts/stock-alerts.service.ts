@@ -53,6 +53,15 @@ export class StockAlertsService {
       return { registered: false, available: true };
     }
 
+    // Descobre se já existia antes de gravar: o agradecimento sai uma vez por
+    // pedido, não a cada reenvio do formulário. Sem isso, quem clicasse duas
+    // vezes receberia dois e-mails — e um formulário público que dispara
+    // e-mail a cada POST vira ferramenta de incomodar terceiro.
+    const jaExistia = await this.prisma.stockAlert.findUnique({
+      where: { productId_color_size_email: { productId: product.id, color, size, email } },
+      select: { id: true },
+    });
+
     await this.prisma.stockAlert.upsert({
       where: {
         productId_color_size_email: { productId: product.id, color, size, email },
@@ -61,7 +70,48 @@ export class StockAlertsService {
       create: { productId: product.id, color, size, email },
     });
 
+    if (!jaExistia) {
+      // Fora do caminho crítico: falha de e-mail não pode fazer a pessoa achar
+      // que o cadastro não funcionou.
+      this.enviarAgradecimento(email, product.name, color, size).catch((err) =>
+        this.logger.error(`Falha no e-mail de agradecimento para ${email}: ${err}`)
+      );
+    }
+
     return { registered: true, available: false };
+  }
+
+  /**
+   * Agradece e mostra o que já existe no tamanho pedido.
+   *
+   * Sai na hora, e não quando a peça volta: a reposição pode demorar semanas e
+   * quem acabou de deixar o e-mail está com a loja aberta agora. Se não houver
+   * nada disponível naquele tamanho, o e-mail sai sem vitrine em vez de
+   * inventar uma.
+   */
+  private async enviarAgradecimento(
+    email: string,
+    productName: string,
+    color: string,
+    size: string
+  ): Promise<void> {
+    const comEstoque = await this.prisma.product.findMany({
+      where: {
+        active: true,
+        variants: { some: { size, stock: { gt: 0 } } },
+      },
+      select: { name: true, slug: true, price: true },
+      orderBy: { name: 'asc' },
+      take: 4,
+    });
+
+    await this.email.sendStockAlertWelcome({
+      email,
+      productName,
+      color,
+      size,
+      outras: comEstoque,
+    });
   }
 
   /**
@@ -170,5 +220,59 @@ export class StockAlertsService {
     return [...porVariacao.values()].sort(
       (a, b) => b.count - a.count || b.lastAt.getTime() - a.lastAt.getTime()
     );
+  }
+
+  /**
+   * Lista nominal para o painel: quem pediu, o quê e quando.
+   *
+   * É dado pessoal, então a rota é admin. Traz também os já avisados, marcados
+   * — sem eles a lojista não consegue conferir se o aviso saiu de fato.
+   */
+  async list() {
+    const alertas = await this.prisma.stockAlert.findMany({
+      include: { product: { select: { id: true, name: true, slug: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+    });
+
+    return alertas.map((a) => ({
+      id: a.id,
+      email: a.email,
+      productId: a.product.id,
+      productName: a.product.name,
+      slug: a.product.slug,
+      color: a.color,
+      size: a.size,
+      createdAt: a.createdAt,
+      notifiedAt: a.notifiedAt,
+      // Combinação que nem existe no cadastro é o achado mais valioso da lista:
+      // é procura por algo que a loja não produz.
+      naoCadastrada: false as boolean,
+    }));
+  }
+
+  /**
+   * A mesma lista, com a marca de quais combinações não existem no cadastro.
+   * Fica separado da consulta acima para não fazer um SELECT por linha quando
+   * a informação não for usada.
+   */
+  async listWithGaps() {
+    const alertas = await this.list();
+    const chaves = [...new Set(alertas.map((a) => `${a.productId}|${a.color}|${a.size}`))];
+
+    const existentes = new Set<string>();
+    for (const chave of chaves) {
+      const [productId, color, size] = chave.split('|');
+      const v = await this.prisma.productVariant.findFirst({
+        where: { productId, color, size },
+        select: { id: true },
+      });
+      if (v) existentes.add(chave);
+    }
+
+    return alertas.map((a) => ({
+      ...a,
+      naoCadastrada: !existentes.has(`${a.productId}|${a.color}|${a.size}`),
+    }));
   }
 }

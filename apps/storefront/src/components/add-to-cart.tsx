@@ -9,7 +9,7 @@ import { formatInstallments, formatPrice } from '../lib/format';
 import { describeBlocks } from '../lib/description';
 import {
   availabilityOf,
-  colorsFor,
+  colorsForDisplay,
   defaultSelection,
   isSoldOut,
   sizesFor,
@@ -33,10 +33,12 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
 
   const price = getVariantPrice(product, color, size);
 
-  // As listas são filtradas uma pela outra: escolhida a cor, só aparecem os
-  // tamanhos que ela tem. Assim não existe clique que leve a lugar nenhum.
-  const sizes = sizesFor(product, color);
-  const colors = colorsFor(product);
+  // Grade e cores completas, sempre. O que muda com a seleção é só a aparência
+  // do botão: riscado quando aquela combinação não dá para comprar. Clicar num
+  // riscado é o caminho para pedir aviso — inclusive num tamanho que a loja
+  // ainda não fabrica, que é o dado que decide o que mandar produzir.
+  const sizes = sizesFor(product);
+  const colors = colorsForDisplay(product);
 
   const estoque = stockOf(product, color, size);
   const situacao = availabilityOf(product, color, size);
@@ -45,18 +47,13 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
   const maximo = Math.min(MAX_POR_PEDIDO, Math.max(1, estoque));
 
   /**
-   * Trocar de cor pode invalidar o tamanho escolhido (nem toda cor tem todos).
-   * Em vez de deixar a seleção num estado impossível, cai no primeiro tamanho
-   * disponível daquela cor.
+   * Trocar de cor não mexe mais no tamanho escolhido. A grade é a mesma para
+   * toda cor, então a seleção continua válida — e se a combinação nova não
+   * tiver estoque, é justamente o caso em que queremos oferecer o aviso.
    */
   function escolherCor(nova: string) {
     setColor(nova);
     setAdded(false);
-    const disponiveis = sizesFor(product, nova);
-    if (!disponiveis.includes(size)) {
-      const comEstoque = disponiveis.find((s) => stockOf(product, nova, s) > 0);
-      setSize(comEstoque ?? disponiveis[0] ?? size);
-    }
   }
 
   function handleAdd() {
@@ -155,9 +152,8 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
             <OptionButton
               key={c}
               active={color === c}
-              // Cor esgotada em todos os tamanhos ainda é clicável: a cliente
-              // pode querer ver que ela existe. O que não pode é comprar.
-              soldOut={sizesFor(product, c).every((s) => stockOf(product, c, s) === 0)}
+              // Riscada quando aquela cor não tem nenhum tamanho com estoque.
+              soldOut={sizes.every((s) => stockOf(product, c, s) === 0)}
               onClick={() => escolherCor(c)}
               className="h-11 px-4"
             >

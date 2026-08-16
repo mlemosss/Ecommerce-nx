@@ -126,6 +126,17 @@ export class UpdateSettingsDto {
   @Max(100)
   winbackCouponPercent?: number;
 
+  /** Cupom do e-mail de agradecimento de quem pediu aviso de reposição. */
+  @IsOptional()
+  @IsString()
+  stockAlertCouponCode?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  stockAlertCouponPercent?: number;
+
   @IsOptional()
   @IsString()
   promoBannerText?: string;

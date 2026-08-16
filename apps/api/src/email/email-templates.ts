@@ -209,6 +209,91 @@ export function boletoExpiredTemplate(
 }
 
 /**
+ * Agradecimento imediato a quem pediu aviso de reposição.
+ *
+ * Sai na hora do cadastro, não quando a peça volta — a reposição pode demorar
+ * semanas, e quem acabou de deixar o e-mail está com a loja aberta agora. O
+ * e-mail reconhece o pedido, mostra o que já existe no tamanho dela e oferece
+ * um motivo para comprar hoje.
+ *
+ * `outras` vem vazia quando não há nada disponível naquele tamanho; nesse caso
+ * o e-mail não inventa vitrine, só confirma o cadastro. O cupom é opcional pelo
+ * mesmo motivo dos outros: anunciar código que a loja não criou faz a pessoa
+ * digitar e levar "cupom inválido".
+ */
+export function stockAlertWelcomeTemplate(
+  storeName: string,
+  storefrontUrl: string,
+  data: {
+    productName: string;
+    color: string;
+    size: string;
+    outras: { name: string; slug: string; price: number; imageUrl?: string }[];
+    coupon: { code: string; percent: number } | null;
+  }
+): EmailTemplate {
+  const vitrine =
+    data.outras.length > 0
+      ? `
+    <p style="color:#333;font-size:14px;line-height:1.6;margin-top:24px;">
+      Enquanto isso, estas peças estão disponíveis no <strong>tamanho ${data.size}</strong>:
+    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin-top:12px;">
+      ${data.outras
+        .map(
+          (p) => `
+      <tr>
+        <td style="padding:8px 0;border-bottom:1px solid #eee;">
+          <a href="${storefrontUrl}/produtos/${p.slug}" style="color:#0b0b0d;text-decoration:none;font-size:14px;font-weight:600;">
+            ${p.name}
+          </a>
+          <span style="color:#888;font-size:14px;"> — ${money(p.price)}</span>
+        </td>
+      </tr>`
+        )
+        .join('')}
+    </table>`
+      : '';
+
+  const oferta = data.coupon
+    ? `
+    <p style="color:#333;font-size:14px;line-height:1.6;margin-top:24px;">
+      E se levar alguma hoje, use o cupom
+      <strong style="font-size:16px;letter-spacing:1px;">${data.coupon.code}</strong> —
+      são <strong>${data.coupon.percent}% de desconto</strong>.
+    </p>`
+    : '';
+
+  const body = `
+    <p style="color:#333;font-size:14px;line-height:1.6;">
+      Obrigada por passar na loja! Anotamos que você quer
+      <strong>${data.productName}</strong> em ${data.color}, tamanho ${data.size} — assim que
+      chegar, você é avisada por aqui.
+    </p>
+    <p style="color:#333;font-size:14px;line-height:1.6;">
+      Nossas peças são feitas em poliamida com elastano: compressão que sustenta sem apertar,
+      tecido opaco, proteção solar FPS 50+ e secagem rápida. Feito para treino de verdade.
+    </p>
+    ${vitrine}
+    ${oferta}
+    <p style="margin:28px 0;">
+      <a href="${storefrontUrl}/produtos"
+         style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;
+                padding:14px 28px;font-size:12px;font-weight:bold;letter-spacing:2px;
+                text-transform:uppercase;">Ver a loja</a>
+    </p>
+    <p style="color:#888;font-size:12px;line-height:1.6;">
+      Você recebeu este e-mail porque pediu aviso sobre uma peça. Seu endereço é usado só para
+      isso e não entra em nenhuma lista.
+    </p>`;
+
+  return {
+    subject: `Anotado! Avisamos quando ${data.productName} ${data.size} chegar`,
+    html: layout(storeName, 'Pedido anotado', body, storefrontUrl),
+  };
+}
+
+/**
  * A peça que a pessoa esperava voltou ao estoque.
  *
  * Vai direto para a página do produto, com cor e tamanho no texto para ela

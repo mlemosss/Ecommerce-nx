@@ -5,6 +5,7 @@ import {
   abandonedCartTemplate,
   AbandonedCartForEmail,
   backInStockTemplate,
+  stockAlertWelcomeTemplate,
   boletoExpiredTemplate,
   orderConfirmedTemplate,
   orderShippedTemplate,
@@ -133,6 +134,31 @@ export class EmailService {
 
     const template = boletoExpiredTemplate(storeName, this.getStorefrontUrl(), order, coupon);
     await this.sendIfEnabled('boleto_vencido', order.customerEmail, template);
+  }
+
+  /**
+   * Agradecimento imediato de quem pediu aviso. O cupom vem das Configurações
+   * e é o mesmo campo do e-mail de boleto vencido — a lojista escolhe um código
+   * de recuperação e ele serve para os dois momentos.
+   */
+  async sendStockAlertWelcome(data: {
+    email: string;
+    productName: string;
+    color: string;
+    size: string;
+    outras: { name: string; slug: string; price: number }[];
+  }): Promise<void> {
+    const { storeName } = await this.getSender();
+    const settings = await this.prisma.storeSettings.findUnique({ where: { id: SETTINGS_ID } });
+    const code = settings?.stockAlertCouponCode?.trim();
+    const percent = settings?.stockAlertCouponPercent ?? 0;
+    const coupon = code && percent > 0 ? { code: code.toUpperCase(), percent } : null;
+
+    const template = stockAlertWelcomeTemplate(storeName, this.getStorefrontUrl(), {
+      ...data,
+      coupon,
+    });
+    await this.dispatch(data.email, template);
   }
 
   /**

@@ -312,6 +312,11 @@ model StoreSettings {
   // faz o cliente digitar e levar "cupom inválido" bem na hora que voltou.
   winbackCouponCode      String?
   winbackCouponPercent   Int      @default(0)
+  // Cupom do e-mail de agradecimento de quem pediu aviso de reposição.
+  // Separado do winback porque são momentos diferentes: um é para quem gerou
+  // boleto e não pagou, outro para quem nem chegou a montar carrinho.
+  stockAlertCouponCode    String?
+  stockAlertCouponPercent Int     @default(0)
   // Faixa de promoção no topo. Sem texto, não aparece; passada a data, some sozinha.
   promoBannerText        String?
   promoBannerEndsAt      DateTime?

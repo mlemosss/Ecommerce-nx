@@ -1,6 +1,7 @@
 import {
   availabilityOf,
   colorsFor,
+  colorsForDisplay,
   defaultSelection,
   inStockCount,
   isSoldOut,
@@ -77,16 +78,27 @@ describe('defaultSelection', () => {
   });
 });
 
-describe('sizesFor / colorsFor', () => {
-  it('sem cor escolhida, lista os tamanhos que existem em alguma variação', () => {
-    expect(sizesFor(legging())).toEqual(['G', 'M', 'P']);
+describe('sizesFor', () => {
+  it('mostra a grade inteira, mesmo o que a loja não fabrica', () => {
+    // A Legging não tem nenhuma variação GG. Ele aparece assim mesmo, riscado,
+    // porque é clicando nele que a cliente informa que existe procura — o dado
+    // que decide o que mandar produzir.
+    expect(sizesFor(legging())).toEqual(['PP', 'P', 'M', 'G', 'GG']);
   });
 
-  it('com cor escolhida, filtra pelos tamanhos daquela cor', () => {
-    expect(sizesFor(legging(), 'Preto')).toEqual(['M', 'P']);
-    expect(sizesFor(legging(), 'Fúcsia')).toEqual(['G']);
+  it('a grade não encolhe ao trocar de cor', () => {
+    // Antes ela filtrava pela cor e os botões sumiam debaixo do dedo.
+    expect(sizesFor(legging(), 'Fúcsia')).toEqual(sizesFor(legging(), 'Preto'));
   });
 
+  it('tamanho fora da grade padrão é acrescentado no fim', () => {
+    const p = legging();
+    p.sizes = ['P', 'Único'];
+    expect(sizesFor(p)).toEqual(['PP', 'P', 'M', 'G', 'GG', 'Único']);
+  });
+});
+
+describe('colorsFor', () => {
   it('com tamanho escolhido, filtra pelas cores daquele tamanho', () => {
     expect(colorsFor(legging(), 'M')).toEqual(['Preto', 'Verde Militar']);
     expect(colorsFor(legging(), 'G')).toEqual(['Fúcsia']);
@@ -94,6 +106,12 @@ describe('sizesFor / colorsFor', () => {
 
   it('mantém a ordem declarada no catálogo', () => {
     expect(colorsFor(legging())).toEqual(['Fúcsia', 'Preto', 'Verde Militar']);
+  });
+});
+
+describe('colorsForDisplay', () => {
+  it('mostra todas as cores declaradas, com estoque ou sem', () => {
+    expect(colorsForDisplay(legging())).toEqual(['Fúcsia', 'Preto', 'Verde Militar']);
   });
 });
 

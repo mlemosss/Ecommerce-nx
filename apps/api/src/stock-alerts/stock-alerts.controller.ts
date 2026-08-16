@@ -18,9 +18,15 @@ export class StockAlertsController {
     return this.stockAlerts.create(dto);
   }
 
-  /** Fila de espera para o painel. Admin — é dado de cliente. */
+  /** Fila agregada por variação, para decidir reposição. Admin. */
   @Get('waitlist')
   waitlist() {
     return this.stockAlerts.waitlist();
+  }
+
+  /** Lista nominal: quem pediu, o quê e quando. Admin — é dado pessoal. */
+  @Get()
+  list() {
+    return this.stockAlerts.listWithGaps();
   }
 }

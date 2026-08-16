@@ -44,19 +44,27 @@ export function stockOf(product: Product, color: string, size: string): number {
 }
 
 /**
- * Tamanhos oferecidos, na ordem em que o catálogo os declara.
+ * Grade padrão da loja. Todos aparecem na página, sempre.
  *
- * Um tamanho só aparece se existir em alguma variação — não adianta oferecer GG
- * porque outra cor tem GG. Quando uma cor está escolhida, a lista é filtrada
- * por ela, senão a cliente clica num tamanho que aquela cor não tem.
+ * Inclusive tamanho que a loja ainda não fabrica — hoje não existe GG em peça
+ * nenhuma. Mostrar o GG riscado e deixar a cliente pedir aviso é o único jeito
+ * de a loja descobrir que existe procura por ele: quem chega, não acha o
+ * próprio tamanho e vai embora não deixa rastro nenhum.
  */
-export function sizesFor(product: Product, color?: string): string[] {
-  const variants = product.variants ?? [];
-  const doCor = color
-    ? variants.filter((v) => v.color.trim().toLowerCase() === color.trim().toLowerCase())
-    : variants;
-  const existentes = new Set(doCor.map((v) => v.size));
-  return product.sizes.filter((s) => existentes.has(s));
+export const SIZE_LADDER = ['PP', 'P', 'M', 'G', 'GG'];
+
+/**
+ * Tamanhos exibidos: a grade padrão, mais qualquer tamanho fora dela que o
+ * produto declare (para um cadastro com "Único" ou numeração não sumir).
+ *
+ * Note que isto NÃO filtra por disponibilidade — quem decide se o botão fica
+ * riscado é `availabilityOf`. A lista é a mesma para toda cor, de propósito:
+ * antes ela encolhia ao trocar de cor, e a cliente via a grade mudar de tamanho
+ * debaixo do dedo.
+ */
+export function sizesFor(product: Product, _color?: string): string[] {
+  const extras = (product.sizes ?? []).filter((s) => !SIZE_LADDER.includes(s));
+  return [...SIZE_LADDER, ...extras];
 }
 
 /** Mesma regra para cores. */
@@ -78,6 +86,11 @@ export function colorsFor(product: Product, size?: string): string[] {
  * senão a primeira que ao menos exista; e só então o primeiro de cada lista,
  * para um produto sem variação nenhuma nunca quebrar a tela.
  */
+/** Cores exibidas: todas as que o produto declara, disponíveis ou não. */
+export function colorsForDisplay(product: Product): string[] {
+  return product.colors ?? [];
+}
+
 export function defaultSelection(product: Product): { color: string; size: string } {
   const variants = product.variants ?? [];
   const ordem = (v: ProductVariant) =>
