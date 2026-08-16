@@ -12,6 +12,7 @@ import { discountPercentFor, parseTiers } from '../../lib/progressive-discount';
 import {
   createOrder,
   DEFAULT_SETTINGS,
+  getCustomerProfile,
   getSettings,
   OrderError,
   quoteShipping,
@@ -19,6 +20,9 @@ import {
   trackAbandonedCart,
   validateCoupon,
 } from '../../lib/api';
+
+/** Mesma chave do contexto de login: o token do cliente mora aqui. */
+const TOKEN_KEY = 'no-excuse:customer-token';
 
 type PaymentMethod = 'pix' | 'cartao' | 'boleto';
 
@@ -81,6 +85,31 @@ export default function CheckoutPage() {
     setName((prev) => prev || customer.name);
     setEmail((prev) => prev || customer.email || '');
     setPhone((prev) => prev || customer.phone || '');
+  }, [customer]);
+
+  /**
+   * Endereço salvo em "Meus dados" preenche o checkout.
+   *
+   * A tela de conta diz "preencha para o frete já vir calculado no próximo
+   * pedido", e essa promessa não era cumprida: só nome, e-mail e telefone
+   * vinham do cadastro, e a cliente redigitava o endereço inteiro toda vez.
+   *
+   * `prev ||` em tudo: o que ela já escreveu nesta tela sempre ganha.
+   */
+  useEffect(() => {
+    if (!customer) return;
+    const token = window.localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+
+    getCustomerProfile(token).then((perfil) => {
+      if (!perfil) return;
+      setZipCode((prev) => prev || perfil.zipCode || '');
+      setStreet((prev) => prev || perfil.street || '');
+      setNumber((prev) => prev || perfil.number || '');
+      setComplement((prev) => prev || perfil.complement || '');
+      setCity((prev) => prev || perfil.city || '');
+      setDocument((prev) => prev || perfil.documentNumber || '');
+    });
   }, [customer]);
 
   const availablePayments = PAYMENT_OPTIONS.filter((option) => settings[option.enabledKey]);

@@ -22,11 +22,51 @@ describe('aboutParagraphs', () => {
   });
 
   it('reconhece o fecho mesmo em caixa e espaçamento diferentes', () => {
-    const solto = 'História.\n\nNÃO QUEREMOS APENAS   VESTIR O SEU TREINO\n\nvista sua força!';
+    const solto = [
+      'História.',
+      'NÃO QUEREMOS APENAS   VESTIR O SEU TREINO.',
+      'VISTA SUA FORÇA. VIVA SEU MOVIMENTO!',
+    ].join('\n\n');
     expect(aboutParagraphs(solto)).toEqual(['História.']);
+  });
+
+  // Frase pela metade não é o fecho: é uma frase que a lojista escreveu. Este
+  // teste antes esperava que ela sumisse — era o comportamento agressivo que
+  // engolia parágrafo legítimo, e sumir sem aviso é o pior desfecho.
+  it('meia assinatura fica: não é o fecho, é texto dela', () => {
+    const texto = 'História.\n\nVista sua força!';
+    expect(aboutParagraphs(texto)).toEqual(['História.', 'Vista sua força!']);
   });
 
   it('texto sem o fecho passa inteiro', () => {
     expect(aboutParagraphs('Um.\n\nDois.\n\nTrês.')).toEqual(['Um.', 'Dois.', 'Três.']);
+  });
+
+  // A primeira versão cortava qualquer parágrafo que *contivesse* a frase. Um
+  // parágrafo legítimo do corpo sumia da página, e do painel não havia como
+  // descobrir por quê.
+  it('não apaga parágrafo do corpo que só menciona a frase', () => {
+    const texto = [
+      'A marca nasceu de duas histórias.',
+      'Vista sua força em cada treino: nossas peças acompanham do aquecimento ao último exercício.',
+      'Não queremos apenas vestir o seu treino. Queremos fazer parte daquela escolha diária de se movimentar, se cuidar, se superar e continuar.',
+    ].join('\n\n');
+
+    const p = aboutParagraphs(texto);
+    expect(p).toHaveLength(2);
+    expect(p[1]).toContain('em cada treino');
+  });
+
+  // O filtro só olha o fim do texto: nada no meio da história corre risco.
+  it('não mexe em parágrafo longe do fim, mesmo idêntico ao fecho', () => {
+    const texto = [
+      'Vista sua força. Viva seu movimento.',
+      'Um.',
+      'Dois.',
+      'Três.',
+      'Quatro.',
+    ].join('\n\n');
+
+    expect(aboutParagraphs(texto)[0]).toBe('Vista sua força. Viva seu movimento.');
   });
 });

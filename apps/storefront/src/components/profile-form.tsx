@@ -63,11 +63,20 @@ export function ProfileForm({ token }: { token: string | null }) {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
   const [salvo, setSalvo] = useState(false);
+  // Distinguir 'carregando' de 'falhou': antes as duas ficavam no mesmo
+  // `perfil === null`, e uma requisicao perdida deixava 'Carregando seus
+  // dados...' na tela para sempre, sem erro e sem como tentar de novo.
+  const [falhou, setFalhou] = useState(false);
+  const [recarregar, setRecarregar] = useState(0);
 
   useEffect(() => {
     if (!token) return;
+    setFalhou(false);
     getCustomerProfile(token).then((p) => {
-      if (!p) return;
+      if (!p) {
+        setFalhou(true);
+        return;
+      }
       setPerfil(p);
       setForm({
         name: p.name ?? '',
@@ -81,16 +90,33 @@ export function ProfileForm({ token }: { token: string | null }) {
         state: p.state ?? '',
       });
     });
-  }, [token]);
+  }, [token, recarregar]);
 
   function mudar(key: keyof Campos, valor: string) {
     setForm((f) => ({ ...f, [key]: valor }));
     setSalvo(false);
   }
 
+  /**
+   * Preenche o que estiver em branco, nunca o que a pessoa já escreveu.
+   *
+   * O ViaCEP devolve `logradouro: ""` para cidade de CEP único — a maior parte
+   * do interior. Espalhar a resposta inteira apagava a rua de quem abriu a
+   * edição só para trocar o telefone, e o `limpo()` do servidor transforma
+   * vazio em nulo: o endereço sumia do cadastro. Também não sobrescreve "Rua X,
+   * fundos", que o ViaCEP não conhece e a cliente precisa.
+   */
   async function aoSairDoCep() {
     const achado = await buscarCep(form.zipCode ?? '');
-    if (achado) setForm((f) => ({ ...f, ...achado }));
+    if (!achado) return;
+    setForm((f) => ({
+      ...f,
+      street: f.street || achado.street || '',
+      neighborhood: f.neighborhood || achado.neighborhood || '',
+      // Cidade e UF vêm do CEP e não são digitadas à mão: aí a resposta manda.
+      city: achado.city || f.city || '',
+      state: achado.state || f.state || '',
+    }));
   }
 
   async function salvar(e: React.FormEvent) {
@@ -107,6 +133,23 @@ export function ProfileForm({ token }: { token: string | null }) {
     } else {
       setErro(r.erro);
     }
+  }
+
+  if (falhou) {
+    return (
+      <div className="mt-8 bg-paper p-6">
+        <p className="text-sm text-ink/70" role="alert">
+          Não conseguimos carregar seus dados agora.
+        </p>
+        <button
+          type="button"
+          onClick={() => setRecarregar((n) => n + 1)}
+          className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] underline underline-offset-4"
+        >
+          Tentar de novo
+        </button>
+      </div>
+    );
   }
 
   if (!perfil) {

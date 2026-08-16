@@ -136,6 +136,22 @@ export class AsaasService {
   }
 
   /**
+   * Cobranças que o Asaas já tem para um pedido nosso.
+   *
+   * `externalReference` é o id do pedido, mandado na criação. Serve para saber
+   * se uma cobrança existe do lado do Asaas mesmo quando o nosso banco não
+   * registrou o vínculo — o caso em que a resposta da criação se perdeu no
+   * caminho. Sem esta consulta, criar uma "segunda via" gera uma segunda
+   * cobrança viva para o mesmo pedido, e o Asaas avisa a cliente sobre as
+   * duas: ela paga uma, e a outra continua de pé.
+   */
+  listPaymentsByExternalReference(externalReference: string): Promise<{ data: AsaasPayment[] }> {
+    return this.request<{ data: AsaasPayment[] }>(
+      `/payments?externalReference=${encodeURIComponent(externalReference)}`
+    );
+  }
+
+  /**
    * QR Code de uma cobrança Pix já criada, para exibir dentro da própria loja
    * em vez de mandar o cliente para a fatura do Asaas.
    *

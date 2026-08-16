@@ -82,14 +82,25 @@ export function sizeLadderFor(category: string): string[] {
  */
 export function sizesFor(product: Product, _color?: string): string[] {
   const daCategoria = new Set(sizeLadderFor(product.category));
-  const cadastrados = new Set([
-    ...(product.sizes ?? []),
-    ...(product.variants ?? []).map((v) => v.size),
-  ]);
+  const variants = product.variants ?? [];
 
-  // A ordem sai da escada padrão, não da ordem de cadastro: um PP que exista
-  // fora da grade da categoria ainda aparece antes do P, e não no fim da fila.
-  const grade = SIZE_LADDER.filter((s) => daCategoria.has(s) || cadastrados.has(s));
+  // Tamanho fora da grade da categoria só aparece se houver peça de verdade
+  // para vender.
+  //
+  // `product.sizes` do catálogo é derivado das variações **independentemente
+  // do estoque**, e "não fazemos esse tamanho" costuma estar cadastrado como
+  // uma variação zerada — que é exatamente o caso do PP em top. Sem o filtro
+  // por estoque, a exceção engolia a regra e o PP voltava a aparecer, riscado,
+  // em todo top que um dia teve a variação criada.
+  const excecoesComPeca = new Set(
+    variants.filter((v) => v.stock > 0).map((v) => v.size)
+  );
+
+  const cadastrados = new Set([...(product.sizes ?? []), ...variants.map((v) => v.size)]);
+
+  // A ordem sai da escada padrão, não da ordem de cadastro: um PP que de fato
+  // exista aparece antes do P, e não no fim da fila.
+  const grade = SIZE_LADDER.filter((s) => daCategoria.has(s) || excecoesComPeca.has(s));
   const fora = [...cadastrados].filter((s) => !SIZE_LADDER.includes(s));
   return [...grade, ...fora];
 }

@@ -51,6 +51,13 @@ const DEBIT_ON_PAYMENT_SINCE = new Date('2026-08-06T23:55:00.000Z');
 const DEBITED_STATUSES = new Set(['pago', 'enviado']);
 
 /**
+ * Cobranças do Asaas que não valem mais nada: estornada, apagada, perdida em
+ * chargeback. Uma cobrança nestes estados não pode ser reaproveitada como
+ * segunda via — a cliente clicaria num link morto.
+ */
+const DEAD_ASAAS_STATUSES = new Set(['REFUNDED', 'DELETED', 'CHARGEBACK_REQUESTED', 'REFUND_REQUESTED']);
+
+/**
  * O que fazer quando a peça não está mais lá na hora de dar baixa.
  *
  * `recusar` — derruba a operação. É o certo quando ainda dá para desfazer:
@@ -709,6 +716,15 @@ export class OrdersService {
       await this.emailService.sendOrderShipped(updated);
     }
 
+    // Pagamento fora do Asaas — Pix direto, transferência, combinado no
+    // WhatsApp — só existe aqui. Desde que "Pedido confirmado" passou a
+    // depender do dinheiro entrar, o webhook virou o único lugar que confirma,
+    // e quem pagava por fora ficava com a última mensagem da loja dizendo
+    // "falta o pagamento". A cliente pagou e tudo que ela tem diz que não.
+    if (dto.status === 'pago' && current.status !== 'pago') {
+      await this.emailService.sendPaymentApproved(updated);
+    }
+
     return updated;
   }
 
@@ -750,12 +766,19 @@ export class OrdersService {
     if (!order) throw new NotFoundException('Pedido não encontrado');
     if (order.reviewToken) return { reviewToken: order.reviewToken };
 
-    const updated = await this.prisma.order.update({
-      where: { id: order.id },
+    // Condicional, não `update` direto: dois cliques seguidos gravariam tokens
+    // diferentes, e o segundo mataria o link que o primeiro já colou numa
+    // conversa de WhatsApp. Quem perde a corrida lê o token do vencedor.
+    await this.prisma.order.updateMany({
+      where: { id: order.id, reviewToken: null },
       data: { reviewToken: generateReviewToken() },
+    });
+
+    const atual = await this.prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
       select: { reviewToken: true },
     });
-    return { reviewToken: updated.reviewToken as string };
+    return { reviewToken: atual.reviewToken as string };
   }
 
   async ensureOpenPayment(orderId: string) {
@@ -772,6 +795,32 @@ export class OrdersService {
     }
 
     try {
+      // Primeiro pergunta ao Asaas se já existe cobrança para este pedido.
+      //
+      // "Sem cobrança" era decidido só pelo nosso banco. Mas o caminho que
+      // deixa `asaasPaymentId` nulo é justamente aquele em que a criação deu
+      // certo do lado do Asaas e a resposta se perdeu — então criar outra
+      // deixava DUAS cobranças vivas para o mesmo pedido. E o Asaas avisa a
+      // cliente sobre as duas: ela paga uma, a outra segue de pé, e a que ela
+      // pagou pode ser a que o nosso banco não conhece.
+      const existentes = await this.asaas
+        .listPaymentsByExternalReference(order.id)
+        .then((r) => r.data ?? [])
+        .catch(() => []);
+      const aproveitavel = existentes.find((p) => !DEAD_ASAAS_STATUSES.has(p.status));
+
+      if (aproveitavel) {
+        this.logger.warn(
+          `Pedido ${order.orderNumber} já tinha cobrança ${aproveitavel.id} no Asaas ` +
+            'sem vínculo no banco. Adotada em vez de criar outra.'
+        );
+        await this.prisma.order.updateMany({
+          where: { id: order.id, asaasPaymentId: null },
+          data: { asaasPaymentId: aproveitavel.id, asaasInvoiceUrl: aproveitavel.invoiceUrl },
+        });
+        return this.prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+      }
+
       const asaasCustomerId =
         order.asaasCustomerId ??
         (
@@ -855,14 +904,22 @@ export class OrdersService {
     });
 
     if (!order && externalReference) {
+      // Sem `asaasPaymentId: null` no filtro, de propósito. O pedido pode já
+      // ter OUTRA cobrança gravada e a cliente ter pago esta — acontece quando
+      // a primeira criação se perdeu no caminho e o Asaas avisou a cliente
+      // sobre as duas. Exigir vínculo nulo aqui deixava justamente esse
+      // pagamento sem dono.
       order = await this.prisma.order.findFirst({
-        where: { id: externalReference, asaasPaymentId: null },
+        where: { id: externalReference },
         include: { items: true },
       });
       if (order) {
         this.logger.warn(
           `Pagamento ${asaasPaymentId} chegou sem vínculo; casado com o pedido ` +
-            `${order.orderNumber} pelo externalReference.`
+            `${order.orderNumber} pelo externalReference` +
+            (order.asaasPaymentId
+              ? ` (que já tinha a cobrança ${order.asaasPaymentId} — conferir cobrança em duplicidade).`
+              : '.')
         );
         await this.prisma.order.updateMany({
           where: { id: order.id, asaasPaymentId: null },
@@ -871,7 +928,17 @@ export class OrdersService {
       }
     }
 
-    if (!order || order.status === 'pago') return order;
+    // Evento de pagamento que não casa com pedido nenhum é dinheiro entrando
+    // sem destino. Antes saía calado, indistinguível de um evento repetido.
+    if (!order) {
+      this.logger.error(
+        `Pagamento ${asaasPaymentId} confirmado no Asaas e não achou pedido nenhum` +
+          `${externalReference ? ` (externalReference: ${externalReference})` : ' (sem externalReference)'}.`
+      );
+      return null;
+    }
+
+    if (order.status === 'pago') return order;
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const { count } = await tx.order.updateMany({

@@ -114,6 +114,22 @@ describe('sizesFor', () => {
     };
     expect(sizesFor(top)).toEqual(['PP', 'P', 'M', 'G', 'GG']);
   });
+
+  it('top com variação PP zerada não mostra PP', () => {
+    // "Não fazemos esse tamanho" costuma estar cadastrado como variação com
+    // estoque zero — e `sizes` do catálogo é derivado das variações sem olhar
+    // estoque. Sem filtrar, a exceção engolia a regra.
+    const top: Product = {
+      ...legging(),
+      category: 'tops',
+      sizes: ['PP', 'M'],
+      variants: [
+        { color: 'Preto', size: 'PP', stock: 0, price: 129 },
+        { color: 'Preto', size: 'M', stock: 4, price: 129 },
+      ],
+    };
+    expect(sizesFor(top)).toEqual(['P', 'M', 'G', 'GG']);
+  });
 });
 
 describe('colorsFor', () => {
