@@ -8,6 +8,26 @@ import type { StoreSettings } from '../lib/api';
  * cadastrado, é melhor não mostrar nenhum do que mostrar um que não responde.
  */
 /**
+ * Identificação legal da loja.
+ *
+ * O Decreto 7.962/2013 (o "decreto do e-commerce") exige nome empresarial,
+ * CNPJ e endereço físico visíveis em toda página. Fica aqui como padrão, e não
+ * só no banco, porque é dado que não muda e que a loja não pode ficar sem — se
+ * o campo em Configurações estiver vazio, a exigência continua cumprida.
+ *
+ * O que a lojista escrever em Configurações ganha destes valores.
+ *
+ * "51.141.534 LAYANE CARDOSO MARIANO" é a razão social mesmo: empresário
+ * individual recebe o nome no formato número-do-CNPJ + nome civil. É o que
+ * consta na Receita e é o que precisa aparecer.
+ */
+const IDENTIFICACAO = {
+  legalName: '51.141.534 LAYANE CARDOSO MARIANO',
+  cnpj: '51.141.534/0001-79',
+  endereco: 'R. Tupi, 103 — Santa Cecília — São Paulo/SP — CEP 01233-001',
+};
+
+/**
  * "5511999520369" vira "(11) 99952-0369".
  *
  * O número guardado tem o 55 na frente porque é assim que o link do WhatsApp
@@ -156,17 +176,16 @@ export function Footer({ settings }: { settings: StoreSettings }) {
               São Paulo/SP — nosso estoque fica em Higienópolis.
             </p>
 
-            {/* Identificação de quem vende: o CDC exige, e rodapé sem CNPJ
-                derruba a confiança em loja que a pessoa ainda não conhece.
-                Some inteiro enquanto os campos estiverem vazios — CNPJ de
-                exemplo é pior do que CNPJ nenhum. */}
-            {(settings.legalName || settings.cnpj) && (
-              <p className="mt-2 text-xs text-white/45">
-                {settings.legalName}
-                {settings.legalName && settings.cnpj ? ' · ' : ''}
-                {settings.cnpj && `CNPJ ${settings.cnpj}`}
-              </p>
-            )}
+            {/* Identificação de quem vende. Exigida pelo Decreto 7.962/2013, e
+                antes disso: rodapé sem CNPJ derruba a confiança de quem ainda
+                não conhece a marca e está decidindo se digita o cartão. */}
+            <p className="mt-3 text-xs leading-relaxed text-white/45">
+              {settings.legalName || IDENTIFICACAO.legalName}
+              <br />
+              CNPJ {settings.cnpj || IDENTIFICACAO.cnpj}
+              <br />
+              {IDENTIFICACAO.endereco}
+            </p>
           </div>
 
           <p className="text-[11px] uppercase tracking-[0.14em] text-white/60">
