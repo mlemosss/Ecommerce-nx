@@ -8,6 +8,7 @@ import { CookieBanner } from '../components/cookie-banner';
 import { PromoBanner } from '../components/promo-banner';
 import { Header } from '../components/header';
 import { Footer } from '../components/footer';
+import { WhatsappButton } from '../components/whatsapp-button';
 import { getSettings } from '../lib/api';
 
 const STOREFRONT_URL = (
@@ -70,6 +71,7 @@ export default async function RootLayout({
               <Header />
               <main className="flex-1">{children}</main>
               <Footer settings={settings} />
+              <WhatsappButton phone={settings.contactWhatsapp} />
               <CookieBanner />
             </CartProvider>
           </CustomerAuthProvider>

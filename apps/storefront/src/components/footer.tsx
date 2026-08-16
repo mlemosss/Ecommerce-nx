@@ -7,6 +7,20 @@ import type { StoreSettings } from '../lib/api';
  * código — e num domínio diferente do que a loja usa hoje. Sem endereço
  * cadastrado, é melhor não mostrar nenhum do que mostrar um que não responde.
  */
+/**
+ * "5511999520369" vira "(11) 99952-0369".
+ *
+ * O número guardado tem o 55 na frente porque é assim que o link do WhatsApp
+ * precisa dele. Mostrar o número cru para o cliente afasta em vez de aproximar:
+ * quem lê quer reconhecer um telefone, não um identificador.
+ */
+function formatarWhatsapp(digits?: string): string | null {
+  if (!digits) return null;
+  const nacional = digits.startsWith('55') ? digits.slice(2) : digits;
+  const m = nacional.match(/^(\d{2})(\d{4,5})(\d{4})$/);
+  return m ? `(${m[1]}) ${m[2]}-${m[3]}` : null;
+}
+
 export function Footer({ settings }: { settings: StoreSettings }) {
   const social = [
     { href: settings.instagramUrl, label: 'Instagram' },
@@ -14,12 +28,13 @@ export function Footer({ settings }: { settings: StoreSettings }) {
   ].filter((item): item is { href: string; label: string } => Boolean(item.href));
 
   const whatsappDigits = settings.contactWhatsapp?.replace(/\D/g, '');
+  const whatsappLegivel = formatarWhatsapp(whatsappDigits);
 
   return (
     <footer className="mt-24 bg-ink text-white">
       <div className="container-page grid grid-cols-2 gap-10 py-14 sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
-          <p className="text-xl font-black uppercase tracking-tighter">No Excuse</p>
+          <p className="text-xl font-black uppercase tracking-tighter">NO EXCUSE</p>
           {/* Assinatura da marca, no lugar da descrição genérica de antes. Aqui
               ela aparece em toda página sem competir com nada. */}
           <p className="mt-3 text-sm font-semibold text-white/85">
@@ -90,18 +105,6 @@ export function Footer({ settings }: { settings: StoreSettings }) {
                 </a>
               </li>
             )}
-            {whatsappDigits && (
-              <li>
-                <a
-                  href={`https://wa.me/${whatsappDigits}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline-offset-4 transition hover:text-white hover:underline"
-                >
-                  WhatsApp
-                </a>
-              </li>
-            )}
           </ul>
         </div>
 
@@ -129,10 +132,35 @@ export function Footer({ settings }: { settings: StoreSettings }) {
         </div>
       </div>
 
-      <div className="border-t border-white/10 py-5">
-        <p className="container-page text-[11px] uppercase tracking-[0.14em] text-white/60">
-          © {new Date().getFullYear()} No Excuse. Todos os direitos reservados.
-        </p>
+      {/* Fecho da página: quem somos e onde estamos.
+          Loja pequena e desconhecida precisa provar que tem gente do outro
+          lado — número que atende e endereço de verdade fazem mais pela
+          conversão do que qualquer selo. */}
+      <div className="border-t border-white/10 py-6">
+        <div className="container-page flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            {whatsappDigits && (
+              <p className="text-sm">
+                <span className="text-white/55">Fale com a gente no WhatsApp: </span>
+                <a
+                  href={`https://wa.me/${whatsappDigits}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-white underline underline-offset-4 transition hover:no-underline"
+                >
+                  {whatsappLegivel ?? 'clique aqui'}
+                </a>
+              </p>
+            )}
+            <p className="mt-2 text-sm text-white/55">
+              São Paulo/SP — nosso estoque fica em Higienópolis.
+            </p>
+          </div>
+
+          <p className="text-[11px] uppercase tracking-[0.14em] text-white/60">
+            © {new Date().getFullYear()} NO EXCUSE. Todos os direitos reservados.
+          </p>
+        </div>
       </div>
     </footer>
   );
