@@ -19,7 +19,7 @@ const EXPIRED_EVENT = 'PAYMENT_OVERDUE';
 
 interface AsaasWebhookBody {
   event: string;
-  payment?: { id: string };
+  payment?: { id: string; externalReference?: string | null };
 }
 
 @Controller('webhooks')
@@ -52,7 +52,12 @@ export class WebhooksController {
     const paymentId = body.payment?.id;
     if (paymentId) {
       if (PAID_EVENTS.has(body.event)) {
-        await this.ordersService.markPaidByAsaasPaymentId(paymentId);
+        // O externalReference (id do pedido) vai junto: é a rede para o caso de o
+        // vínculo não ter sido gravado no checkout.
+        await this.ordersService.markPaidByAsaasPaymentId(
+          paymentId,
+          body.payment?.externalReference ?? undefined
+        );
       } else if (body.event === EXPIRED_EVENT) {
         await this.ordersService.markCancelledByAsaasPaymentId(paymentId, { expired: true });
       } else if (CANCELLED_EVENTS.has(body.event)) {

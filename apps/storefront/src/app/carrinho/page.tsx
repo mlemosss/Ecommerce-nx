@@ -40,7 +40,15 @@ export default function CartPage() {
     );
   }
 
-  const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
+  // O frete real depende do CEP e sai da cotação do Melhor Envio, no
+  // checkout. Aqui só se sabe uma coisa com certeza: se passou do valor de
+  // frete grátis, é grátis.
+  //
+  // Antes esta linha mostrava , uma taxa fixa de
+  // R$ 19,90 que o checkout nem usa. A cliente somava o total no carrinho,
+  // avançava, via outro número, e desistia no último passo — o pior lugar
+  // possível para uma surpresa de preço.
+  const freteGratis = subtotal >= settings.freeShippingThreshold;
 
   const tiers = parseTiers(settings.progressiveDiscount);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -48,7 +56,7 @@ export default function CartPage() {
   const discount = Math.round(((subtotal * percent) / 100) * 100) / 100;
   const upcoming = nextTier(totalItems, tiers);
 
-  const total = Math.max(0, subtotal + shipping - discount);
+  const total = Math.max(0, subtotal - discount);
 
   return (
     <div className="container-page py-14 sm:py-16">
@@ -144,7 +152,9 @@ export default function CartPage() {
             )}
             <div className="flex justify-between">
               <dt className="text-ink/60">Frete</dt>
-              <dd>{shipping === 0 ? 'Grátis' : formatPrice(shipping)}</dd>
+              <dd className={freteGratis ? 'font-semibold' : 'text-ink/60'}>
+                {freteGratis ? 'Grátis' : 'Calculado no próximo passo'}
+              </dd>
             </div>
             {upcoming && (
               <p className="border-t border-ink/10 pt-3 text-xs leading-relaxed text-ink">
@@ -153,14 +163,15 @@ export default function CartPage() {
                 <span className="font-bold">{upcoming.percent}% de desconto</span>.
               </p>
             )}
-            {shipping > 0 && (
+            {!freteGratis && (
               <p className="pt-1 text-xs text-ink/60">
                 Falta {formatPrice(settings.freeShippingThreshold - subtotal)} para frete grátis.
+                Informe o CEP no próximo passo para ver o valor e os prazos.
               </p>
             )}
           </dl>
           <div className="mt-5 flex items-baseline justify-between border-t border-ink/15 pt-5">
-            <span className="eyebrow">Total</span>
+            <span className="eyebrow">{freteGratis ? 'Total' : 'Total sem frete'}</span>
             <span className="text-xl font-black tracking-tight">{formatPrice(total)}</span>
           </div>
           <Link href="/checkout" className="btn-primary mt-6 w-full">

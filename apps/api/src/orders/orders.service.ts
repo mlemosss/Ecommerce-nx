@@ -50,6 +50,19 @@ const DEBIT_ON_PAYMENT_SINCE = new Date('2026-08-06T23:55:00.000Z');
 /** Status em que o pedido segura estoque, no modelo novo. */
 const DEBITED_STATUSES = new Set(['pago', 'enviado']);
 
+/**
+ * O que fazer quando a peça não está mais lá na hora de dar baixa.
+ *
+ * `recusar` — derruba a operação. É o certo quando ainda dá para desfazer:
+ * a lojista marcando um pedido como pago na mão prefere o erro a um estoque
+ * que mente.
+ *
+ * `zerar` — baixa o que houver e segue. É o certo quando o dinheiro **já
+ * entrou**. Recusar aí não devolve a peça nem o pagamento: só deixa o pedido
+ * preso em "aguardando" com o valor na conta, invisível para as duas partes.
+ */
+type FaltaDeEstoque = 'recusar' | 'zerar';
+
 interface StockItem {
   productId: string;
   productName: string;
@@ -131,23 +144,25 @@ export class OrdersService {
     });
   }
 
+
   /**
    * Movimenta o estoque das variações de um pedido. 'saida' é a venda, 'entrada'
    * é a devolução (cancelamento ou exclusão do pedido).
    *
    * A saída usa update condicional (`stock >= quantity`): se duas compras
-   * simultâneas disputarem a última peça, só uma consegue baixar e a outra
-   * recebe erro em vez de deixar o estoque negativo.
+   * simultâneas disputarem a última peça, só uma consegue baixar. O que
+   * acontece com a outra depende de `quandoFalta`.
    */
   private async moveStock(
     tx: Prisma.TransactionClient,
     items: StockItem[],
-    direction: 'saida' | 'entrada'
+    direction: 'saida' | 'entrada',
+    quandoFalta: FaltaDeEstoque = 'recusar'
   ) {
     for (const item of items) {
       const variant = await tx.productVariant.findFirst({
         where: { productId: item.productId, color: item.color, size: item.size },
-        select: { id: true },
+        select: { id: true, stock: true },
       });
       // Sem variação correspondente (produto apagado, cor/tamanho renomeado) não
       // há o que movimentar — e isso não é motivo para derrubar a venda.
@@ -165,11 +180,28 @@ export class OrdersService {
         where: { id: variant.id, stock: { gte: item.quantity } },
         data: { stock: { decrement: item.quantity } },
       });
-      if (count === 0) {
+      if (count > 0) continue;
+
+      if (quandoFalta === 'recusar') {
         throw new ConflictException(
           `Estoque insuficiente para ${item.productName} (${item.color}/${item.size}).`
         );
       }
+
+      // Venda acima do estoque. Zera o que sobrou e grita no log: a peça foi
+      // vendida duas vezes e alguém vai precisar decidir o que fazer.
+      const disponivel = Math.max(0, variant.stock);
+      if (disponivel > 0) {
+        await tx.productVariant.updateMany({
+          where: { id: variant.id },
+          data: { stock: { decrement: disponivel } },
+        });
+      }
+      this.logger.error(
+        `VENDA ACIMA DO ESTOQUE: ${item.productName} (${item.color}/${item.size}) — ` +
+          `pagas ${item.quantity}, havia ${disponivel}. ` +
+          `Faltam ${item.quantity - disponivel} peças para entregar este pedido.`
+      );
     }
   }
 
@@ -223,12 +255,13 @@ export class OrdersService {
   private async syncStock(
     tx: Prisma.TransactionClient,
     order: { createdAt: Date; status: string; items: StockItem[] },
-    nextStatus: string
+    nextStatus: string,
+    quandoFalta: FaltaDeEstoque = 'recusar'
   ) {
     const before = this.holdsStock(order, order.status);
     const after = this.holdsStock(order, nextStatus);
     if (before === after) return;
-    await this.moveStock(tx, order.items, after ? 'saida' : 'entrada');
+    await this.moveStock(tx, order.items, after ? 'saida' : 'entrada', quandoFalta);
   }
 
   /**
@@ -540,23 +573,53 @@ export class OrdersService {
           : {}),
       });
 
-      const paidNow = ASAAS_PAID_STATUSES.has(payment.status);
-
-      const updated = await this.prisma.$transaction(async (tx) => {
-        // Cartão aprovado na hora já sai do estoque: não faz sentido esperar o
-        // webhook para um pagamento que a resposta já confirmou.
-        if (paidNow) await this.syncStock(tx, order, 'pago');
-        return tx.order.update({
-          where: { id: order.id },
-          data: {
-            asaasCustomerId: customer.id,
-            asaasPaymentId: payment.id,
-            asaasInvoiceUrl: payment.invoiceUrl,
-            ...(paidNow ? { status: 'pago' } : {}),
-          },
-          include: { items: true },
-        });
+      // A COBRANÇA EXISTE A PARTIR DAQUI. Gravar o vínculo é a primeira coisa
+      // que se faz, sozinha, antes de estoque, cupom ou e-mail.
+      //
+      // Antes tudo isso vivia numa transação só: se a baixa de estoque
+      // falhasse, ela levava junto o `asaasPaymentId`, e o pagamento ficava
+      // órfão — cobrado no cartão do cliente, sem nenhum pedido apontando para
+      // ele. Nem o webhook achava depois.
+      const comCobranca = await this.prisma.order.update({
+        where: { id: order.id },
+        data: {
+          asaasCustomerId: customer.id,
+          asaasPaymentId: payment.id,
+          asaasInvoiceUrl: payment.invoiceUrl,
+        },
+        include: { items: true },
       });
+
+      const paidNow = ASAAS_PAID_STATUSES.has(payment.status);
+      let updated = comCobranca;
+
+      if (paidNow) {
+        try {
+          updated = await this.prisma.$transaction(async (tx) => {
+            // Cartão aprovado na hora já sai do estoque: não faz sentido
+            // esperar o webhook para um pagamento que a resposta já confirmou.
+            // `zerar`: o dinheiro entrou, e recusar aqui não o devolve.
+            await this.syncStock(tx, comCobranca, 'pago', 'zerar');
+            // O cupom era contado só no webhook, e o webhook desiste de um
+            // pedido que já está pago — então compra no cartão aprovada na
+            // hora nunca gastava uso nenhum do cupom.
+            await this.syncCouponUsage(tx, comCobranca, 'pago');
+            return tx.order.update({
+              where: { id: order.id },
+              data: { status: 'pago' },
+              include: { items: true },
+            });
+          });
+        } catch (err) {
+          // Pagamento aprovado e escrituração falhou. O pedido NÃO é
+          // cancelado: o dinheiro está na conta. Fica em "aguardando" e o
+          // webhook do Asaas, que chega em seguida, refaz a baixa.
+          this.logger.error(
+            `Pedido ${order.orderNumber}: pagamento aprovado, mas a baixa falhou. ` +
+              `O webhook deve corrigir. Erro: ${err}`
+          );
+        }
+      }
 
       // "Pedido confirmado" só sai quando existe pagamento. Enquanto não há, o
       // e-mail é o de cobrança, com o caminho para pagar — dizer "confirmado"
@@ -593,11 +656,23 @@ export class OrdersService {
 
       // Cartão recusado: o pedido não pode ficar pendurado como se fosse acontecer.
       // Cancela e devolve o motivo para o cliente tentar de novo.
+      //
+      // O `updateMany` condicional é a trava que faltava. Se a cobrança chegou
+      // a existir — a resposta do Asaas se perdeu no caminho, por exemplo —,
+      // `asaasPaymentId` já está gravado, o `where` não casa, e o pedido pago
+      // não é cancelado. Cancelar aí era o pior desfecho possível: cliente
+      // cobrado, pedido morto, e ninguém sabendo.
       if (payingWithCard) {
-        await this.prisma.order.update({
-          where: { id: order.id },
+        const { count } = await this.prisma.order.updateMany({
+          where: { id: order.id, asaasPaymentId: null },
           data: { status: 'cancelado' },
         });
+        if (count === 0) {
+          this.logger.error(
+            `Pedido ${order.orderNumber} falhou DEPOIS de a cobrança existir. ` +
+              `Não foi cancelado de propósito — conferir no Asaas se houve captura. Erro: ${err}`
+          );
+        }
         throw new BadRequestException(message);
       }
 
@@ -637,17 +712,6 @@ export class OrdersService {
     return updated;
   }
 
-  /**
-   * Confirma o pagamento: baixa o estoque, conta o uso do cupom e avisa o
-   * cliente.
-   *
-   * A trava de idempotência é o `updateMany` condicional, não o `if` acima
-   * dele. O Asaas dispara `PAYMENT_CONFIRMED` e `PAYMENT_RECEIVED` — no Pix
-   * quase juntos —, e em serverless os dois POSTs caem em instâncias
-   * diferentes: as duas liam "aguardando_pagamento" e as duas baixavam
-   * estoque. Com o update condicional, só a primeira encontra o pedido no
-   * status anterior; a segunda vê `count === 0` e desiste sem efeito nenhum.
-   */
   /**
    * Garante que um pedido em aberto tenha cobrança no Asaas, criando uma se
    * faltar.
@@ -767,11 +831,46 @@ export class OrdersService {
     }
   }
 
-  async markPaidByAsaasPaymentId(asaasPaymentId: string) {
-    const order = await this.prisma.order.findFirst({
+  /**
+   * Confirma o pagamento: baixa o estoque, conta o uso do cupom e avisa o
+   * cliente.
+   *
+   * A trava de idempotência é o `updateMany` condicional, não o `if` acima
+   * dele. O Asaas dispara `PAYMENT_CONFIRMED` e `PAYMENT_RECEIVED` — no Pix
+   * quase juntos —, e em serverless os dois POSTs caem em instâncias
+   * diferentes: as duas liam "aguardando_pagamento" e as duas baixavam
+   * estoque. Com o update condicional, só a primeira encontra o pedido no
+   * status anterior; a segunda vê `count === 0` e desiste sem efeito nenhum.
+   */
+  async markPaidByAsaasPaymentId(asaasPaymentId: string, externalReference?: string) {
+    // `externalReference` é o id do pedido, que a loja manda ao criar a
+    // cobrança. Serve de rede: se a resposta do Asaas se perdeu e o
+    // `asaasPaymentId` nunca chegou a ser gravado, o pagamento seria de um
+    // pedido que a busca não encontra — dinheiro recebido, pedido eternamente
+    // "aguardando". Pelo externalReference ele volta a encontrar o dono, e o
+    // id é gravado de uma vez.
+    let order = await this.prisma.order.findFirst({
       where: { asaasPaymentId },
       include: { items: true },
     });
+
+    if (!order && externalReference) {
+      order = await this.prisma.order.findFirst({
+        where: { id: externalReference, asaasPaymentId: null },
+        include: { items: true },
+      });
+      if (order) {
+        this.logger.warn(
+          `Pagamento ${asaasPaymentId} chegou sem vínculo; casado com o pedido ` +
+            `${order.orderNumber} pelo externalReference.`
+        );
+        await this.prisma.order.updateMany({
+          where: { id: order.id, asaasPaymentId: null },
+          data: { asaasPaymentId },
+        });
+      }
+    }
+
     if (!order || order.status === 'pago') return order;
 
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -783,7 +882,14 @@ export class OrdersService {
       if (count === 0) return null;
 
       // É aqui que a peça sai do estoque e o cupom conta de verdade.
-      await this.syncStock(tx, order, 'pago');
+      //
+      // `zerar`, e não `recusar`: o dinheiro já está na conta. Recusar aqui
+      // desfazia a transação inteira, o webhook respondia erro, o Asaas
+      // reenviava, e o mesmo erro se repetia — o pedido ficava preso em
+      // "aguardando pagamento" para sempre, pago e invisível. Vender acima do
+      // estoque é problema para a lojista resolver com a cliente; perder o
+      // registro do pagamento não tem conserto.
+      await this.syncStock(tx, order, 'pago', 'zerar');
       await this.syncCouponUsage(tx, order, 'pago');
 
       return tx.order.findUnique({ where: { id: order.id }, include: { items: true } });
