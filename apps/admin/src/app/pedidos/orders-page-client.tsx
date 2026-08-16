@@ -40,6 +40,42 @@ export function OrdersPageClient() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'todos'>('todos');
   const [search, setSearch] = useState('');
+  const [copiado, setCopiado] = useState<string | null>(null);
+
+  /**
+   * O link tem que apontar para o domínio da loja, não para o do painel — os
+   * dois vivem no mesmo endereço (`/admin`), então uma URL relativa levaria a
+   * cliente para dentro do administrativo.
+   */
+  const lojaUrl = (
+    process.env.NEXT_PUBLIC_STOREFRONT_URL ?? 'https://www.noexcusenx.com.br'
+  ).replace(/\/$/, '');
+
+  function linkAvaliacao(order: Order): string {
+    return `${lojaUrl}/avaliar/${order.reviewToken}`;
+  }
+
+  function copiarLinkAvaliacao(order: Order) {
+    navigator.clipboard
+      .writeText(linkAvaliacao(order))
+      .then(() => {
+        setCopiado(order.id);
+        setTimeout(() => setCopiado((atual) => (atual === order.id ? null : atual)), 2000);
+      })
+      .catch(() => undefined);
+  }
+
+  /** Abre o WhatsApp já com a mensagem escrita, para a lojista só apertar enviar. */
+  function linkWhatsApp(order: Order): string {
+    const telefone = (order.customerPhone ?? '').replace(/\D/g, '');
+    const primeiroNome = order.customerName.trim().split(/\s+/)[0] ?? '';
+    const texto =
+      `Oi, ${primeiroNome}! Aqui é da NO EXCUSE. ` +
+      `Você recebeu o pedido #${order.orderNumber}? Se puder contar o que achou, ajuda muito ` +
+      `quem está em dúvida no tamanho: ${linkAvaliacao(order)}`;
+    const numero = telefone.length >= 10 ? (telefone.startsWith('55') ? telefone : `55${telefone}`) : '';
+    return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
+  }
   const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState('');
   // Rastreio digitado por pedido, antes de salvar.
@@ -175,6 +211,35 @@ export function OrdersPageClient() {
                       <p className="text-black/60">{order.customerEmail}</p>
                       <p className="text-black/60">{order.customerPhone}</p>
                     </div>
+
+                    {/* Link de avaliação, para mandar no WhatsApp.
+                        Abre sem senha — quem comprou como convidado não tem
+                        conta, e era isso que travava a avaliação até agora. */}
+                    {order.reviewToken && (
+                      <div>
+                        <p className="font-semibold">Avaliação</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => copiarLinkAvaliacao(order)}
+                            className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white"
+                          >
+                            {copiado === order.id ? 'Link copiado!' : 'Copiar link de avaliação'}
+                          </button>
+                          <a
+                            href={linkWhatsApp(order)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-semibold text-accent underline underline-offset-2"
+                          >
+                            Abrir no WhatsApp
+                          </a>
+                        </div>
+                        <p className="mt-1 text-xs text-black/45">
+                          Abre sem login. Vale só para este pedido e pode ser reenviado.
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <p className="font-semibold">Entrega</p>
                       <p className="text-black/60">

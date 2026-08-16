@@ -118,6 +118,8 @@ export interface ProductReview {
   customerName: string;
   rating: number;
   comment: string;
+  /** Foto da cliente usando a peça, quando ela mandou. */
+  photoUrl: string | null;
   createdAt: string;
 }
 
@@ -321,5 +323,53 @@ export async function registerStockAlert(data: {
     return { ok: false, message: message || 'Não foi possível registrar agora. Tente de novo.' };
   } catch {
     return { ok: false, message: 'Não foi possível registrar agora. Tente de novo.' };
+  }
+}
+
+export interface ReviewLinkProduct {
+  productId: string;
+  productName: string;
+  avaliacao: { rating: number; comment: string; photoUrl: string | null } | null;
+}
+
+export interface ReviewLinkData {
+  orderNumber: string;
+  firstName: string;
+  produtos: ReviewLinkProduct[];
+}
+
+/**
+ * Abre a tela de avaliação pelo token do pedido. Sem cache: a pessoa pode
+ * voltar no link para mudar o que escreveu, e uma resposta guardada mostraria
+ * o formulário vazio de novo.
+ */
+export async function getReviewLink(token: string): Promise<ReviewLinkData | null> {
+  try {
+    const res = await fetch(`${API_URL}/reviews/link/${encodeURIComponent(token)}`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function submitReviewLink(
+  token: string,
+  data: { productId: string; rating: number; comment: string; photoUrl?: string }
+): Promise<{ ok: boolean; message: string }> {
+  try {
+    const res = await fetch(`${API_URL}/reviews/link/${encodeURIComponent(token)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) return { ok: true, message: '' };
+    const body = await res.json().catch(() => ({}));
+    const message = Array.isArray(body?.message) ? body.message[0] : body?.message;
+    return { ok: false, message: message || 'Não foi possível enviar agora. Tente de novo.' };
+  } catch {
+    return { ok: false, message: 'Não foi possível enviar agora. Tente de novo.' };
   }
 }

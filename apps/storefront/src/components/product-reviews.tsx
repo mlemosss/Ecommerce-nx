@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useCustomerAuth } from '../lib/customer-auth-context';
 import type { ProductReview } from '../lib/api';
@@ -120,12 +121,30 @@ export function ProductReviews({
 
       <div className="mt-6 space-y-4">
         {reviews.map((review) => (
-          <div key={review.id} className="border-b border-line pb-4">
-            <Stars rating={review.rating} />
-            <p className="mt-2 text-sm leading-relaxed text-ink/75">{review.comment}</p>
-            <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-ink/60">
-              {review.customerName}
-            </p>
+          <div key={review.id} className="flex gap-4 border-b border-line pb-4">
+            {/* Foto da cliente usando a peça. É a prova social que mais decide
+                compra em moda — a pessoa quer ver a roupa num corpo parecido
+                com o dela, não em foto de estúdio. `unoptimized` porque vem
+                como dataURL do banco, não de uma URL que o Next possa otimizar. */}
+            {review.photoUrl && (
+              <div className="relative h-24 w-20 shrink-0 overflow-hidden border border-line">
+                <Image
+                  src={review.photoUrl}
+                  alt={`Foto enviada por ${review.customerName}`}
+                  fill
+                  sizes="80px"
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
+            )}
+            <div className="min-w-0">
+              <Stars rating={review.rating} />
+              <p className="mt-2 text-sm leading-relaxed text-ink/75">{review.comment}</p>
+              <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-ink/60">
+                {review.customerName}
+              </p>
+            </div>
           </div>
         ))}
       </div>

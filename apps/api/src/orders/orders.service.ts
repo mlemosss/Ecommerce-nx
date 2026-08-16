@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ASAAS_PAID_STATUSES, AsaasService } from '../asaas/asaas.service';
@@ -59,6 +60,15 @@ interface StockItem {
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+/**
+ * Token do link de avaliação. 32 caracteres hexadecimais de `randomUUID`, que é
+ * criptograficamente aleatório — `Math.random` não serve aqui, porque quem
+ * adivinhasse um token conseguiria escrever avaliação em pedido alheio.
+ */
+function generateReviewToken(): string {
+  return randomUUID().replace(/-/g, '');
 }
 
 function generateOrderNumber(): string {
@@ -451,6 +461,7 @@ export class OrdersService {
       return tx.order.create({
         data: {
           orderNumber: generateOrderNumber(),
+          reviewToken: generateReviewToken(),
           customerId: customer.id,
           customerName: dto.customerName,
           customerEmail: dto.customerEmail,

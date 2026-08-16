@@ -166,6 +166,8 @@ export interface Order {
   asaasInvoiceUrl: string | null;
   shippedAt: string | null;
   trackingCode: string | null;
+  /** Token do link de avaliação: /avaliar/&lt;token&gt;. Sem senha, por pedido. */
+  reviewToken: string | null;
   reviewRequestSentAt: string | null;
   items: OrderItem[];
   createdAt: string;

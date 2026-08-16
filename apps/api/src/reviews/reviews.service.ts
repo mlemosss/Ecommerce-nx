@@ -1,10 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UploadsService } from '../uploads/uploads.service';
 import { CreateReviewDto } from './dto/review.dto';
 
 @Injectable()
 export class ReviewsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uploads: UploadsService
+  ) {}
+
+  /**
+   * Valida a foto antes de gravar. O endpoint do link é público, então aceitar
+   * a string como veio deixaria qualquer um guardar qualquer coisa no banco.
+   * Passa pela mesma checagem de tipo e tamanho da foto de produto.
+   */
+  private validarFoto(photoUrl?: string): string | null {
+    if (!photoUrl?.trim()) return null;
+    return this.uploads.validateProductImage(photoUrl).url;
+  }
 
   async findForProduct(productId: string) {
     const reviews = await this.prisma.productReview.findMany({
@@ -34,6 +48,7 @@ export class ReviewsService {
         customerName,
         rating: dto.rating,
         comment: dto.comment,
+        photoUrl: this.validarFoto(dto.photoUrl),
       },
     });
   }
@@ -62,7 +77,7 @@ export class ReviewsService {
     // mostrar o que a pessoa escreveu em vez de parecer que nada foi salvo.
     const jaAvaliados = await this.prisma.productReview.findMany({
       where: { orderId: order.id },
-      select: { productId: true, rating: true, comment: true },
+      select: { productId: true, rating: true, comment: true, photoUrl: true },
     });
     const porProduto = new Map(jaAvaliados.map((r) => [r.productId, r]));
 
@@ -106,9 +121,11 @@ export class ReviewsService {
       throw new NotFoundException('Este produto não faz parte do pedido.');
     }
 
+    const foto = this.validarFoto(dto.photoUrl);
+
     return this.prisma.productReview.upsert({
       where: { orderId_productId: { orderId: order.id, productId: dto.productId } },
-      update: { rating: dto.rating, comment: dto.comment },
+      update: { rating: dto.rating, comment: dto.comment, photoUrl: foto },
       create: {
         productId: dto.productId,
         orderId: order.id,
@@ -116,6 +133,7 @@ export class ReviewsService {
         customerName: order.customerName,
         rating: dto.rating,
         comment: dto.comment,
+        photoUrl: foto,
       },
     });
   }

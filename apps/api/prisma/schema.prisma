@@ -90,6 +90,10 @@ model ProductReview {
   comment      String
   approved     Boolean  @default(false)
   createdAt    DateTime @default(now())
+  // Foto de quem usou a peça, opcional. É o formato de prova social que mais
+  // converte em moda: a cliente quer ver a roupa num corpo parecido com o dela,
+  // não em foto de estúdio. Guardada como dataURL, igual à foto de produto.
+  photoUrl     String?
   // Pedido de onde veio a avaliação, quando ela chegou pelo link.
   //
   // Serve para duas coisas: impedir a mesma pessoa de avaliar o mesmo produto

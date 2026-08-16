@@ -8,6 +8,8 @@ interface OrderItemLike {
 
 export interface OrderForEmail {
   orderNumber: string;
+  /** Token do link de avaliação sem login. Nulo em pedido antigo. */
+  reviewToken?: string | null;
   customerName: string;
   total: number;
   subtotal: number;
@@ -354,13 +356,20 @@ export function reviewRequestTemplate(
   storefrontUrl: string,
   order: OrderForEmail
 ): EmailTemplate {
+  // Link com token: abre a avaliação sem login. A loja é de compra sem
+  // cadastro, então o botão antigo — que apontava para /conta — levava o
+  // cliente a uma tela de login que ele não tinha como passar. Pedido antigo,
+  // sem token, ainda cai em /conta.
+  const destino = order.reviewToken ? `${storefrontUrl}/avaliar/${order.reviewToken}` : `${storefrontUrl}/conta`;
+
   const body = `
     <p style="color:#333;font-size:14px;line-height:1.6;">
       ${firstName(order.customerName)}, esperamos que esteja treinando bem com o que comprou no pedido
-      <strong>#${order.orderNumber}</strong>! Que tal deixar uma avaliação pra ajudar outros clientes?
+      <strong>#${order.orderNumber}</strong>! Que tal contar o que achou? Ajuda muito quem está em
+      dúvida no tamanho — e se quiser mandar uma foto usando, melhor ainda.
     </p>
-    <a href="${storefrontUrl}/conta" style="display:inline-block;margin-top:12px;background:#111;color:#fff;padding:12px 20px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;">
-      Avaliar meus produtos
+    <a href="${destino}" style="display:inline-block;margin-top:12px;background:#111;color:#fff;padding:12px 20px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;">
+      Avaliar minha compra
     </a>`;
   return {
     subject: `O que achou da sua compra na ${storeName}?`,
