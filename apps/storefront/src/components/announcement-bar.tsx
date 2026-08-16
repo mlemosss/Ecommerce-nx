@@ -13,7 +13,10 @@ export function AnnouncementBar({
 }) {
   const items = [
     `Frete grátis acima de ${formatPrice(freeShippingThreshold)}`,
-    'Troca grátis em até 7 dias',
+    // O cupom só entra aqui porque existe de verdade: PRIMEIRACOMPRA10 é criado
+    // na migração 20260815230000, ativo, valendo uma vez por CPF. Anunciar
+    // código que a loja não tem faz o cliente digitar e levar "cupom inválido".
+    '10% na 1ª compra com PRIMEIRACOMPRA10',
     `Pix, cartão em até ${maxInstallments}x ou boleto`,
   ];
 

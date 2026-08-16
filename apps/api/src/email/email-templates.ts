@@ -156,6 +156,58 @@ export function paymentApprovedTemplate(
   };
 }
 
+/**
+ * Boleto venceu sem pagamento: o pedido foi cancelado e as peças voltaram ao
+ * estoque. O e-mail não é só um aviso de cancelamento — quem gerou boleto
+ * demonstrou intenção de compra e desistiu por atrito, não por preço. O cupom
+ * dá um motivo concreto para voltar.
+ *
+ * O código do cupom vem de fora porque quem decide qual é a campanha é o
+ * lojista, não este arquivo.
+ */
+export function boletoExpiredTemplate(
+  storeName: string,
+  storefrontUrl: string,
+  order: OrderForEmail,
+  coupon: { code: string; percent: number } | null
+): EmailTemplate {
+  const oferta = coupon
+    ? `
+    <p style="color:#333;font-size:14px;line-height:1.6;">
+      Se ainda quiser as peças, use o cupom <strong style="font-size:16px;letter-spacing:1px;">${coupon.code}</strong>
+      e leve com <strong>${coupon.percent}% de desconto</strong> no valor da compra.
+    </p>
+    <p style="margin:24px 0;">
+      <a href="${storefrontUrl}/produtos"
+         style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;
+                padding:14px 28px;font-size:12px;font-weight:bold;letter-spacing:2px;
+                text-transform:uppercase;">Comprar com ${coupon.percent}% off</a>
+    </p>`
+    : `
+    <p style="margin:24px 0;">
+      <a href="${storefrontUrl}/produtos"
+         style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;
+                padding:14px 28px;font-size:12px;font-weight:bold;letter-spacing:2px;
+                text-transform:uppercase;">Ver produtos</a>
+    </p>`;
+
+  const body = `
+    <p style="color:#333;font-size:14px;line-height:1.6;">
+      ${firstName(order.customerName)}, o boleto do pedido <strong>#${order.orderNumber}</strong> venceu sem
+      pagamento, então ele foi cancelado e as peças voltaram para a loja. Nada foi cobrado de você.
+    </p>
+    ${oferta}
+    <p style="color:#888;font-size:12px;line-height:1.6;">
+      Se você pagou o boleto e recebeu este e-mail, responda que a gente resolve — pagamento em atraso
+      pode levar alguns dias para ser reconhecido.
+    </p>`;
+
+  return {
+    subject: `Seu boleto venceu — mas dá pra recomeçar`,
+    html: layout(storeName, 'Pedido cancelado', body, storefrontUrl),
+  };
+}
+
 export function orderShippedTemplate(
   storeName: string,
   storefrontUrl: string,

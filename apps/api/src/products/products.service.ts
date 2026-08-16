@@ -196,13 +196,25 @@ export class ProductsService {
         const data = {
           color: v.color,
           size: v.size,
-          stock: v.stock,
           price: v.price ?? null,
           costPrice: v.costPrice ?? null,
         };
+        // Variação que já existe NÃO tem o estoque tocado aqui.
+        //
+        // O formulário de produto guarda o estoque de quando a tela abriu e o
+        // devolve inteiro em todo save, mesmo quando só a descrição mudou. Como
+        // isto gravava valor absoluto, uma venda entre abrir e salvar era
+        // desfeita: a peça saía de casa e voltava para a prateleira do sistema.
+        // Quem movimenta estoque é PATCH /products/variants/:id/stock, que
+        // registra a movimentação. Esta rota cuida do cadastro.
+        //
+        // Variação nova é o único caso em que o número do formulário vale: não
+        // há estoque anterior a preservar, é a quantidade inicial.
         return match
           ? this.prisma.productVariant.update({ where: { id: match.id }, data })
-          : this.prisma.productVariant.create({ data: { productId, ...data } });
+          : this.prisma.productVariant.create({
+              data: { productId, ...data, stock: Math.max(0, v.stock ?? 0) },
+            });
       }),
     ]);
   }

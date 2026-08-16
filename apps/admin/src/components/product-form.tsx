@@ -11,6 +11,8 @@ interface VariantRow {
   color: string;
   size: string;
   stock: number;
+  /** Já existe no banco: o estoque dela não é editável por esta tela. */
+  existing?: boolean;
   price: string;
   costPrice: string;
 }
@@ -35,6 +37,7 @@ export function ProductForm({ product }: ProductFormProps) {
       color: v.color,
       size: v.size,
       stock: v.stock,
+      existing: true,
       price: v.price?.toString() ?? '',
       costPrice: v.costPrice?.toString() ?? '',
     })) ?? [{ color: '', size: '', stock: 0, price: '', costPrice: '' }]
@@ -280,13 +283,27 @@ export function ProductForm({ product }: ProductFormProps) {
                   onChange={(e) => updateVariant(index, { size: e.target.value })}
                   className="input-field w-20"
                 />
+                {/* Variação que já existe tem o estoque só de leitura aqui. O
+                    formulário carregava o saldo de quando a tela abriu e o
+                    reenviava em todo save — uma venda no meio do caminho era
+                    desfeita. Quem move estoque é a tela Estoque, que registra a
+                    movimentação. Na variação nova o campo é editável, porque aí
+                    é a quantidade inicial e não há saldo a preservar. */}
                 <input
                   type="number"
                   min="0"
                   placeholder="Qtd."
                   value={variant.stock}
                   onChange={(e) => updateVariant(index, { stock: Number(e.target.value) })}
-                  className="input-field w-20"
+                  readOnly={isEdit && Boolean(variant.existing)}
+                  title={
+                    isEdit && variant.existing
+                      ? 'Estoque é alterado na tela Estoque, que registra a movimentação'
+                      : undefined
+                  }
+                  className={`input-field w-20 ${
+                    isEdit && variant.existing ? 'cursor-not-allowed bg-black/5 text-black/50' : ''
+                  }`}
                 />
                 <button
                   type="button"

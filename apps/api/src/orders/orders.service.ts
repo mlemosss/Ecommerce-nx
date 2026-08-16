@@ -594,17 +594,45 @@ export class OrdersService {
     return updated;
   }
 
-  async markCancelledByAsaasPaymentId(asaasPaymentId: string) {
+  /**
+   * Cancela o pedido a partir de um evento do Asaas e devolve as peças.
+   *
+   * `expired` marca o vencimento de boleto, que é diferente de estorno e de
+   * chargeback: ele só diz que ninguém pagou aquele boleto. Se o pedido já
+   * está pago ou enviado, foi pago por outro caminho (Pix, transferência, a
+   * lojista marcou na mão) — cancelar aí virava o pedido postado em
+   * "cancelado" e devolvia ao estoque uma peça que já saiu de casa.
+   */
+  async markCancelledByAsaasPaymentId(asaasPaymentId: string, options: { expired?: boolean } = {}) {
     const order = await this.prisma.order.findFirst({
       where: { asaasPaymentId },
       include: { items: true },
     });
     if (!order || order.status === 'cancelado') return order;
 
-    return this.prisma.$transaction(async (tx) => {
+    if (options.expired && order.status !== 'aguardando_pagamento') {
+      this.logger.warn(
+        `Boleto do pedido ${order.orderNumber} venceu, mas ele já está "${order.status}". ` +
+          'Cancelamento ignorado: pagamento veio por outro caminho.'
+      );
+      return order;
+    }
+
+    const cancelled = await this.prisma.$transaction(async (tx) => {
       await this.syncStock(tx, order, 'cancelado');
       return tx.order.update({ where: { id: order.id }, data: { status: 'cancelado' } });
     });
+
+    // Quem gerou boleto e não pagou desistiu por atrito, não por preço: vale
+    // um convite de volta. Fora da transação de propósito — falha de e-mail
+    // não pode desfazer o cancelamento nem prender o estoque.
+    if (options.expired && order.customerEmail) {
+      await this.emailService
+        .sendBoletoExpired({ ...order, customerEmail: order.customerEmail })
+        .catch((err) => this.logger.error(`Falha no e-mail de boleto vencido: ${err}`));
+    }
+
+    return cancelled;
   }
 
   async remove(id: string) {

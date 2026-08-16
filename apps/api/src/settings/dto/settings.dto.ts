@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ValuePropDto {
@@ -114,6 +114,17 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsString()
   sizeGuide?: string;
+
+  /** Cupom oferecido no e-mail de boleto vencido. Vazio = e-mail sem oferta. */
+  @IsOptional()
+  @IsString()
+  winbackCouponCode?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  winbackCouponPercent?: number;
 
   @IsOptional()
   @IsString()

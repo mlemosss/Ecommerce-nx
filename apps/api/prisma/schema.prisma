@@ -259,6 +259,12 @@ model StoreSettings {
   googleAdsConversionLabel String?
   // Desconto progressivo, em JSON: [{ minItems, percent }]. Vazio = desligado.
   progressiveDiscount    String   @default("[]")
+  // Cupom oferecido no e-mail de boleto vencido, para a pessoa voltar. Vazio =
+  // o e-mail sai só como aviso de cancelamento. O código não é validado aqui:
+  // criar o cupom em Cupons é passo separado, e anunciar código inexistente
+  // faz o cliente digitar e levar "cupom inválido" bem na hora que voltou.
+  winbackCouponCode      String?
+  winbackCouponPercent   Int      @default(0)
   // Faixa de promoção no topo. Sem texto, não aparece; passada a data, some sozinha.
   promoBannerText        String?
   promoBannerEndsAt      DateTime?

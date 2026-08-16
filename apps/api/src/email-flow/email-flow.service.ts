@@ -44,8 +44,17 @@ const STEP_DEFINITIONS: EmailFlowStepDefinition[] = [
     defaultEnabled: false,
   },
   {
-    key: 'pedido_avaliacao',
+    key: 'boleto_vencido',
     order: 5,
+    name: 'Boleto vencido',
+    description:
+      'Avisa que o boleto venceu e o pedido foi cancelado, com um cupom para a pessoa voltar e comprar de novo.',
+    trigger: 'Enviado quando o Asaas informa que o boleto venceu sem pagamento.',
+    defaultEnabled: true,
+  },
+  {
+    key: 'pedido_avaliacao',
+    order: 6,
     name: 'Pedido de avaliação',
     description:
       'Convida o cliente a avaliar os produtos que comprou, com link direto pra tela de avaliação na loja.',

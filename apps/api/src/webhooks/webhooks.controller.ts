@@ -7,11 +7,15 @@ const CANCELLED_EVENTS = new Set([
   'PAYMENT_REFUNDED',
   'PAYMENT_DELETED',
   'PAYMENT_CHARGEBACK_REQUESTED',
-  // Boleto/Pix vencido sem pagamento. Sem isto o pedido ficava em "aguardando
-  // pagamento" para sempre, sujando o painel. Se o cliente pagar em atraso, o
-  // evento de recebimento chega depois e devolve o pedido para "pago".
-  'PAYMENT_OVERDUE',
 ]);
+/**
+ * Boleto/Pix vencido sem pagamento. Sem isto o pedido ficava em "aguardando
+ * pagamento" para sempre, sujando o painel. Fica separado dos demais porque
+ * vencimento não é estorno: ele só afirma que aquele boleto não foi pago, e
+ * pedido já pago ou enviado não pode ser cancelado por causa dele. Se o cliente
+ * pagar em atraso, o evento de recebimento chega depois e devolve para "pago".
+ */
+const EXPIRED_EVENT = 'PAYMENT_OVERDUE';
 
 interface AsaasWebhookBody {
   event: string;
@@ -49,6 +53,8 @@ export class WebhooksController {
     if (paymentId) {
       if (PAID_EVENTS.has(body.event)) {
         await this.ordersService.markPaidByAsaasPaymentId(paymentId);
+      } else if (body.event === EXPIRED_EVENT) {
+        await this.ordersService.markCancelledByAsaasPaymentId(paymentId, { expired: true });
       } else if (CANCELLED_EVENTS.has(body.event)) {
         await this.ordersService.markCancelledByAsaasPaymentId(paymentId);
       }

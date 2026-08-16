@@ -4,6 +4,7 @@ import { EmailFlowService } from '../email-flow/email-flow.service';
 import {
   abandonedCartTemplate,
   AbandonedCartForEmail,
+  boletoExpiredTemplate,
   orderConfirmedTemplate,
   orderShippedTemplate,
   OrderForEmail,
@@ -15,6 +16,8 @@ import {
 
 const RESEND_URL = 'https://api.resend.com/emails';
 const SETTINGS_ID = 'singleton';
+/** Domínio canônico da loja — o mesmo que o storefront declara na tag `canonical`. */
+const CANONICAL_STOREFRONT_URL = 'https://www.noexcusenx.com.br';
 
 @Injectable()
 export class EmailService {
@@ -30,8 +33,15 @@ export class EmailService {
     return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim().length > 0);
   }
 
+  /**
+   * Host `.vercel.app` cai no domínio canônico. `STOREFRONT_URL` na produção
+   * ainda aponta para `no-excuse-storefront.vercel.app`, e todo link de e-mail
+   * saía por lá — um endereço que não é o da marca e que a própria loja declara
+   * como não-canônico. Trocar a variável na Vercel continua sendo o certo.
+   */
   private getStorefrontUrl(): string {
-    return process.env.STOREFRONT_URL || 'https://no-excuse-storefront.vercel.app';
+    const configured = (process.env.STOREFRONT_URL || CANONICAL_STOREFRONT_URL).replace(/\/$/, '');
+    return /(^|\/\/)([^/]*\.)?vercel\.app$/i.test(configured) ? CANONICAL_STOREFRONT_URL : configured;
   }
 
   private async getSender(): Promise<{ storeName: string; fromName: string; fromAddress: string }> {
@@ -105,6 +115,23 @@ export class EmailService {
     const { storeName } = await this.getSender();
     const template = paymentApprovedTemplate(storeName, this.getStorefrontUrl(), order);
     await this.sendIfEnabled('pagamento_aprovado', order.customerEmail, template);
+  }
+
+  /**
+   * O cupom de recuperação vem das Configurações e é opcional: sem ele o
+   * e-mail sai como aviso de cancelamento, sem oferta. Anunciar um código que
+   * o lojista não criou é pior do que não anunciar nada — a pessoa digita e
+   * leva "cupom inválido" justamente no momento em que voltou.
+   */
+  async sendBoletoExpired(order: OrderForEmail & { customerEmail: string }): Promise<void> {
+    const { storeName } = await this.getSender();
+    const settings = await this.prisma.storeSettings.findUnique({ where: { id: SETTINGS_ID } });
+    const code = settings?.winbackCouponCode?.trim();
+    const percent = settings?.winbackCouponPercent ?? 0;
+    const coupon = code && percent > 0 ? { code: code.toUpperCase(), percent } : null;
+
+    const template = boletoExpiredTemplate(storeName, this.getStorefrontUrl(), order, coupon);
+    await this.sendIfEnabled('boleto_vencido', order.customerEmail, template);
   }
 
   async sendOrderShipped(order: OrderForEmail & { customerEmail: string }): Promise<void> {
