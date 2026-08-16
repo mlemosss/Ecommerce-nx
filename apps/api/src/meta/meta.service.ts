@@ -8,6 +8,21 @@ const GRAPH_BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 /** Domínio canônico da loja — o mesmo que o storefront declara na tag `canonical`. */
 const CANONICAL_STOREFRONT_URL = 'https://www.noexcusenx.com.br';
 
+/**
+ * Onde as fotos de produto realmente são servidas.
+ *
+ * Fixo de propósito. O resto da API monta URL de imagem a partir do host de
+ * quem pediu, o que é certo no catálogo — a loja chama a API direto. No feed
+ * não é: ele também é servido pelo domínio da loja, por reescrita, e ali o host
+ * de quem pediu é `noexcusenx.com.br`, que não serve `/api/images`. Como o
+ * cache da borda é por URL e não por host, a primeira resposta gravada
+ * contaminava as duas — e o Meta rejeita item com imagem inacessível.
+ */
+const IMAGE_BASE_URL = (process.env.API_PUBLIC_URL || 'https://noexcuse-api.vercel.app/api').replace(
+  /\/$/,
+  ''
+);
+
 interface MetaConfig {
   accessToken: string;
   catalogId: string;
@@ -70,7 +85,7 @@ export class MetaService {
     const storefrontUrl = this.storefrontUrl();
 
     const items = products.flatMap((product) => {
-      const built = buildCatalogItems(product, storefrontUrl);
+      const built = buildCatalogItems(product, storefrontUrl, IMAGE_BASE_URL);
       if (built.length === 0 && product.variants.length > 0) withoutImage.push(product.name);
       return built;
     });

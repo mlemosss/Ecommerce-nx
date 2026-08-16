@@ -37,9 +37,20 @@ export function parseImages(raw: string): string[] {
  * pela CDN. A URL carrega o hash do conteúdo, então nunca serve foto velha.
  *
  * Strings que já são URL (http/https) passam intactas.
+ *
+ * `baseOverride` existe para resposta que vai para cache compartilhado. O padrão
+ * é o host de quem pediu, o que é certo para o catálogo (a loja chama a API
+ * direto) e errado para o feed do Meta: ele é servido também pelo domínio da
+ * loja, por reescrita, e ali o host de quem pediu é `noexcusenx.com.br` — que
+ * não serve `/api/images`. Como o cache é por URL e não por host, a primeira
+ * resposta contaminava as duas. Ver `meta.service.ts`.
  */
-export function toPublicImageUrls(productId: string, images: string[]): string[] {
-  const base = apiBaseUrl();
+export function toPublicImageUrls(
+  productId: string,
+  images: string[],
+  baseOverride?: string
+): string[] {
+  const base = baseOverride ?? apiBaseUrl();
   return images.map((image) => {
     const match = DATA_URL.exec(image);
     if (!match) return image;

@@ -87,8 +87,12 @@ function flattenDescription(description: string, fallback: string): string {
   return (flat || fallback).slice(0, 9999);
 }
 
-export function buildCatalogItems(product: CatalogSource, storefrontUrl: string): CatalogItem[] {
-  const images = toPublicImageUrls(product.id, parseImages(product.images));
+export function buildCatalogItems(
+  product: CatalogSource,
+  storefrontUrl: string,
+  imageBaseUrl?: string
+): CatalogItem[] {
+  const images = toPublicImageUrls(product.id, parseImages(product.images), imageBaseUrl);
   if (images.length === 0) return [];
 
   const onSale = isOnSale(product);

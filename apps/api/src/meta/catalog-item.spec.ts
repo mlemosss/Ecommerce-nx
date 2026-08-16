@@ -116,6 +116,20 @@ describe('buildCatalogItems', () => {
     const [item] = buildCatalogItems(produto(), LOJA);
     expect(item.link).toBe('https://www.noexcusenx.com.br/produtos/top-energy');
   });
+
+  it('a foto sai do endereço da API, não do host de quem pediu o feed', () => {
+    // O feed é servido também pelo domínio da loja, por reescrita. Sem a base
+    // fixa, a foto saía como noexcusenx.com.br/api/images/... — que é 404 — e
+    // o cache da borda espalhava esse endereço para os dois hosts.
+    const API = 'https://noexcuse-api.vercel.app/api';
+    const [item] = buildCatalogItems(
+      produto({ images: JSON.stringify(['data:image/jpeg;base64,QQ==']) }),
+      LOJA,
+      API
+    );
+    expect(item.image_link.startsWith(`${API}/images/`)).toBe(true);
+    expect(item.image_link).not.toContain('noexcusenx.com.br');
+  });
 });
 
 describe('toCsv', () => {
