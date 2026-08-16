@@ -31,6 +31,19 @@ const nextConfig = {
       { protocol: 'http', hostname: 'localhost' },
     ],
   },
+
+  /**
+   * O feed do catálogo do Meta atendido pelo domínio da loja.
+   *
+   * O feed é gerado pela API, onde os produtos moram — gerar aqui obrigaria o
+   * site a perguntar à API e montar tudo de novo, com duas cópias da mesma
+   * regra de preço para divergirem. Isto é reescrita e não redirecionamento:
+   * o Meta pede /api/meta-feed e recebe 200 com o CSV, sem pular de endereço.
+   * Buscador de feed que não segue redirecionamento continua funcionando.
+   */
+  async rewrites() {
+    return [{ source: '/api/meta-feed', destination: `${apiUrl}/meta/feed.csv` }];
+  },
 };
 
 const plugins = [
