@@ -32,7 +32,7 @@ export default function LoginPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           <Image
             src="/admin/logo-nx.png"
-            alt="No Excuse"
+            alt="NO EXCUSE"
             width={64}
             height={56}
             priority

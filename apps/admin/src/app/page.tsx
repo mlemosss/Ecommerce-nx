@@ -29,7 +29,7 @@ export default function HomePage() {
         </div>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-ink px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
-            No Excuse
+            NO EXCUSE
           </span>
           <LogoutButton />
         </div>

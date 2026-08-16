@@ -67,7 +67,7 @@ export function Sidebar() {
 
       <div className="mt-auto flex items-center justify-between gap-2 border-t border-black/10 pt-3">
         <span className="rounded-full bg-ink px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white">
-          No Excuse
+          NO EXCUSE
         </span>
         <LogoutButton />
       </div>

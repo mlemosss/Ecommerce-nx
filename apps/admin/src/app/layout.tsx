@@ -4,8 +4,8 @@ import { Sidebar } from '../components/sidebar';
 import { AuthGuard } from '../components/auth-guard';
 
 export const metadata = {
-  title: 'No Excuse — Gerencial',
-  description: 'Painel de gestão da loja No Excuse: produtos, estoque, clientes, vendas e despesas.',
+  title: 'NO EXCUSE — Gerencial',
+  description: 'Painel de gestão da loja NO EXCUSE: produtos, estoque, clientes, vendas e despesas.',
 };
 
 export default function RootLayout({

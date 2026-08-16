@@ -189,7 +189,7 @@ export default async function HomePage() {
       <section className="border-y border-line bg-foam py-20 sm:py-24">
         <div className="container-page grid gap-14 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
           <div>
-            <p className="eyebrow text-ink/50">Por que No Excuse</p>
+            <p className="eyebrow text-ink/50">Por que NO EXCUSE</p>
             {/* Fecho da história da marca, no lugar da chamada genérica de
                 antes. É o texto das fundadoras, e cai bem aqui: a pessoa já viu
                 a vitrine e está decidindo se compra desta loja. */}

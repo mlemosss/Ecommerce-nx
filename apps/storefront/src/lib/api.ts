@@ -42,7 +42,7 @@ export interface StoreSettings {
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
-  storeName: 'No Excuse',
+  storeName: 'NO EXCUSE',
   contactEmail: null,
   contactWhatsapp: null,
   shippingFee: 19.9,
@@ -402,5 +402,64 @@ export async function getOrderPayment(
     return await res.json();
   } catch {
     return null;
+  }
+}
+
+/** Cadastro completo de quem está logado, incluindo endereço de entrega. */
+export interface CustomerProfile {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  documentNumber: string | null;
+  zipCode: string | null;
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+}
+
+export async function getCustomerProfile(token: string): Promise<CustomerProfile | null> {
+  try {
+    const res = await fetch(`${API_URL}/customer-auth/me/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Salva o cadastro. Devolve a mensagem de erro da API em vez de um booleano:
+ * "não foi possível salvar" não diz à pessoa qual campo corrigir.
+ */
+export async function saveCustomerProfile(
+  token: string,
+  dados: Partial<Omit<CustomerProfile, 'id' | 'email' | 'documentNumber'>>
+): Promise<{ ok: true; profile: CustomerProfile } | { ok: false; erro: string }> {
+  try {
+    const res = await fetch(`${API_URL}/customer-auth/me/profile`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(dados),
+    });
+    const corpo = await res.json().catch(() => null);
+    if (!res.ok) {
+      const message = corpo?.message;
+      return {
+        ok: false,
+        erro: Array.isArray(message)
+          ? message[0]
+          : message || 'Não foi possível salvar agora. Tente de novo em instantes.',
+      };
+    }
+    return { ok: true, profile: corpo };
+  } catch {
+    return { ok: false, erro: 'Sem conexão com a loja. Verifique a internet e tente de novo.' };
   }
 }

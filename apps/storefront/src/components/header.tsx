@@ -32,8 +32,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center" aria-label="No Excuse">
-          <Image src="/logo-nx.png" alt="No Excuse" width={44} height={38} priority className="h-9 w-auto" />
+        <Link href="/" className="flex items-center" aria-label="NO EXCUSE">
+          <Image src="/logo-nx.png" alt="NO EXCUSE" width={44} height={38} priority className="h-9 w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-7 text-[11px] font-semibold uppercase tracking-[0.16em] lg:flex">

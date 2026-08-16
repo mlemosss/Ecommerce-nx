@@ -106,7 +106,7 @@ export default async function AboutPage() {
       <section className="container-page py-20 text-center sm:py-24">
         <p className="display-sm mx-auto max-w-3xl text-ink/40">{CLOSING.lead}</p>
         <p className="display-sm mx-auto mt-3 max-w-3xl">{CLOSING.body}</p>
-        <p className="eyebrow mt-12 text-ink/50">No Excuse</p>
+        <p className="eyebrow mt-12 text-ink/50">NO EXCUSE</p>
         <p className="mt-3 text-lg font-semibold tracking-tight">
           Vista sua força. Viva seu movimento.
         </p>
