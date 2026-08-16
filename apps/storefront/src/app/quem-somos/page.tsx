@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getSettings } from '../../lib/api';
 import { getProducts } from '../../lib/products';
 import { ProductImage } from '../../components/product-image';
+import { CLOSING, aboutParagraphs } from '../../lib/about';
 
 export const metadata = {
   alternates: { canonical: '/quem-somos' },
@@ -19,25 +20,15 @@ const DEFAULT_BODY = [
   'Por isso, cada peça é escolhida pensando no equilíbrio entre performance, conforto, qualidade e estilo.',
 ].join('\n\n');
 
-/**
- * Fecho da história, sempre em destaque próprio.
- *
- * Fica fora de `aboutBody` de propósito: é a assinatura da marca, e sai com
- * tratamento tipográfico diferente do corpo do texto. Se estivesse no corpo,
- * viraria mais um parágrafo entre outros.
- */
-const CLOSING = {
-  lead: 'Não queremos apenas vestir o seu treino.',
-  body: 'Queremos fazer parte daquela escolha diária de se movimentar, se cuidar, se superar e continuar.',
-};
-
 export default async function AboutPage() {
   const settings = await getSettings();
   const products = await getProducts();
 
   const headline = settings.aboutHeadline?.trim() || DEFAULT_HEADLINE;
   const body = settings.aboutBody?.trim() || DEFAULT_BODY;
-  const paragraphs = body.split(/\n{2,}/).filter(Boolean);
+  // Tira o fecho do corpo: ele tem seção própria mais abaixo, e o texto salvo
+  // em Configurações termina com as mesmas linhas.
+  const paragraphs = aboutParagraphs(body);
   const showcase = products.filter((p) => p.images?.[0]).slice(0, 3);
 
   return (
@@ -107,9 +98,7 @@ export default async function AboutPage() {
         <p className="display-sm mx-auto max-w-3xl text-ink/40">{CLOSING.lead}</p>
         <p className="display-sm mx-auto mt-3 max-w-3xl">{CLOSING.body}</p>
         <p className="eyebrow mt-12 text-ink/50">NO EXCUSE</p>
-        <p className="mt-3 text-lg font-semibold tracking-tight">
-          Vista sua força. Viva seu movimento.
-        </p>
+        <p className="mt-3 text-lg font-semibold tracking-tight">{CLOSING.signature}</p>
       </section>
 
       <section className="border-b border-t border-line bg-paper">
