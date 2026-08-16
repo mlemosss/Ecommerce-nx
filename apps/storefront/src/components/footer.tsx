@@ -20,8 +20,13 @@ export function Footer({ settings }: { settings: StoreSettings }) {
       <div className="container-page grid grid-cols-2 gap-10 py-14 sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
           <p className="text-xl font-black uppercase tracking-tighter">No Excuse</p>
+          {/* Assinatura da marca, no lugar da descrição genérica de antes. Aqui
+              ela aparece em toda página sem competir com nada. */}
+          <p className="mt-3 text-sm font-semibold text-white/85">
+            Vista sua força. Viva seu movimento.
+          </p>
           <p className="mt-4 text-sm leading-relaxed text-white/60">
-            Roupas e acessórios de academia feitos para quem não pula treino.
+            Roupas de academia pensadas por mulheres, para mulheres que treinam de verdade.
           </p>
         </div>
 

@@ -190,11 +190,25 @@ export default async function HomePage() {
         <div className="container-page grid gap-14 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
           <div>
             <p className="eyebrow text-ink/50">Por que No Excuse</p>
+            {/* Fecho da história da marca, no lugar da chamada genérica de
+                antes. É o texto das fundadoras, e cai bem aqui: a pessoa já viu
+                a vitrine e está decidindo se compra desta loja. */}
             <h2 className="display-sm mt-6">
-              Feito para o treino
+              Não queremos apenas
               <br />
-              <span className="text-ink/40">que você faz de verdade.</span>
+              <span className="text-ink/40">vestir o seu treino.</span>
             </h2>
+            <p className="mt-6 max-w-md leading-relaxed text-ink/70">
+              Queremos fazer parte daquela escolha diária de se movimentar, se cuidar, se superar e
+              continuar.
+            </p>
+            <Link
+              href="/quem-somos"
+              className="link-ghost mt-8 inline-flex text-xs"
+            >
+              Nossa história
+              <span aria-hidden>→</span>
+            </Link>
           </div>
 
           <ol className="border-t border-ink/10">
