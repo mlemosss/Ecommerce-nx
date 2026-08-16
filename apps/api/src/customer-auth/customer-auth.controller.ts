@@ -50,6 +50,16 @@ export class CustomerAuthController {
     return this.customerAuthService.myOrders(req.user.sub);
   }
 
+  /**
+   * Como pagar um pedido em aberto. Busca o QR do Pix na hora — ele era
+   * guardado só na aba do checkout e se perdia ao fechar.
+   */
+  @CustomerAccessible()
+  @Get('me/orders/:orderId/payment')
+  orderPayment(@Req() req: CustomerRequest, @Param('orderId') orderId: string) {
+    return this.customerAuthService.orderPayment(req.user.sub, orderId);
+  }
+
   /** Baixar meus dados (LGPD art. 18, V). */
   @CustomerAccessible()
   @Get('me/export')

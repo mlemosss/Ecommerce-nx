@@ -1,9 +1,16 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { AsaasService } from '../asaas/asaas.service';
 import { RegisterCustomerDto, LoginCustomerDto, SetPasswordDto } from './dto/customer-auth.dto';
 import { parseImages, toPublicImageUrls } from '../products/product-images';
 
@@ -22,10 +29,13 @@ function withParsedImages<T extends { id: string; images: string }>(
 
 @Injectable()
 export class CustomerAuthService {
+  private readonly logger = new Logger(CustomerAuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly email: EmailService
+    private readonly email: EmailService,
+    private readonly asaas: AsaasService
   ) {}
 
   private sign(customer: { id: string; email: string | null; name: string }) {
@@ -129,6 +139,52 @@ export class CustomerAuthService {
       include: { items: true },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * Como pagar um pedido que ainda está aguardando.
+   *
+   * O QR do Pix era buscado uma vez, no checkout, e guardado na sessão da aba.
+   * Fechou a aba, perdeu — e a pessoa ficava com um pedido em aberto sem
+   * nenhum caminho para pagar. Aqui ele é buscado de novo, na hora, direto do
+   * Asaas.
+   *
+   * O `where` casa pedido E cliente: sem isso, trocar o id na URL daria acesso
+   * ao pagamento de qualquer pedido da loja.
+   */
+  async orderPayment(customerId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, customerId },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        total: true,
+        paymentMethod: true,
+        asaasPaymentId: true,
+        asaasInvoiceUrl: true,
+      },
+    });
+    if (!order) throw new NotFoundException('Pedido não encontrado');
+
+    if (order.status !== 'aguardando_pagamento') {
+      return { ...order, pix: null, alreadyPaid: order.status !== 'cancelado' };
+    }
+
+    // Só Pix tem QR. Boleto e cartão seguem pela fatura do Asaas, que é onde a
+    // pessoa também consegue trocar a forma de pagamento.
+    let pix: { encodedImage: string; payload: string; expirationDate?: string } | null = null;
+    if (order.paymentMethod === 'pix' && order.asaasPaymentId) {
+      try {
+        pix = await this.asaas.getPixQrCode(order.asaasPaymentId);
+      } catch (err) {
+        // QR indisponível não pode esconder o link da fatura, que é a outra
+        // saída da pessoa.
+        this.logger.warn(`Falha ao buscar QR do pedido ${order.orderNumber}: ${err}`);
+      }
+    }
+
+    return { ...order, pix, alreadyPaid: false };
   }
 
   async listFavorites(customerId: string) {

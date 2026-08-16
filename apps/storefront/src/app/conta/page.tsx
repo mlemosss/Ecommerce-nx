@@ -8,6 +8,7 @@ import { useProducts } from '../../lib/products-context';
 import { formatPrice } from '../../lib/format';
 import { ProductCard } from '../../components/product-card';
 import { PrivacyActions } from '../../components/privacy-actions';
+import { OrderPaymentPanel } from '../../components/order-payment';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 const TOKEN_KEY = 'no-excuse:customer-token';
@@ -32,6 +33,9 @@ export default function AccountPage() {
   const { products } = useProducts();
   const router = useRouter();
   const [orders, setOrders] = useState<OrderSummary[] | null>(null);
+  // Guardado no estado para o painel de pagamento poder chamar a API do cliente
+  // sem reler o localStorage a cada render.
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (isLoaded && !customer) {
@@ -43,6 +47,7 @@ export default function AccountPage() {
     if (!customer) return;
     const token = window.localStorage.getItem(TOKEN_KEY);
     if (!token) return;
+    setAuthToken(token);
 
     fetch(`${API_URL}/customer-auth/me/orders`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => (res.ok ? res.json() : []))
@@ -101,19 +106,25 @@ export default function AccountPage() {
         {orders && orders.length > 0 && (
           <ul className="mt-4 border-t border-line">
             {orders.map((order) => (
-              <li
-                key={order.id}
-                className="flex items-center justify-between border-b border-line py-4 text-sm"
-              >
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em]">
-                    #{order.orderNumber}
-                  </p>
-                  <p className="mt-1 text-xs text-ink/60">
-                    {STATUS_LABEL[order.status] ?? order.status}
-                  </p>
+              <li key={order.id} className="border-b border-line py-4 text-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em]">
+                      #{order.orderNumber}
+                    </p>
+                    <p className="mt-1 text-xs text-ink/60">
+                      {STATUS_LABEL[order.status] ?? order.status}
+                    </p>
+                  </div>
+                  <span className="font-bold">{formatPrice(order.total)}</span>
                 </div>
-                <span className="font-bold">{formatPrice(order.total)}</span>
+
+                {/* Pedido em aberto tinha o status e nada mais: quem fechou a
+                    aba do checkout perdia o QR do Pix e ficava sem caminho
+                    nenhum para pagar. */}
+                {order.status === 'aguardando_pagamento' && (
+                  <OrderPaymentPanel orderId={order.id} token={authToken} />
+                )}
               </li>
             ))}
           </ul>

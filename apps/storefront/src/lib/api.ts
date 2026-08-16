@@ -373,3 +373,34 @@ export async function submitReviewLink(
     return { ok: false, message: 'Não foi possível enviar agora. Tente de novo.' };
   }
 }
+
+export interface OrderPayment {
+  id: string;
+  orderNumber: string;
+  status: string;
+  total: number;
+  paymentMethod: string;
+  asaasInvoiceUrl: string | null;
+  pix: { encodedImage: string; payload: string; expirationDate?: string } | null;
+  alreadyPaid: boolean;
+}
+
+/**
+ * Como pagar um pedido em aberto. Exige o token do cliente: a API casa o
+ * pedido com o dono antes de responder, então ninguém vê pagamento alheio.
+ */
+export async function getOrderPayment(
+  token: string,
+  orderId: string
+): Promise<OrderPayment | null> {
+  try {
+    const res = await fetch(`${API_URL}/customer-auth/me/orders/${orderId}/payment`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
