@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, type FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCustomerAuth } from '../../../lib/customer-auth-context';
+import { caminhoDeVolta } from '../../../lib/voltar';
 
-export default function LoginPage() {
+function LoginPage() {
   const { login } = useCustomerAuth();
   const router = useRouter();
+  const params = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,7 +21,9 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.push('/conta');
+      // Volta para onde a pessoa estava. Quem clicou no coração de uma peça
+      // caía na conta e perdia a peça — some justamente quem se interessou.
+      router.push(caminhoDeVolta(params.get('voltar')));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao entrar');
     } finally {
@@ -60,11 +64,33 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-ink/70">
           Ainda não tem conta?{' '}
-          <Link href="/conta/cadastro" className="font-semibold underline underline-offset-4">
+          {/* O caminho de volta atravessa o cadastro também: quem clicou no
+              coração e ainda não tem conta não pode perder a peça no meio. */}
+          <Link
+            href={
+              params.get('voltar')
+                ? `/conta/cadastro?voltar=${encodeURIComponent(params.get('voltar') as string)}`
+                : '/conta/cadastro'
+            }
+            className="font-semibold underline underline-offset-4"
+          >
             Cadastre-se
           </Link>
         </p>
       </div>
     </div>
+  );
+}
+
+/**
+ *  obriga a página a sair do pré-render estático; sem este
+ * Suspense o build do Next falha na exportação. O fallback é a própria tela
+ * sem o parametro, que so decide para onde voltar depois do login.
+ */
+export default function Page() {
+  return (
+    <Suspense>
+      <LoginPage />
+    </Suspense>
   );
 }

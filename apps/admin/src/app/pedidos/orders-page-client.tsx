@@ -246,8 +246,6 @@ export function OrdersPageClient() {
                     {/* Link de avaliação, para mandar no WhatsApp.
                         Abre sem senha — quem comprou como convidado não tem
                         conta, e era isso que travava a avaliação até agora. */}
-                    {/* Sem `order.reviewToken &&`: o botão aparece em todo
-                        pedido e o token é criado no clique, se faltar. */}
                     <div>
                       <p className="font-semibold">Avaliação</p>
                       <div className="mt-1 flex flex-wrap items-center gap-3">

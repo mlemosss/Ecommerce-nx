@@ -1,18 +1,28 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useCustomerAuth } from '../lib/customer-auth-context';
 
 export function FavoriteButton({ productId }: { productId: string }) {
   const { customer, isLoaded, favoriteIds, toggleFavorite } = useCustomerAuth();
+  const pathname = usePathname();
   const [pending, setPending] = useState(false);
   const isFavorited = favoriteIds.has(productId);
 
   if (isLoaded && !customer) {
+    // O coração levava para o login e a peça se perdia: depois de entrar, a
+    // cliente caía na conta, não de volta na peça que tinha acabado de
+    // escolher. Some justamente quem demonstrou interesse.
+    //
+    // Só o caminho de volta, sem favoritar sozinho depois do login. A conta
+    // recém-aberta já carregou a lista de favoritos, e marcar por fora dela
+    // deixaria o coração vazio numa peça que está salva — errado de um jeito
+    // pior do que pedir um clique a mais.
     return (
       <Link
-        href="/conta/entrar"
+        href={`/conta/entrar?voltar=${encodeURIComponent(pathname)}`}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/90 text-ink/70 shadow-sm backdrop-blur transition hover:bg-white hover:text-ink"
         aria-label="Entre para favoritar"
         title="Entre para favoritar"

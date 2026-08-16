@@ -1,13 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, type FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCustomerAuth } from '../../../lib/customer-auth-context';
+import { caminhoDeVolta } from '../../../lib/voltar';
 
-export default function RegisterPage() {
+function RegisterPage() {
   const { register } = useCustomerAuth();
   const router = useRouter();
+  const params = useSearchParams();
+  const voltar = params.get('voltar');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -27,7 +30,7 @@ export default function RegisterPage() {
         setPendingMessage(result.message ?? 'Enviamos um link para o seu e-mail.');
         return;
       }
-      router.push('/conta');
+      router.push(caminhoDeVolta(voltar));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar conta');
     } finally {
@@ -98,11 +101,24 @@ export default function RegisterPage() {
 
         <p className="mt-6 text-center text-sm text-ink/70">
           Já tem conta?{' '}
-          <Link href="/conta/entrar" className="font-semibold underline underline-offset-4">
+          <Link href={voltar ? `/conta/entrar?voltar=${encodeURIComponent(voltar)}` : '/conta/entrar'} className="font-semibold underline underline-offset-4">
             Entrar
           </Link>
         </p>
       </div>
     </div>
+  );
+}
+
+/**
+ *  obriga a página a sair do pré-render estático; sem este
+ * Suspense o build do Next falha na exportação. O fallback é a própria tela
+ * sem o parametro, que so decide para onde voltar depois do login.
+ */
+export default function Page() {
+  return (
+    <Suspense>
+      <RegisterPage />
+    </Suspense>
   );
 }

@@ -51,11 +51,21 @@ const DEBIT_ON_PAYMENT_SINCE = new Date('2026-08-06T23:55:00.000Z');
 const DEBITED_STATUSES = new Set(['pago', 'enviado']);
 
 /**
- * Cobranças do Asaas que não valem mais nada: estornada, apagada, perdida em
- * chargeback. Uma cobrança nestes estados não pode ser reaproveitada como
- * segunda via — a cliente clicaria num link morto.
+ * Cobranças que ainda dá para pagar — lista branca, não lista negra.
+ *
+ * Era o contrário: uma lista de status "mortos", e tudo que não estivesse nela
+ * era adotado como segunda via. Lista negra erra para o lado perigoso. Faltava
+ * `OVERDUE` (fatura vencida: a cliente clicaria num link morto, e a adoção é
+ * definitiva — `ensureOpenPayment` nunca reconsidera) e faltavam os status
+ * pagos, o que é pior: o caso que a função existe para resolver é "a criação
+ * deu certo e a resposta se perdeu", e o passo seguinte natural é a cliente ter
+ * pago aquela cobrança. Adotá-la como pendente mandava quem já pagou para uma
+ * fatura de novo.
+ *
+ * Com lista branca, status desconhecido não é adotado — o pior caso vira uma
+ * cobrança a mais, não uma cliente cobrada duas vezes.
  */
-const DEAD_ASAAS_STATUSES = new Set(['REFUNDED', 'DELETED', 'CHARGEBACK_REQUESTED', 'REFUND_REQUESTED']);
+const REUSABLE_ASAAS_STATUSES = new Set(['PENDING', 'AWAITING_RISK_ANALYSIS']);
 
 /**
  * O que fazer quando a peça não está mais lá na hora de dar baixa.
@@ -195,19 +205,25 @@ export class OrdersService {
         );
       }
 
-      // Venda acima do estoque. Zera o que sobrou e grita no log: a peça foi
-      // vendida duas vezes e alguém vai precisar decidir o que fazer.
-      const disponivel = Math.max(0, variant.stock);
-      if (disponivel > 0) {
-        await tx.productVariant.updateMany({
-          where: { id: variant.id },
-          data: { stock: { decrement: disponivel } },
-        });
-      }
+      // Venda acima do estoque. Debita a quantidade INTEIRA, deixando o saldo
+      // negativo, e grita no log.
+      //
+      // Zerar em vez de negativar parecia mais limpo e não era: a devolução
+      // (cancelamento, estorno, exclusão do pedido) credita `item.quantity`
+      // cheio. Estoque 1, pedido pago de 3: zerava, e o estorno devolvia 3 —
+      // a loja passava a anunciar 3 peças que não existem, cada uma capaz de
+      // repetir o mesmo caminho. O erro se multiplicava a cada estorno.
+      //
+      // Negativo é assimetria nenhuma e, de quebra, é o aviso mais honesto que
+      // existe: "-2" no painel quer dizer duas peças devendo.
+      await tx.productVariant.update({
+        where: { id: variant.id },
+        data: { stock: { decrement: item.quantity } },
+      });
       this.logger.error(
         `VENDA ACIMA DO ESTOQUE: ${item.productName} (${item.color}/${item.size}) — ` +
-          `pagas ${item.quantity}, havia ${disponivel}. ` +
-          `Faltam ${item.quantity - disponivel} peças para entregar este pedido.`
+          `pagas ${item.quantity}, havia ${variant.stock}. ` +
+          `Faltam ${item.quantity - variant.stock} peças para entregar este pedido.`
       );
     }
   }
@@ -540,6 +556,16 @@ export class OrdersService {
       };
     }
 
+    /**
+     * Existe cobrança no Asaas? A pergunta que decide se dá para cancelar.
+     *
+     * Não dá para responder pelo banco: se for justamente a gravação que
+     * falhar, `asaasPaymentId` continua nulo e o cancelamento dispararia com o
+     * cartão já cobrado. Esta variável guarda o fato — a chamada voltou com um
+     * id —, que é o que realmente importa.
+     */
+    let cobrancaCriada: string | null = null;
+
     try {
       const customer = await this.asaas.createCustomer({
         name: dto.customerName,
@@ -580,6 +606,8 @@ export class OrdersService {
           : {}),
       });
 
+      cobrancaCriada = payment.id;
+
       // A COBRANÇA EXISTE A PARTIR DAQUI. Gravar o vínculo é a primeira coisa
       // que se faz, sozinha, antes de estoque, cupom ou e-mail.
       //
@@ -603,17 +631,38 @@ export class OrdersService {
       if (paidNow) {
         try {
           updated = await this.prisma.$transaction(async (tx) => {
-            // Cartão aprovado na hora já sai do estoque: não faz sentido
-            // esperar o webhook para um pagamento que a resposta já confirmou.
-            // `zerar`: o dinheiro entrou, e recusar aqui não o devolve.
-            await this.syncStock(tx, comCobranca, 'pago', 'zerar');
-            // O cupom era contado só no webhook, e o webhook desiste de um
-            // pedido que já está pago — então compra no cartão aprovada na
-            // hora nunca gastava uso nenhum do cupom.
-            await this.syncCouponUsage(tx, comCobranca, 'pago');
-            return tx.order.update({
-              where: { id: order.id },
+            // O MESMO updateMany condicional do webhook, e não um update
+            // direto.
+            //
+            // Gravar `asaasPaymentId` antes desta transação conserta o
+            // pagamento órfão, mas abre uma porta: o pedido passa a ser
+            // encontrável pelo webhook enquanto esta transação ainda roda. No
+            // cartão o `PAYMENT_CONFIRMED` chega na hora, cai em outra
+            // instância, e as duas baixavam estoque e contavam cupom — uma
+            // venda, duas saídas, `usageCount` +2. Pior: com `zerar` a segunda
+            // baixa nem dá erro, zera a variação e registra "VENDA ACIMA DO
+            // ESTOQUE" para uma venda que não existiu.
+            //
+            // Quem encontrar o pedido fora de "pago" primeiro faz o trabalho;
+            // o outro vê `count === 0` e sai sem efeito.
+            const { count } = await tx.order.updateMany({
+              where: { id: order.id, status: { not: 'pago' } },
               data: { status: 'pago' },
+            });
+
+            if (count > 0) {
+              // Cartão aprovado na hora já sai do estoque: não faz sentido
+              // esperar o webhook para um pagamento que a resposta já
+              // confirmou. `zerar`: o dinheiro entrou, e recusar não o devolve.
+              await this.syncStock(tx, comCobranca, 'pago', 'zerar');
+              // O cupom era contado só no webhook, e o webhook desiste de um
+              // pedido que já está pago — então compra no cartão aprovada na
+              // hora nunca gastava uso nenhum do cupom.
+              await this.syncCouponUsage(tx, comCobranca, 'pago');
+            }
+
+            return tx.order.findUniqueOrThrow({
+              where: { id: order.id },
               include: { items: true },
             });
           });
@@ -628,14 +677,27 @@ export class OrdersService {
         }
       }
 
-      // "Pedido confirmado" só sai quando existe pagamento. Enquanto não há, o
-      // e-mail é o de cobrança, com o caminho para pagar — dizer "confirmado"
-      // sem um centavo pago fazia a cliente achar que tinha terminado e a
-      // lojista achar que tinha vendido.
-      if (paidNow) {
-        await this.emailService.sendOrderConfirmed(updated, { paid: true });
-      } else {
-        await this.emailService.sendOrderAwaitingPayment(updated);
+      // DAQUI PARA BAIXO NADA PODE DERRUBAR A COMPRA.
+      //
+      // E-mail e QR Code são acessórios de uma compra que já aconteceu: o
+      // dinheiro está na conta e o pedido está gravado. Estavam dentro do
+      // `try` de fora, e uma falha ali — `sendOrderConfirmed` consulta o banco
+      // para achar o remetente, e banco serverless pisca — caía no `catch`, que
+      // devolvia BadRequest. A loja então dizia "não foi possível finalizar o
+      // pedido, tente novamente" com o cartão já cobrado, e o carrinho seguia
+      // cheio: a cliente tentava de novo e era cobrada duas vezes.
+      try {
+        // "Pedido confirmado" só sai quando existe pagamento. Enquanto não há,
+        // o e-mail é o de cobrança, com o caminho para pagar — dizer
+        // "confirmado" sem um centavo pago fazia a cliente achar que tinha
+        // terminado e a lojista achar que tinha vendido.
+        if (paidNow) {
+          await this.emailService.sendOrderConfirmed(updated, { paid: true });
+        } else {
+          await this.emailService.sendOrderAwaitingPayment(updated);
+        }
+      } catch (err) {
+        this.logger.error(`Falha ao enviar o e-mail do pedido ${order.orderNumber}: ${err}`);
       }
 
       // Pix: traz o QR Code para a loja exibir na própria tela de confirmação,
@@ -664,21 +726,24 @@ export class OrdersService {
       // Cartão recusado: o pedido não pode ficar pendurado como se fosse acontecer.
       // Cancela e devolve o motivo para o cliente tentar de novo.
       //
-      // O `updateMany` condicional é a trava que faltava. Se a cobrança chegou
-      // a existir — a resposta do Asaas se perdeu no caminho, por exemplo —,
-      // `asaasPaymentId` já está gravado, o `where` não casa, e o pedido pago
-      // não é cancelado. Cancelar aí era o pior desfecho possível: cliente
-      // cobrado, pedido morto, e ninguém sabendo.
+      // Cancelar SÓ se nenhuma cobrança chegou a existir. Cliente cobrado com
+      // o pedido cancelado era o pior desfecho possível — dinheiro fora, peça
+      // não reservada, e ninguém sabendo.
+      //
+      // A trava é `cobrancaCriada`, não o banco: se for a própria gravação do
+      // vínculo que falhar, `asaasPaymentId` continua nulo e um `where` por ele
+      // cancelaria o pedido cobrado. A variável guarda o fato.
       if (payingWithCard) {
-        const { count } = await this.prisma.order.updateMany({
-          where: { id: order.id, asaasPaymentId: null },
-          data: { status: 'cancelado' },
-        });
-        if (count === 0) {
+        if (cobrancaCriada) {
           this.logger.error(
-            `Pedido ${order.orderNumber} falhou DEPOIS de a cobrança existir. ` +
-              `Não foi cancelado de propósito — conferir no Asaas se houve captura. Erro: ${err}`
+            `Pedido ${order.orderNumber} falhou DEPOIS de a cobrança ${cobrancaCriada} existir. ` +
+              `NÃO cancelado de propósito — conferir no Asaas se houve captura. Erro: ${err}`
           );
+        } else {
+          await this.prisma.order.updateMany({
+            where: { id: order.id, asaasPaymentId: null },
+            data: { status: 'cancelado' },
+          });
         }
         throw new BadRequestException(message);
       }
@@ -693,6 +758,11 @@ export class OrdersService {
 
   async updateStatus(id: string, dto: UpdateOrderStatusDto) {
     const current = await this.findOne(id);
+    // Só quem realmente moveu o pedido para "pago" avisa a cliente. Comparar
+    // com `current.status` não bastava: marcar pago, marcar enviado por engano
+    // e voltar para pago mandava o segundo "pagamento aprovado", porque o
+    // status anterior era "enviado" e não "pago".
+    const virouPago = dto.status === 'pago' && !DEBITED_STATUSES.has(current.status);
 
     const updated = await this.prisma.$transaction(async (tx) => {
       // Marcar como pago tira do estoque e conta o cupom; cancelar devolve os
@@ -721,7 +791,7 @@ export class OrdersService {
     // depender do dinheiro entrar, o webhook virou o único lugar que confirma,
     // e quem pagava por fora ficava com a última mensagem da loja dizendo
     // "falta o pagamento". A cliente pagou e tudo que ela tem diz que não.
-    if (dto.status === 'pago' && current.status !== 'pago') {
+    if (virouPago) {
       await this.emailService.sendPaymentApproved(updated);
     }
 
@@ -806,8 +876,33 @@ export class OrdersService {
       const existentes = await this.asaas
         .listPaymentsByExternalReference(order.id)
         .then((r) => r.data ?? [])
-        .catch(() => []);
-      const aproveitavel = existentes.find((p) => !DEAD_ASAAS_STATUSES.has(p.status));
+        .catch((err) => {
+          // Sem resposta do Asaas seguimos criando, como antes. Fica no log
+          // porque é aqui que uma cobrança duplicada pode nascer.
+          this.logger.warn(
+            `Não deu para consultar cobranças do pedido ${order.orderNumber}: ${err}`
+          );
+          return [];
+        });
+
+      // Cobrança já paga: a criação tinha dado certo, a resposta se perdeu, e a
+      // cliente pagou. Vincula e confirma — mandá-la para uma fatura seria
+      // pedir o mesmo dinheiro duas vezes.
+      const jaPaga = existentes.find((p) => ASAAS_PAID_STATUSES.has(p.status));
+      if (jaPaga) {
+        this.logger.warn(
+          `Pedido ${order.orderNumber} já estava PAGO no Asaas (cobrança ${jaPaga.id}) ` +
+            'sem vínculo no banco. Confirmando agora.'
+        );
+        await this.prisma.order.updateMany({
+          where: { id: order.id, asaasPaymentId: null },
+          data: { asaasPaymentId: jaPaga.id, asaasInvoiceUrl: jaPaga.invoiceUrl },
+        });
+        await this.markPaidByAsaasPaymentId(jaPaga.id, order.id);
+        return this.prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+      }
+
+      const aproveitavel = existentes.find((p) => REUSABLE_ASAAS_STATUSES.has(p.status));
 
       if (aproveitavel) {
         this.logger.warn(
@@ -987,6 +1082,25 @@ export class OrdersService {
       this.logger.warn(
         `Boleto do pedido ${order.orderNumber} venceu, mas ele já está "${order.status}". ` +
           'Cancelamento ignorado: pagamento veio por outro caminho.'
+      );
+      return order;
+    }
+
+    // Pedido pago ou enviado não é cancelado por evento do Asaas, nenhum.
+    //
+    // O código passou a aceitar que um pedido tenha duas cobranças (uma criada
+    // e perdida, outra gerada como segunda via) e que a cliente pague a que o
+    // banco não conhecia. O log pede para a lojista conferir a duplicidade —
+    // e o que ela faz é apagar a cobrança sobrando no painel do Asaas. Isso
+    // dispara PAYMENT_DELETED da cobrança vinculada, e o pedido pago era
+    // cancelado com o estoque devolvido, às vezes de peça já postada.
+    //
+    // Estorno e chargeback de verdade continuam chegando aqui e ficam no log:
+    // desfazer uma venda entregue é decisão de gente, não de webhook.
+    if (DEBITED_STATUSES.has(order.status)) {
+      this.logger.error(
+        `Evento de cancelamento no pedido ${order.orderNumber}, que está "${order.status}". ` +
+          'Ignorado de propósito — conferir no Asaas e resolver na mão se for estorno real.'
       );
       return order;
     }
