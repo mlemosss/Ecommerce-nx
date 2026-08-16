@@ -39,17 +39,18 @@ model Product {
   @@map("products")
 }
 
-/**
- * "Avise-me quando chegar": alguém quis uma cor/tamanho que estava sem estoque.
- *
- * Guarda cor e tamanho como texto, e não o id da variação, de propósito — a
- * combinação pedida pode nem existir ainda no cadastro, e é justamente essa a
- * informação mais valiosa para decidir reposição.
- *
- * O e-mail é coletado para uma finalidade única e declarada: avisar sobre esta
- * peça. Depois de avisado, o registro cumpriu o propósito e pode ser apagado —
- * não vira lista de marketing.
- */
+// "Avise-me quando chegar": alguém quis uma cor/tamanho que estava sem estoque.
+//
+// Guarda cor e tamanho como texto, e não o id da variação, de propósito — a
+// combinação pedida pode nem existir ainda no cadastro, e é justamente essa a
+// informação mais valiosa para decidir reposição.
+//
+// O e-mail é coletado para uma finalidade única e declarada: avisar sobre esta
+// peça. Depois de avisado, o registro cumpriu o propósito e pode ser apagado —
+// não vira lista de marketing.
+//
+// (Comentário de linha, não de bloco: o Prisma não aceita /* */ e o schema
+// inteiro deixa de validar — foi o que derrubou dois deploys seguidos.)
 model StockAlert {
   id         String    @id @default(cuid())
   productId  String
