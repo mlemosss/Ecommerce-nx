@@ -162,7 +162,7 @@ export default function FinancialDashboardPage() {
           </span>
         </Link>
         <a
-          href={process.env.NEXT_PUBLIC_STOREFRONT_URL ?? 'https://no-excuse-storefront.vercel.app'}
+          href={process.env.NEXT_PUBLIC_STOREFRONT_URL ?? 'https://www.noexcusenx.com.br'}
           target="_blank"
           rel="noreferrer"
           className="card flex items-center justify-between"
