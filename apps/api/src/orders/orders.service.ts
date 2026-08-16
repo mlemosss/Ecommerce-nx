@@ -666,6 +666,34 @@ export class OrdersService {
    * Falha do Asaas não é erro para quem pediu: devolve o pedido como está e
    * quem chamou mostra o caminho do WhatsApp.
    */
+  /**
+   * Token do link de avaliação, criando um se o pedido ainda não tiver.
+   *
+   * O token passou a ser gerado no checkout, mas nenhum pedido anterior a isso
+   * ganhou o seu — e no painel o botão "Copiar link de avaliação" só existia
+   * quando o campo estava preenchido. Resultado: justamente as primeiras
+   * clientes, as que já receberam a peça e teriam o que dizer, eram as que a
+   * lojista não conseguia convidar.
+   *
+   * Criar sob demanda também evita ter que mexer no banco de produção para
+   * corrigir pedidos antigos.
+   */
+  async ensureReviewToken(orderId: string): Promise<{ reviewToken: string }> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, reviewToken: true },
+    });
+    if (!order) throw new NotFoundException('Pedido não encontrado');
+    if (order.reviewToken) return { reviewToken: order.reviewToken };
+
+    const updated = await this.prisma.order.update({
+      where: { id: order.id },
+      data: { reviewToken: generateReviewToken() },
+      select: { reviewToken: true },
+    });
+    return { reviewToken: updated.reviewToken as string };
+  }
+
   async ensureOpenPayment(orderId: string) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException('Pedido não encontrado');

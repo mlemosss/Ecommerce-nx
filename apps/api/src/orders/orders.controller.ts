@@ -37,6 +37,15 @@ export class OrdersController {
     return this.ordersService.updateStatus(id, dto);
   }
 
+  /**
+   * Link de avaliação do pedido. Cria o token na hora se o pedido for anterior
+   * ao dia em que passamos a gerar um no checkout.
+   */
+  @Post(':id/review-token')
+  ensureReviewToken(@Param('id') id: string) {
+    return this.ordersService.ensureReviewToken(id);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.ordersService.remove(id);

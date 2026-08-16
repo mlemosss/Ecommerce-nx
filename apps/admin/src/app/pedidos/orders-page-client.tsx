@@ -51,35 +51,60 @@ export function OrdersPageClient() {
     process.env.NEXT_PUBLIC_STOREFRONT_URL ?? 'https://www.noexcusenx.com.br'
   ).replace(/\/$/, '');
 
-  function linkAvaliacao(order: Order): string {
-    return `${lojaUrl}/avaliar/${order.reviewToken}`;
-  }
-
-  function copiarLinkAvaliacao(order: Order) {
-    navigator.clipboard
-      .writeText(linkAvaliacao(order))
-      .then(() => {
-        setCopiado(order.id);
-        setTimeout(() => setCopiado((atual) => (atual === order.id ? null : atual)), 2000);
-      })
-      .catch(() => undefined);
-  }
-
-  /** Abre o WhatsApp já com a mensagem escrita, para a lojista só apertar enviar. */
-  function linkWhatsApp(order: Order): string {
-    const telefone = (order.customerPhone ?? '').replace(/\D/g, '');
-    const primeiroNome = order.customerName.trim().split(/\s+/)[0] ?? '';
-    const texto =
-      `Oi, ${primeiroNome}! Aqui é da NO EXCUSE. ` +
-      `Você recebeu o pedido #${order.orderNumber}? Se puder contar o que achou, ajuda muito ` +
-      `quem está em dúvida no tamanho: ${linkAvaliacao(order)}`;
-    const numero = telefone.length >= 10 ? (telefone.startsWith('55') ? telefone : `55${telefone}`) : '';
-    return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
-  }
   const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState('');
   // Rastreio digitado por pedido, antes de salvar.
   const [tracking, setTracking] = useState<Record<string, string>>({});
+
+  /**
+   * O token é pedido à API na hora do clique, não lido do pedido.
+   *
+   * Pedidos anteriores ao dia em que o checkout passou a gerar token estão com
+   * o campo vazio — e eram justamente as primeiras clientes, as que já
+   * receberam a peça, que ficavam sem botão. A API cria o token se faltar.
+   */
+  async function obterLinkAvaliacao(order: Order): Promise<string> {
+    if (order.reviewToken) return `${lojaUrl}/avaliar/${order.reviewToken}`;
+
+    const { reviewToken } = await api.post<{ reviewToken: string }>(
+      `/orders/${order.id}/review-token`,
+      {}
+    );
+    // Guarda no estado para o próximo clique não bater na API de novo.
+    setOrders((atuais) =>
+      atuais?.map((o) => (o.id === order.id ? { ...o, reviewToken } : o)) ?? atuais
+    );
+    return `${lojaUrl}/avaliar/${reviewToken}`;
+  }
+
+  async function copiarLinkAvaliacao(order: Order) {
+    try {
+      const link = await obterLinkAvaliacao(order);
+      await navigator.clipboard.writeText(link);
+      setCopiado(order.id);
+      setTimeout(() => setCopiado((atual) => (atual === order.id ? null : atual)), 2000);
+    } catch {
+      setError('Não foi possível gerar o link de avaliação. Tente de novo.');
+    }
+  }
+
+  /** Abre o WhatsApp já com a mensagem escrita, para a lojista só apertar enviar. */
+  async function abrirWhatsApp(order: Order) {
+    try {
+      const link = await obterLinkAvaliacao(order);
+      const telefone = (order.customerPhone ?? '').replace(/\D/g, '');
+      const primeiroNome = order.customerName.trim().split(/\s+/)[0] ?? '';
+      const texto =
+        `Oi, ${primeiroNome}! Aqui é da NO EXCUSE. ` +
+        `Você recebeu o pedido #${order.orderNumber}? Se puder contar o que achou, ajuda muito ` +
+        `quem está em dúvida no tamanho: ${link}`;
+      const numero =
+        telefone.length >= 10 ? (telefone.startsWith('55') ? telefone : `55${telefone}`) : '';
+      window.open(`https://wa.me/${numero}?text=${encodeURIComponent(texto)}`, '_blank');
+    } catch {
+      setError('Não foi possível gerar o link de avaliação. Tente de novo.');
+    }
+  }
 
   // A busca vai para a API com um respiro, para não disparar a cada tecla.
   useEffect(() => {
@@ -215,31 +240,30 @@ export function OrdersPageClient() {
                     {/* Link de avaliação, para mandar no WhatsApp.
                         Abre sem senha — quem comprou como convidado não tem
                         conta, e era isso que travava a avaliação até agora. */}
-                    {order.reviewToken && (
-                      <div>
-                        <p className="font-semibold">Avaliação</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => copiarLinkAvaliacao(order)}
-                            className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white"
-                          >
-                            {copiado === order.id ? 'Link copiado!' : 'Copiar link de avaliação'}
-                          </button>
-                          <a
-                            href={linkWhatsApp(order)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs font-semibold text-accent underline underline-offset-2"
-                          >
-                            Abrir no WhatsApp
-                          </a>
-                        </div>
-                        <p className="mt-1 text-xs text-black/45">
-                          Abre sem login. Vale só para este pedido e pode ser reenviado.
-                        </p>
+                    {/* Sem `order.reviewToken &&`: o botão aparece em todo
+                        pedido e o token é criado no clique, se faltar. */}
+                    <div>
+                      <p className="font-semibold">Avaliação</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => copiarLinkAvaliacao(order)}
+                          className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white"
+                        >
+                          {copiado === order.id ? 'Link copiado!' : 'Copiar link de avaliação'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => abrirWhatsApp(order)}
+                          className="text-xs font-semibold text-accent underline underline-offset-2"
+                        >
+                          Abrir no WhatsApp
+                        </button>
                       </div>
-                    )}
+                      <p className="mt-1 text-xs text-black/45">
+                        Abre sem login. Vale só para este pedido e pode ser reenviado.
+                      </p>
+                    </div>
                     <div>
                       <p className="font-semibold">Entrega</p>
                       <p className="text-black/60">
