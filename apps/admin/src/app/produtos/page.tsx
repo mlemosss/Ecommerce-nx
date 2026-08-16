@@ -29,6 +29,28 @@ export default function ProductsPage() {
     return term ? products.filter((p) => p.name.toLowerCase().includes(term)) : products;
   }, [products, search]);
 
+  /**
+   * Resumo do estoque, sempre do catálogo inteiro e não do filtro de busca —
+   * "quantas peças eu tenho" é uma pergunta sobre a loja, não sobre o que está
+   * na tela. O valor é a preço de custo: é o dinheiro parado na prateleira.
+   */
+  const resumo = useMemo(() => {
+    if (!products) return null;
+    let pecas = 0;
+    let valorCusto = 0;
+    let valorVenda = 0;
+    let semEstoque = 0;
+    for (const p of products) {
+      for (const v of p.variants) {
+        pecas += v.stock;
+        valorCusto += v.stock * (v.costPrice ?? p.costPrice ?? 0);
+        valorVenda += v.stock * (v.price ?? p.price);
+        if (v.stock === 0) semEstoque += 1;
+      }
+    }
+    return { pecas, valorCusto, valorVenda, semEstoque, variacoes: products.reduce((s, p) => s + p.variants.length, 0) };
+  }, [products]);
+
   const grouped = useMemo(() => {
     const groups: Record<string, Product[]> = {};
     for (const product of filtered) {
@@ -56,6 +78,46 @@ export default function ProductsPage() {
             Importar CSV/XML
           </Link>
         </div>
+        {resumo && (
+          <div className="mt-2 grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-black/10 sm:grid-cols-4">
+            <div className="bg-white p-3">
+              <p className="text-2xl font-bold leading-none tabular-nums">{resumo.pecas}</p>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-black/45">
+                peças no estoque
+              </p>
+            </div>
+            <div className="bg-white p-3">
+              <p className="text-2xl font-bold leading-none tabular-nums">
+                {formatPrice(resumo.valorCusto)}
+              </p>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-black/45">
+                investido (custo)
+              </p>
+            </div>
+            <div className="bg-white p-3">
+              <p className="text-2xl font-bold leading-none tabular-nums">
+                {formatPrice(resumo.valorVenda)}
+              </p>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-black/45">
+                a receber se vender tudo
+              </p>
+            </div>
+            <div className="bg-white p-3">
+              <p
+                className={`text-2xl font-bold leading-none tabular-nums ${
+                  resumo.semEstoque > 0 ? 'text-amber-600' : ''
+                }`}
+              >
+                {resumo.semEstoque}
+                <span className="text-base font-medium text-black/35">/{resumo.variacoes}</span>
+              </p>
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-black/45">
+                variações zeradas
+              </p>
+            </div>
+          </div>
+        )}
+
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}

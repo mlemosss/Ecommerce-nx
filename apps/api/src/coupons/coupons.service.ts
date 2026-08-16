@@ -108,9 +108,19 @@ export class CouponsService {
     if (coupon.firstPurchaseOnly && (await this.jaComprou(dto.customerDocument))) {
       return {
         valid: false,
-        message: (dto.customerDocument ?? '').replace(/\D/g, '')
-          ? 'Este cupom vale só na primeira compra, e este CPF já tem pedido na loja.'
-          : 'Preencha o CPF para usar este cupom — ele vale só na primeira compra.',
+        // Mensagem igual nos dois casos — CPF sem pedido e CPF com pedido — e
+        // por isso ela não diz qual dos dois é.
+        //
+        // A versão anterior dizia "este CPF já tem pedido na loja", e como
+        // POST /coupons/validate é público isso virava um oráculo: qualquer
+        // pessoa, sem token, descobria se um CPF conhecido já comprou aqui. Um
+        // bit por consulta, mas é dado pessoal ligado a documento nacional, e o
+        // código do cupom está impresso em toda página da loja.
+        //
+        // A regra não afrouxou: quem decide é POST /orders, que chama esta
+        // mesma validação com o CPF do cadastro sendo criado. Ali a resposta
+        // pode ser específica, porque quem pergunta é o dono do CPF.
+        message: 'Este cupom vale só na primeira compra. Confira o CPF informado.',
       };
     }
 

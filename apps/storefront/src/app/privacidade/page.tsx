@@ -2,6 +2,7 @@ import { getSettings } from '../../lib/api';
 import { ConsentPreferences } from '../../components/consent-preferences';
 
 export const metadata = {
+  alternates: { canonical: '/privacidade' },
   title: 'Privacidade e cookies — NO EXCUSE',
   description: 'Como a NO EXCUSE trata seus dados pessoais e usa cookies.',
 };

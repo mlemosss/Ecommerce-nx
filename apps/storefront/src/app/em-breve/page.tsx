@@ -5,10 +5,17 @@ import type { Category } from '../../lib/types';
 
 export const metadata = {
   title: 'Em breve — NO EXCUSE',
-  description: 'Camisetas, jaquetas e acessórios NO EXCUSE chegando em breve.',
+  description: 'As próximas linhas da NO EXCUSE. Leggings, tops e shorts já estão à venda.',
+  alternates: { canonical: '/em-breve' },
 };
 
-/** Categorias já previstas na loja que ainda não têm peça cadastrada. */
+/**
+ * Categorias já previstas que ainda não têm peça cadastrada.
+ *
+ * Sai de `categories`, então tirar uma categoria do menu tira daqui junto —
+ * camisetas e jaquetas saíram porque a loja não vende nenhuma das duas, e
+ * anunciar "em breve" o que não está sendo produzido é promessa sem data.
+ */
 const COMING: { value: Category; label: string; description: string }[] = categories.filter((c) =>
   ['camisetas', 'jaquetas', 'acessorios'].includes(c.value)
 );

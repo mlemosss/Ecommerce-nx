@@ -4,6 +4,7 @@ import { getProducts } from '../../lib/products';
 import { ProductImage } from '../../components/product-image';
 
 export const metadata = {
+  alternates: { canonical: '/quem-somos' },
   title: 'Quem somos — NO EXCUSE',
   description: 'A história da NO EXCUSE, por Isabella e Layane.',
 };

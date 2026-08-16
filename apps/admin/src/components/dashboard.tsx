@@ -84,6 +84,25 @@ export function Dashboard() {
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
       .slice(0, 6);
 
+    /**
+     * O estoque não depende do período escolhido: "quantas peças eu tenho" é
+     * uma foto do agora, não um recorte de tempo. Por isso fica numa faixa
+     * própria, separada dos números de venda.
+     *
+     * `valorEstoque` é a preço de custo — é o dinheiro que está parado na
+     * prateleira. `aReceber` é o que os pedidos ainda não pagos valem.
+     */
+    let pecas = 0;
+    let valorEstoque = 0;
+    for (const p of products) {
+      if (p.active === false) continue;
+      for (const v of p.variants) {
+        pecas += v.stock;
+        valorEstoque += v.stock * (v.costPrice ?? p.costPrice ?? 0);
+      }
+    }
+    const aReceber = pending.reduce((s, o) => s + (o.total ?? 0), 0);
+
     return {
       revenue,
       orderCount: periodOrders.length,
@@ -91,6 +110,9 @@ export function Dashboard() {
       itemsSold,
       newCustomers,
       pending,
+      aReceber,
+      pecas,
+      valorEstoque,
       lowStock,
       recent,
     };
@@ -135,6 +157,34 @@ export function Dashboard() {
             <Kpi label="Pedidos" value={String(metrics.orderCount)} hint={`${metrics.pending.length} aguardando`} />
             <Kpi label="Ticket médio" value={formatPrice(metrics.aov)} />
             <Kpi label="Novos clientes" value={String(metrics.newCustomers)} hint="no período" />
+          </div>
+
+          {/* Estoque: foto do agora, fora do recorte de período. */}
+          <div className="mt-3 grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-black/10">
+            <div className="bg-white p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-black/50">
+                Peças no estoque
+              </p>
+              <p className="mt-1 text-xl font-black tabular-nums tracking-tight">{metrics.pecas}</p>
+            </div>
+            <div className="bg-white p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-black/50">
+                Valor em estoque
+              </p>
+              <p className="mt-1 text-xl font-black tabular-nums tracking-tight">
+                {formatPrice(metrics.valorEstoque)}
+              </p>
+              <p className="mt-0.5 text-xs text-black/50">a custo</p>
+            </div>
+            <div className="bg-white p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-black/50">A receber</p>
+              <p className="mt-1 text-xl font-black tabular-nums tracking-tight">
+                {formatPrice(metrics.aReceber)}
+              </p>
+              <p className="mt-0.5 text-xs text-black/50">
+                {metrics.pending.length} aguardando
+              </p>
+            </div>
           </div>
 
           {/* Aguardando pagamento */}

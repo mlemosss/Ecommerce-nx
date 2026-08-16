@@ -2,12 +2,19 @@ import type { Category, Product } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 
+/**
+ * Categorias que a loja mostra — no menu, na vitrine da home, no rodapé e nos
+ * filtros de /produtos.
+ *
+ * Camisetas e jaquetas saíram: não existe peça cadastrada em nenhuma das duas, e
+ * uma aba que leva a uma prateleira vazia gasta a atenção de quem chegou para
+ * comprar. O tipo `Category` continua aceitando as duas, então um produto
+ * cadastrado nelas não quebra nada — só não ganha lugar no menu até existir.
+ */
 export const categories: { value: Category; label: string; description: string }[] = [
   { value: 'leggings', label: 'Leggings', description: 'Compressão e liberdade de movimento' },
   { value: 'tops', label: 'Tops', description: 'Sustentação para qualquer treino' },
   { value: 'shorts', label: 'Shorts', description: 'Leveza para dias de alta intensidade' },
-  { value: 'camisetas', label: 'Camisetas', description: 'Respirabilidade em cada repetição' },
-  { value: 'jaquetas', label: 'Jaquetas', description: 'Do aquecimento ao pós-treino' },
   { value: 'acessorios', label: 'Acessórios', description: 'Os detalhes que fazem diferença' },
 ];
 

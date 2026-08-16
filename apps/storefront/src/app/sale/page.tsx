@@ -3,6 +3,7 @@ import { getProducts } from '../../lib/products';
 import { ProductCard } from '../../components/product-card';
 
 export const metadata = {
+  alternates: { canonical: '/sale' },
   title: 'Sale — NO EXCUSE',
   description: 'Peças NO EXCUSE com desconto.',
 };
