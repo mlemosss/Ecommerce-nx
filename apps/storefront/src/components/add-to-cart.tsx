@@ -16,6 +16,7 @@ import {
   stockOf,
 } from '../lib/availability';
 import { SizeGuide } from './size-guide';
+import { StockAlertForm } from './stock-alert-form';
 
 /** Quantas peças da mesma variação a loja deixa levar de uma vez. */
 const MAX_POR_PEDIDO = 10;
@@ -211,11 +212,23 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
           {podeComprar ? 'Adicionar ao carrinho' : 'Esgotado'}
         </button>
         {!podeComprar && (
-          <p className="mt-3 text-center text-sm text-ink/60">
-            {esgotadoDeVez
-              ? 'Esta peça está esgotada em todos os tamanhos e cores.'
-              : `${color} no tamanho ${size} está sem estoque. Experimente outra combinação acima.`}
-          </p>
+          <>
+            <p className="mt-3 text-center text-sm text-ink/60">
+              {esgotadoDeVez
+                ? 'Esta peça está esgotada em todos os tamanhos e cores.'
+                : `${color} no tamanho ${size} está sem estoque. Experimente outra combinação acima.`}
+            </p>
+            {/* A chave inclui cor e tamanho: trocar a seleção limpa o formulário
+                em vez de deixar um "pronto, vamos te avisar" de outra peça. */}
+            <div className="mt-4">
+              <StockAlertForm
+                key={`${color}|${size}`}
+                productId={product.id}
+                color={color}
+                size={size}
+              />
+            </div>
+          </>
         )}
       </div>
 

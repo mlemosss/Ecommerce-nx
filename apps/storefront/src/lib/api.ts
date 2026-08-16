@@ -295,3 +295,31 @@ export async function quoteShipping(input: ShippingQuoteInput): Promise<Shipping
     return { configured: false, options: [] };
   }
 }
+
+/**
+ * "Avise-me quando chegar". Devolve sempre um objeto em vez de lançar: é um
+ * formulário secundário na página de produto e uma exceção aqui derrubaria a
+ * tela inteira por causa de um aviso opcional.
+ */
+export async function registerStockAlert(data: {
+  productId: string;
+  color: string;
+  size: string;
+  email: string;
+}): Promise<{ ok: boolean; message: string }> {
+  try {
+    const res = await fetch(`${API_URL}/stock-alerts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) return { ok: true, message: '' };
+
+    const body = await res.json().catch(() => ({}));
+    const message = Array.isArray(body?.message) ? body.message[0] : body?.message;
+    return { ok: false, message: message || 'Não foi possível registrar agora. Tente de novo.' };
+  } catch {
+    return { ok: false, message: 'Não foi possível registrar agora. Tente de novo.' };
+  }
+}

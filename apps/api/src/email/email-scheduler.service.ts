@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
+import { StockAlertsService } from '../stock-alerts/stock-alerts.service';
 
 const REVIEW_REQUEST_DELAY_MS = 3 * 24 * 60 * 60 * 1000; // 3 dias após o envio
 const ABANDONED_CART_DELAY_MS = 2 * 60 * 60 * 1000; // 2 horas sem finalizar a compra
@@ -12,7 +13,9 @@ export class EmailSchedulerService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly emailService: EmailService
+    private readonly emailService: EmailService,
+    @Inject(forwardRef(() => StockAlertsService))
+    private readonly stockAlerts: StockAlertsService
   ) {}
 
   async runScheduled() {
@@ -56,13 +59,24 @@ export class EmailSchedulerService {
       });
     }
 
+    // Avisos de "voltou ao estoque". Ficam aqui, e não onde o estoque muda,
+    // porque o estoque sobe por três caminhos — tela de estoque, cancelamento
+    // de pedido e cadastro de variação nova — e pendurar a chamada nos três
+    // garante que o quarto, quando existir, seja esquecido.
+    const { notified } = await this.stockAlerts.notifyRestocked().catch((err) => {
+      this.logger.error(`Falha ao processar avisos de reposição: ${err}`);
+      return { notified: 0 };
+    });
+
     this.logger.log(
-      `E-mails agendados processados: ${ordersForReview.length} pedidos de avaliação, ${abandonedCarts.length} lembretes de carrinho.`
+      `E-mails agendados processados: ${ordersForReview.length} pedidos de avaliação, ` +
+        `${abandonedCarts.length} lembretes de carrinho, ${notified} avisos de reposição.`
     );
 
     return {
       reviewRequestsSent: ordersForReview.length,
       abandonedCartRemindersSent: abandonedCarts.length,
+      backInStockNotified: notified,
     };
   }
 }

@@ -4,6 +4,7 @@ import { EmailFlowService } from '../email-flow/email-flow.service';
 import {
   abandonedCartTemplate,
   AbandonedCartForEmail,
+  backInStockTemplate,
   boletoExpiredTemplate,
   orderConfirmedTemplate,
   orderShippedTemplate,
@@ -132,6 +133,23 @@ export class EmailService {
 
     const template = boletoExpiredTemplate(storeName, this.getStorefrontUrl(), order, coupon);
     await this.sendIfEnabled('boleto_vencido', order.customerEmail, template);
+  }
+
+  /**
+   * Aviso de reposicao. Nao passa pelo sendIfEnabled: a pessoa pediu este
+   * e-mail especificamente, e desligar deixaria a loja com o endereco dela sem
+   * nunca cumprir o que prometeu na tela.
+   */
+  async sendBackInStock(data: {
+    email: string;
+    productName: string;
+    slug: string;
+    color: string;
+    size: string;
+  }): Promise<void> {
+    const { storeName } = await this.getSender();
+    const template = backInStockTemplate(storeName, this.getStorefrontUrl(), data);
+    await this.dispatch(data.email, template);
   }
 
   async sendOrderShipped(order: OrderForEmail & { customerEmail: string }): Promise<void> {

@@ -25,6 +25,7 @@ import { AbandonedCartModule } from '../abandoned-cart/abandoned-cart.module';
 import { CustomPaymentsModule } from '../custom-payments/custom-payments.module';
 import { QuotesModule } from '../quotes/quotes.module';
 import { ShippingModule } from '../shipping/shipping.module';
+import { StockAlertsModule } from '../stock-alerts/stock-alerts.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { ShippingModule } from '../shipping/shipping.module';
     CustomPaymentsModule,
     QuotesModule,
     ShippingModule,
+    StockAlertsModule,
   ],
 })
 export class AppModule {}

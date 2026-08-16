@@ -1,0 +1,174 @@
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
+import { CreateStockAlertDto } from './dto/stock-alert.dto';
+
+@Injectable()
+export class StockAlertsService {
+  private readonly logger = new Logger(StockAlertsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => EmailService))
+    private readonly email: EmailService
+  ) {}
+
+  /**
+   * Registra o pedido de aviso.
+   *
+   * `upsert` na chave (produto, cor, tamanho, e-mail): pedir de novo não cria
+   * uma segunda linha nem manda dois e-mails depois. Se a pessoa já tinha sido
+   * avisada e voltou a pedir — porque esgotou outra vez —, o registro volta a
+   * "esperando".
+   */
+  async create(dto: CreateStockAlertDto) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: dto.productId },
+      select: { id: true, active: true, name: true },
+    });
+    if (!product || !product.active) {
+      throw new NotFoundException('Produto não encontrado');
+    }
+
+    const email = dto.email.trim().toLowerCase();
+    const color = dto.color.trim();
+    const size = dto.size.trim();
+    if (!color || !size) {
+      throw new BadRequestException('Informe a cor e o tamanho que você quer.');
+    }
+
+    // Já tem estoque? Então não há o que esperar — a tela deve deixar comprar.
+    const variant = await this.prisma.productVariant.findFirst({
+      where: { productId: product.id, color, size },
+      select: { stock: true },
+    });
+    if (variant && variant.stock > 0) {
+      return { registered: false, available: true };
+    }
+
+    await this.prisma.stockAlert.upsert({
+      where: {
+        productId_color_size_email: { productId: product.id, color, size, email },
+      },
+      update: { notifiedAt: null },
+      create: { productId: product.id, color, size, email },
+    });
+
+    return { registered: true, available: false };
+  }
+
+  /**
+   * Avisa quem estava esperando peça que voltou ao estoque.
+   *
+   * Roda no varredor de 30 em 30 minutos em vez de ser chamado onde o estoque
+   * muda. O estoque sobe por três caminhos — a tela de estoque, o cancelamento
+   * de pedido e o cadastro de variação nova —, e pendurar a chamada nos três
+   * garante que o quarto, quando existir, seja esquecido. Meia hora de atraso
+   * num aviso de reposição não custa nada.
+   */
+  async notifyRestocked(): Promise<{ notified: number }> {
+    const pendentes = await this.prisma.stockAlert.findMany({
+      where: { notifiedAt: null },
+      include: { product: { select: { id: true, name: true, slug: true, active: true } } },
+    });
+    if (pendentes.length === 0) return { notified: 0 };
+
+    // Uma consulta de estoque por variação pedida, e não por alerta: várias
+    // pessoas costumam esperar a mesma peça.
+    const chaves = new Map<string, { productId: string; color: string; size: string }>();
+    for (const a of pendentes) {
+      chaves.set(`${a.productId}|${a.color}|${a.size}`, {
+        productId: a.productId,
+        color: a.color,
+        size: a.size,
+      });
+    }
+
+    const comEstoque = new Set<string>();
+    for (const [chave, v] of chaves) {
+      const variant = await this.prisma.productVariant.findFirst({
+        where: { productId: v.productId, color: v.color, size: v.size },
+        select: { stock: true },
+      });
+      if (variant && variant.stock > 0) comEstoque.add(chave);
+    }
+
+    let notified = 0;
+    for (const alerta of pendentes) {
+      const chave = `${alerta.productId}|${alerta.color}|${alerta.size}`;
+      if (!comEstoque.has(chave) || !alerta.product.active) continue;
+
+      try {
+        await this.email.sendBackInStock({
+          email: alerta.email,
+          productName: alerta.product.name,
+          slug: alerta.product.slug,
+          color: alerta.color,
+          size: alerta.size,
+        });
+        // Marca depois de enviar: se o envio falhar, ele tenta de novo daqui a
+        // meia hora em vez de a pessoa nunca ser avisada.
+        await this.prisma.stockAlert.update({
+          where: { id: alerta.id },
+          data: { notifiedAt: new Date() },
+        });
+        notified += 1;
+      } catch (err) {
+        this.logger.error(`Falha ao avisar ${alerta.email} sobre ${alerta.product.name}: ${err}`);
+      }
+    }
+
+    if (notified > 0) this.logger.log(`Avisos de reposição enviados: ${notified}`);
+    return { notified };
+  }
+
+  /**
+   * Fila de espera para o painel: o que as pessoas pediram e a loja não tinha.
+   *
+   * É a lista de reposição mais honesta que existe — não é estimativa de
+   * demanda, é gente que chegou na peça, escolheu cor e tamanho e deixou o
+   * e-mail. Ordena pelo que mais gente espera.
+   */
+  async waitlist() {
+    const pendentes = await this.prisma.stockAlert.findMany({
+      where: { notifiedAt: null },
+      include: { product: { select: { name: true, slug: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const porVariacao = new Map<
+      string,
+      { productId: string; productName: string; slug: string; color: string; size: string; count: number; lastAt: Date }
+    >();
+
+    for (const a of pendentes) {
+      const chave = `${a.productId}|${a.color}|${a.size}`;
+      const atual = porVariacao.get(chave);
+      if (atual) {
+        atual.count += 1;
+        if (a.createdAt > atual.lastAt) atual.lastAt = a.createdAt;
+      } else {
+        porVariacao.set(chave, {
+          productId: a.productId,
+          productName: a.product.name,
+          slug: a.product.slug,
+          color: a.color,
+          size: a.size,
+          count: 1,
+          lastAt: a.createdAt,
+        });
+      }
+    }
+
+    return [...porVariacao.values()].sort(
+      (a, b) => b.count - a.count || b.lastAt.getTime() - a.lastAt.getTime()
+    );
+  }
+}

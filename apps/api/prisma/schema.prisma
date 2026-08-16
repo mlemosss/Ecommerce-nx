@@ -34,8 +34,37 @@ model Product {
   variants        ProductVariant[]
   favorites       Favorite[]
   reviews         ProductReview[]
+  stockAlerts     StockAlert[]
 
   @@map("products")
+}
+
+/**
+ * "Avise-me quando chegar": alguém quis uma cor/tamanho que estava sem estoque.
+ *
+ * Guarda cor e tamanho como texto, e não o id da variação, de propósito — a
+ * combinação pedida pode nem existir ainda no cadastro, e é justamente essa a
+ * informação mais valiosa para decidir reposição.
+ *
+ * O e-mail é coletado para uma finalidade única e declarada: avisar sobre esta
+ * peça. Depois de avisado, o registro cumpriu o propósito e pode ser apagado —
+ * não vira lista de marketing.
+ */
+model StockAlert {
+  id         String    @id @default(cuid())
+  productId  String
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color      String
+  size       String
+  email      String
+  createdAt  DateTime  @default(now())
+  notifiedAt DateTime?
+
+  // Pedir de novo a mesma peça não cria uma segunda linha nem um segundo
+  // e-mail: o upsert reaproveita e devolve o registro ao estado "esperando".
+  @@unique([productId, color, size, email])
+  @@index([productId, notifiedAt])
+  @@map("stock_alerts")
 }
 
 model ShopeeIntegration {

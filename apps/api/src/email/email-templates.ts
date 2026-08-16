@@ -208,6 +208,43 @@ export function boletoExpiredTemplate(
   };
 }
 
+/**
+ * A peça que a pessoa esperava voltou ao estoque.
+ *
+ * Vai direto para a página do produto, com cor e tamanho no texto para ela
+ * reconhecer o que pediu — quem se cadastra em duas peças diferentes recebe
+ * dois e-mails e precisa saber qual é qual.
+ *
+ * Sem urgência inventada ("corre que acaba!"): o estoque é pequeno de verdade
+ * e o próprio site mostra "restam N". Exagero aqui só queima a próxima.
+ */
+export function backInStockTemplate(
+  storeName: string,
+  storefrontUrl: string,
+  data: { productName: string; slug: string; color: string; size: string }
+): EmailTemplate {
+  const body = `
+    <p style="color:#333;font-size:14px;line-height:1.6;">
+      A peça que você pediu para avisar voltou:
+      <strong>${data.productName}</strong>, ${data.color}, tamanho ${data.size}.
+    </p>
+    <p style="margin:24px 0;">
+      <a href="${storefrontUrl}/produtos/${data.slug}"
+         style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;
+                padding:14px 28px;font-size:12px;font-weight:bold;letter-spacing:2px;
+                text-transform:uppercase;">Ver a peça</a>
+    </p>
+    <p style="color:#888;font-size:12px;line-height:1.6;">
+      Você recebeu este e-mail porque pediu para ser avisada sobre esta peça. Foi o único uso do seu
+      endereço, e ele sai da nossa lista agora que o aviso foi enviado.
+    </p>`;
+
+  return {
+    subject: `${data.productName} voltou — ${data.color}, ${data.size}`,
+    html: layout(storeName, 'Voltou ao estoque', body, storefrontUrl),
+  };
+}
+
 export function orderShippedTemplate(
   storeName: string,
   storefrontUrl: string,
