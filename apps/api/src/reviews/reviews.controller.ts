@@ -18,6 +18,26 @@ export class ReviewsController {
     return this.reviewsService.findForProduct(productId);
   }
 
+  /**
+   * Tela de avaliação por link, sem login.
+   *
+   * Público porque o token É a credencial: a loja é de compra sem cadastro e
+   * quem comprou não tem senha. O retorno traz só o número do pedido, o
+   * primeiro nome e os produtos — quem tem o link avalia, não consulta o
+   * pedido.
+   */
+  @Public()
+  @Get('link/:token')
+  findByToken(@Param('token') token: string) {
+    return this.reviewsService.findByToken(token);
+  }
+
+  @Public()
+  @Post('link/:token')
+  createFromToken(@Param('token') token: string, @Body() dto: CreateReviewDto) {
+    return this.reviewsService.createFromToken(token, dto);
+  }
+
   @Get('all')
   findAll() {
     return this.reviewsService.findAll();

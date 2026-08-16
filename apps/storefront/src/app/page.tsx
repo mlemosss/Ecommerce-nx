@@ -64,7 +64,7 @@ export default async function HomePage() {
       {/* Sem peça em promoção a abertura nem é montada: anunciar oferta que não
           existe queima a credibilidade da próxima. */}
       {biggestDiscount > 0 && (
-        <SaleIntro discount={biggestDiscount} itemCount={onSale.length} />
+        <SaleIntro discount={biggestDiscount} />
       )}
 
       {/* ---------------- HERO ---------------- */}

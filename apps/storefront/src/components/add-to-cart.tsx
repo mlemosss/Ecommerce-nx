@@ -311,15 +311,24 @@ function OptionButton({
       aria-pressed={active}
       aria-disabled={soldOut}
       title={soldOut ? 'Sem estoque' : undefined}
-      className={`border text-sm font-semibold transition ${className} ${
+      className={`relative border text-sm font-semibold transition ${className} ${
         active
           ? 'border-ink bg-ink text-white'
           : soldOut
             ? 'border-ink/10 text-ink/35 line-through decoration-ink/30 hover:border-ink/25'
             : 'border-ink/15 hover:border-ink'
-      } ${soldOut && active ? 'line-through decoration-white/50' : ''}`}
+      } ${soldOut && active ? 'line-through decoration-white/70 decoration-2' : ''}`}
     >
       {children}
+      {/* Faixa diagonal no canto quando esgotado e selecionado: no fundo preto
+          o risco branco quase some, e é justamente o estado em que a cliente
+          precisa entender por que o botão de comprar está apagado. */}
+      {soldOut && active && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-0 top-0 h-0 w-0 border-l-8 border-t-8 border-l-transparent border-t-white/70"
+        />
+      )}
     </button>
   );
 }

@@ -24,7 +24,7 @@ const SEEN_KEY = 'no-excuse:sale-intro';
  * Renderiza no cliente de propósito: o HTML que o Google e o WhatsApp leem
  * continua sendo o da home, sem a camada por cima.
  */
-export function SaleIntro({ discount, itemCount }: { discount: number; itemCount: number }) {
+export function SaleIntro({ discount }: { discount: number }) {
   const [open, setOpen] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -123,7 +123,7 @@ export function SaleIntro({ discount, itemCount }: { discount: number; itemCount
 
         <div className="flex flex-col gap-3 px-8 py-8">
           <Link href="/sale" onClick={dismiss} className="btn-primary w-full">
-            Ver as {itemCount} peças
+            Ver as peças
           </Link>
           <button
             type="button"

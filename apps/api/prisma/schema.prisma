@@ -90,7 +90,14 @@ model ProductReview {
   comment      String
   approved     Boolean  @default(false)
   createdAt    DateTime @default(now())
+  // Pedido de onde veio a avaliação, quando ela chegou pelo link.
+  //
+  // Serve para duas coisas: impedir a mesma pessoa de avaliar o mesmo produto
+  // duas vezes pelo mesmo pedido, e marcar no painel quais avaliações vieram de
+  // compra confirmada — que valem mais do que as outras.
+  orderId      String?
 
+  @@unique([orderId, productId])
   @@map("product_reviews")
 }
 
@@ -238,6 +245,16 @@ model Order {
   shippedAt           DateTime?
   trackingCode        String?
   reviewRequestSentAt DateTime?
+  // Token do link de avaliação: noexcusenx.com.br/avaliar/<token>.
+  //
+  // A loja é de compra sem cadastro, então quem comprou não tem senha — e o
+  // e-mail de avaliação levava a uma tela de login que o cliente não conseguia
+  // passar. O token identifica o pedido sem exigir conta, e serve só para ele.
+  //
+  // Não expira de propósito: expirar deixaria a lojista sem poder recuperar uma
+  // avaliação atrasada, e o estrago máximo de um token vazado é uma avaliação
+  // falsa num pedido que de fato existiu.
+  reviewToken         String?   @unique
   items             OrderItem[]
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
