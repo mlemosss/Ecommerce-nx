@@ -7,19 +7,60 @@ import { useCart } from '../lib/cart-context';
 import { getVariantPrice } from '../lib/products';
 import { formatInstallments, formatPrice } from '../lib/format';
 import { describeBlocks } from '../lib/description';
+import {
+  availabilityOf,
+  colorsFor,
+  defaultSelection,
+  isSoldOut,
+  sizesFor,
+  stockOf,
+} from '../lib/availability';
 import { SizeGuide } from './size-guide';
+
+/** Quantas peças da mesma variação a loja deixa levar de uma vez. */
+const MAX_POR_PEDIDO = 10;
 
 export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?: string }) {
   const { addItem } = useCart();
-  const [size, setSize] = useState(product.sizes[0]);
-  const [color, setColor] = useState(product.colors[0]);
+  // Abre numa combinação que existe e tem estoque. O padrão antigo era
+  // colors[0]+sizes[0], que na Legging dava uma variação esgotada.
+  const inicial = defaultSelection(product);
+  const [size, setSize] = useState(inicial.size);
+  const [color, setColor] = useState(inicial.color);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
   const price = getVariantPrice(product, color, size);
 
+  // As listas são filtradas uma pela outra: escolhida a cor, só aparecem os
+  // tamanhos que ela tem. Assim não existe clique que leve a lugar nenhum.
+  const sizes = sizesFor(product, color);
+  const colors = colorsFor(product);
+
+  const estoque = stockOf(product, color, size);
+  const situacao = availabilityOf(product, color, size);
+  const podeComprar = situacao === 'disponivel';
+  const esgotadoDeVez = isSoldOut(product);
+  const maximo = Math.min(MAX_POR_PEDIDO, Math.max(1, estoque));
+
+  /**
+   * Trocar de cor pode invalidar o tamanho escolhido (nem toda cor tem todos).
+   * Em vez de deixar a seleção num estado impossível, cai no primeiro tamanho
+   * disponível daquela cor.
+   */
+  function escolherCor(nova: string) {
+    setColor(nova);
+    setAdded(false);
+    const disponiveis = sizesFor(product, nova);
+    if (!disponiveis.includes(size)) {
+      const comEstoque = disponiveis.find((s) => stockOf(product, nova, s) > 0);
+      setSize(comEstoque ?? disponiveis[0] ?? size);
+    }
+  }
+
   function handleAdd() {
-    addItem({ productId: product.id, size, color, quantity });
+    if (!podeComprar) return;
+    addItem({ productId: product.id, size, color, quantity: Math.min(quantity, maximo) });
     setAdded(true);
   }
 
@@ -89,10 +130,11 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
           {sizeGuide && <SizeGuide category={product.category} sizeGuide={sizeGuide} />}
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {product.sizes.map((s) => (
+          {sizes.map((s) => (
             <OptionButton
               key={s}
               active={size === s}
+              soldOut={stockOf(product, color, s) === 0}
               onClick={() => {
                 setSize(s);
                 setAdded(false);
@@ -108,14 +150,14 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
       <div>
         <p className="eyebrow mb-3 text-ink/50">Cor</p>
         <div className="flex flex-wrap gap-1.5">
-          {product.colors.map((c) => (
+          {colors.map((c) => (
             <OptionButton
               key={c}
               active={color === c}
-              onClick={() => {
-                setColor(c);
-                setAdded(false);
-              }}
+              // Cor esgotada em todos os tamanhos ainda é clicável: a cliente
+              // pode querer ver que ela existe. O que não pode é comprar.
+              soldOut={sizesFor(product, c).every((s) => stockOf(product, c, s) === 0)}
+              onClick={() => escolherCor(c)}
               className="h-11 px-4"
             >
               {c}
@@ -126,30 +168,56 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
 
       <div>
         <p className="eyebrow mb-3 text-ink/50">Quantidade</p>
-        <div className="inline-flex items-center border border-ink/15">
-          <button
-            type="button"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="flex h-11 w-11 items-center justify-center text-lg transition hover:bg-paper"
-            aria-label="Diminuir quantidade"
-          >
-            −
-          </button>
-          <span className="w-10 text-center text-sm font-bold">{quantity}</span>
-          <button
-            type="button"
-            onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-            className="flex h-11 w-11 items-center justify-center text-lg transition hover:bg-paper"
-            aria-label="Aumentar quantidade"
-          >
-            +
-          </button>
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center border border-ink/15">
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              disabled={!podeComprar}
+              className="flex h-11 w-11 items-center justify-center text-lg transition hover:bg-paper disabled:opacity-30"
+              aria-label="Diminuir quantidade"
+            >
+              −
+            </button>
+            <span className="w-10 text-center text-sm font-bold">{quantity}</span>
+            <button
+              type="button"
+              // Teto no estoque real: pedir 5 de uma variação com 2 só era
+              // recusado no fim do checkout, depois de digitar tudo.
+              onClick={() => setQuantity((q) => Math.min(maximo, q + 1))}
+              disabled={!podeComprar || quantity >= maximo}
+              className="flex h-11 w-11 items-center justify-center text-lg transition hover:bg-paper disabled:opacity-30"
+              aria-label="Aumentar quantidade"
+            >
+              +
+            </button>
+          </div>
+          {/* Escassez verdadeira, tirada do estoque — não é um selo de marketing. */}
+          {podeComprar && estoque <= 3 && (
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink/60">
+              {estoque === 1 ? 'Última peça' : `Restam ${estoque}`}
+            </p>
+          )}
         </div>
       </div>
 
-      <button type="button" onClick={handleAdd} className="btn-primary w-full">
-        Adicionar ao carrinho
-      </button>
+      <div>
+        <button
+          type="button"
+          onClick={handleAdd}
+          disabled={!podeComprar}
+          className="btn-primary w-full disabled:cursor-not-allowed disabled:bg-ink/25 disabled:shadow-none disabled:hover:translate-y-0"
+        >
+          {podeComprar ? 'Adicionar ao carrinho' : 'Esgotado'}
+        </button>
+        {!podeComprar && (
+          <p className="mt-3 text-center text-sm text-ink/60">
+            {esgotadoDeVez
+              ? 'Esta peça está esgotada em todos os tamanhos e cores.'
+              : `${color} no tamanho ${size} está sem estoque. Experimente outra combinação acima.`}
+          </p>
+        )}
+      </div>
 
       {added && (
         <div
@@ -202,13 +270,23 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
   );
 }
 
+/**
+ * Botão de cor/tamanho.
+ *
+ * Esgotado continua clicável de propósito: a cliente precisa poder ver que o
+ * tamanho dela existe e está em falta — esconder faria parecer que a loja nem
+ * fabrica aquele tamanho. O que muda é a aparência (riscado, apagado) e o
+ * `aria-disabled`, que avisa o leitor de tela sem tirar o foco do teclado.
+ */
 function OptionButton({
   active,
+  soldOut = false,
   onClick,
   className = '',
   children,
 }: {
   active: boolean;
+  soldOut?: boolean;
   onClick: () => void;
   className?: string;
   children: React.ReactNode;
@@ -218,9 +296,15 @@ function OptionButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      aria-disabled={soldOut}
+      title={soldOut ? 'Sem estoque' : undefined}
       className={`border text-sm font-semibold transition ${className} ${
-        active ? 'border-ink bg-ink text-white' : 'border-ink/15 hover:border-ink'
-      }`}
+        active
+          ? 'border-ink bg-ink text-white'
+          : soldOut
+            ? 'border-ink/10 text-ink/35 line-through decoration-ink/30 hover:border-ink/25'
+            : 'border-ink/15 hover:border-ink'
+      } ${soldOut && active ? 'line-through decoration-white/50' : ''}`}
     >
       {children}
     </button>

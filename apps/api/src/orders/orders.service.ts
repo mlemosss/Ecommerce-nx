@@ -215,24 +215,24 @@ export class OrdersService {
       });
 
       if (!variant) {
-        // Sem variação correspondente, o preço do produto vale — e não há
-        // estoque a conferir.
+        // Variação que não existe é recusada, não cobrada.
+        //
+        // Antes isto caía num fallback que cobrava o preço do produto e seguia
+        // sem conferir estoque. Como a vitrine oferecia o produto cartesiano
+        // cor × tamanho, 47 das 97 combinações do catálogo não existiam — e
+        // cada uma virava pedido pago de uma peça que a loja não tem. O
+        // `moveStock` depois também pulava o item, então nem no estoque
+        // aparecia.
         const product = await tx.product.findUnique({
           where: { id: item.productId },
-          select: { name: true, price: true, active: true },
+          select: { name: true, active: true },
         });
-        if (!product || !product.active) {
-          throw new BadRequestException(`Produto indisponível: ${item.productName}`);
-        }
-        priced.push({
-          productId: item.productId,
-          productName: product.name,
-          size: item.size,
-          color: item.color,
-          quantity: item.quantity,
-          unitPrice: product.price,
-        });
-        continue;
+        throw new BadRequestException(
+          !product || !product.active
+            ? `Produto indisponível: ${item.productName}`
+            : `${product.name} não está disponível em ${item.color} / ${item.size}. ` +
+              'Escolha outra cor ou tamanho.'
+        );
       }
 
       if (!variant.product.active) {

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 const SEEN_KEY = 'no-excuse:sale-intro';
@@ -90,14 +91,32 @@ export function SaleIntro({ discount, itemCount }: { discount: number; itemCount
           </svg>
         </button>
 
-        {/* Faixa de maré, para a abertura falar a mesma língua da home. */}
-        <div className="bg-gradient-to-b from-tide to-foam px-8 pb-10 pt-14 text-center">
-          <p className="eyebrow text-ink/55">Promoção</p>
-          <p id="sale-intro-title" className="display mt-4">
-            <span className="block text-ink/40">Até</span>
+        {/* Foto de entrada com o texto por cima. A areia clara e o céu deixam
+            o texto preto legível sem precisar escurecer a imagem inteira — só
+            um véu branco na metade de baixo, onde o número fica. */}
+        <div className="relative isolate px-8 pb-10 pt-14 text-center">
+          <Image
+            src="/entrada-dunas.jpg"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 640px) 100vw, 32rem"
+            className="-z-10 object-cover object-[60%_center]"
+          />
+          {/* Véu leve e só embaixo: forte o bastante para o texto miúdo
+              descolar da areia, fraco o bastante para a foto continuar sendo
+              a foto. A primeira versão levou 70% de branco no meio e apagou
+              as dunas inteiras. */}
+          <div
+            aria-hidden
+            className="absolute inset-0 -z-10 bg-gradient-to-b from-white/10 via-white/35 to-white/80"
+          />
+          <p className="eyebrow text-ink/70">Promoção</p>
+          <p id="sale-intro-title" className="display mt-4 drop-shadow-[0_1px_10px_rgba(255,255,255,0.85)]">
+            <span className="block text-ink/60">Até</span>
             <span className="block">{discount}% off</span>
           </p>
-          <p className="mx-auto mt-5 max-w-xs text-sm leading-relaxed text-ink/70">
+          <p className="mx-auto mt-5 max-w-xs text-sm font-medium leading-relaxed text-ink/80">
             Últimas peças, aproveite! Promoção enquanto durar o estoque.
           </p>
         </div>
