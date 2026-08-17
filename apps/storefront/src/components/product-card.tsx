@@ -3,6 +3,7 @@ import type { Product } from '../lib/types';
 import { formatPrice } from '../lib/format';
 import { ProductImage } from './product-image';
 import { FavoriteButton } from './favorite-button';
+import { isSoldOut, stockWarning } from '../lib/availability';
 
 export function ProductCard({
   product,
@@ -24,6 +25,19 @@ export function ProductCard({
       ? Math.round((1 - product.price / product.compareAtPrice) * 100)
       : null;
 
+  /**
+   * Aviso de estoque baixo, tirado do número real.
+   *
+   * A loja tinha escassez de verdade e escondia: há peça com três unidades no
+   * mundo, e quem passava pela vitrine não via. A página de produto já avisava,
+   * mas só depois de a pessoa entrar — tarde demais para servir de motivo.
+   *
+   * Some sozinho quando a lojista repõe, e não aparece em peça esgotada: ali o
+   * card não precisa de pressa, precisa do "avise-me" que está lá dentro.
+   */
+  const aviso = stockWarning(product);
+  const esgotado = isSoldOut(product);
+
   return (
     <div className="group relative flex flex-col">
       <div className="relative overflow-hidden bg-paper">
@@ -35,6 +49,22 @@ export function ProductCard({
           <span className="absolute left-0 top-3 z-10 bg-ink px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
             -{discount}%
           </span>
+        )}
+
+        {/* Fica embaixo, não em cima: o canto de cima já tem o desconto e o
+            coração, e três selos na mesma foto competem entre si em vez de
+            informar. Aqui ele também cai perto do preço, que é onde o olho
+            está quando a decisão acontece. */}
+        {esgotado ? (
+          <span className="absolute bottom-3 left-0 z-10 bg-ink/70 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
+            Esgotado
+          </span>
+        ) : (
+          aviso && (
+            <span className="absolute bottom-3 left-0 z-10 bg-white/95 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-ink shadow-sm">
+              {aviso}
+            </span>
+          )
         )}
 
         <Link href={`/produtos/${product.slug}`} tabIndex={-1} aria-hidden className="block">

@@ -147,6 +147,37 @@ export function inStockCount(product: Product): number {
   return (product.variants ?? []).filter((v) => v.stock > 0).length;
 }
 
+/** Quantas peças da peça existem no total, somando todas as cores e tamanhos. */
+export function totalStock(product: Product): number {
+  return (product.variants ?? []).reduce((soma, v) => soma + Math.max(0, v.stock), 0);
+}
+
+/**
+ * A partir de quantas peças a vitrine para de avisar que está acabando.
+ *
+ * Cinco é baixo de propósito. A loja tem escassez de verdade — há peça com três
+ * unidades no mundo inteiro —, e um aviso que aparece em tudo vira enfeite: a
+ * cliente aprende a ignorar em duas visitas e o selo deixa de significar
+ * qualquer coisa justamente quando importa.
+ */
+const POUCAS_PECAS = 5;
+
+/**
+ * O aviso de estoque baixo da vitrine, ou nada.
+ *
+ * Sai do número real e some sozinho quando a lojista repõe. É o único tipo de
+ * urgência que não queima a marca: não há contagem regressiva inventada nem
+ * "restam poucas unidades" perpétuo — se está escrito, é porque é verdade.
+ *
+ * Peça esgotada não entra: para ela o card não precisa de pressa, precisa de
+ * outro caminho, e quem abrir vai achar o "avise-me".
+ */
+export function stockWarning(product: Product): string | null {
+  const total = totalStock(product);
+  if (total === 0 || total > POUCAS_PECAS) return null;
+  return total === 1 ? 'Última peça' : `Últimas ${total}`;
+}
+
 /** Nenhuma variação com estoque: a peça inteira está esgotada. */
 export function isSoldOut(product: Product): boolean {
   return (product.variants ?? []).length > 0 && inStockCount(product) === 0;

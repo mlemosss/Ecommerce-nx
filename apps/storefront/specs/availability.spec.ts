@@ -7,6 +7,7 @@ import {
   isSoldOut,
   sizesFor,
   stockOf,
+  stockWarning,
 } from '../src/lib/availability';
 import type { Product } from '../src/lib/types';
 
@@ -166,5 +167,41 @@ describe('inStockCount / isSoldOut', () => {
     const p = legging();
     p.variants = [];
     expect(isSoldOut(p)).toBe(false);
+  });
+});
+
+describe('stockWarning', () => {
+  function comEstoque(...quantidades: number[]): Product {
+    return {
+      ...legging(),
+      variants: quantidades.map((stock, i) => ({
+        id: `v${i}`,
+        color: `Cor ${i}`,
+        size: 'M',
+        stock,
+        price: 169,
+      })),
+    };
+  }
+
+  it('conta peças, não combinações', () => {
+    // Três variações com 1 peça cada são 3 peças, não 3 avisos diferentes.
+    expect(stockWarning(comEstoque(1, 1, 1))).toBe('Últimas 3');
+  });
+
+  it('uma peça só tem nome próprio', () => {
+    expect(stockWarning(comEstoque(1))).toBe('Última peça');
+    expect(stockWarning(comEstoque(1, 0, 0))).toBe('Última peça');
+  });
+
+  it('cala a boca quando há estoque de sobra', () => {
+    // Aviso que aparece em tudo vira enfeite: a cliente aprende a ignorar.
+    expect(stockWarning(comEstoque(6))).toBeNull();
+    expect(stockWarning(comEstoque(3, 3, 3))).toBeNull();
+  });
+
+  it('peça esgotada não recebe aviso de pressa', () => {
+    // Ali o card não precisa de urgência, precisa do "avise-me" lá dentro.
+    expect(stockWarning(comEstoque(0, 0))).toBeNull();
   });
 });
