@@ -287,6 +287,15 @@ export class ShopeeService {
               item_name: product.name,
               description: product.description || product.name,
               weight: '0.3',
+              // `original_price` da Shopee e o preco que a cliente PAGA, nao o
+              // preco "de". Promocao la e outra API (`add_discount`), que grava
+              // um `promotion_price` por periodo.
+              //
+              // Estava na lista de pendencias como "manda preco promocional como
+              // preco de lista". Diagnostico meu, e errado: trocar por
+              // `compareAtPrice` faria a Shopee COBRAR R$ 199 numa peca que a
+              // loja vende por R$ 169. O que falta e o "de/por" aparecer, que e
+              // recurso a mais, nao conserto.
               price_info: [{ currency: 'BRL', original_price: product.price }],
               stock_info_v2: { seller_stock: [{ stock: totalStock }] },
               logistic_info: logisticInfo,

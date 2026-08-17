@@ -67,6 +67,27 @@ export default function FinancialDashboardPage() {
             Mês atual: {summary ? formatPrice(summary.monthExpenses) : '—'}
           </span>
         </div>
+
+        {/* Quanto do faturamento veio da loja online.
+            Esta tela somava só o balcão, então o site aparecia como zero. Agora
+            que ele entra no total, o recorte separado é o que responde "está
+            valendo a pena vender pela internet?" — e é o número que vai para o
+            Google Ads decidir orçamento. */}
+        <Link href="/pedidos" className="card flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-medium">🌐 Loja online</span>
+          <span className="text-right">
+            <span className="block rounded-lg border border-black/10 px-3 py-1 text-sm font-semibold text-emerald-700">
+              Mês atual: {summary ? formatPrice(summary.onlineStore.monthRevenue) : '—'}
+            </span>
+            <span className="mt-1 block text-xs text-black/50">
+              {summary
+                ? `${summary.onlineStore.monthCount} ${
+                    summary.onlineStore.monthCount === 1 ? 'pedido pago' : 'pedidos pagos'
+                  }`
+                : ''}
+            </span>
+          </span>
+        </Link>
       </div>
 
       <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">

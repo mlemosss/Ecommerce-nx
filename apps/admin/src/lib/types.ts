@@ -110,6 +110,8 @@ export interface DashboardSummary {
   grossProfit: number;
   openAccounts: { count: number; total: number };
   installmentSales: { count: number; total: number };
+  /** Recorte só da loja online, para separar do balcão. */
+  onlineStore: { monthCount: number; monthRevenue: number };
 }
 
 export type CouponDiscountType = 'percentage' | 'fixed';
