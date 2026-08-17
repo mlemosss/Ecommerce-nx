@@ -7,9 +7,18 @@ import { SettingsModule } from '../settings/settings.module';
 import { ShippingModule } from '../shipping/shipping.module';
 import { EmailModule } from '../email/email.module';
 import { AbandonedCartModule } from '../abandoned-cart/abandoned-cart.module';
+import { MetaModule } from '../meta/meta.module';
 
 @Module({
-  imports: [CouponsModule, SettingsModule, ShippingModule, EmailModule, AbandonedCartModule],
+  imports: [
+    CouponsModule,
+    SettingsModule,
+    ShippingModule,
+    EmailModule,
+    AbandonedCartModule,
+    // O Purchase da API de Conversões sai daqui, quando o pagamento confirma.
+    MetaModule,
+  ],
   controllers: [OrdersController],
   providers: [OrdersService, AsaasService],
   exports: [OrdersService],

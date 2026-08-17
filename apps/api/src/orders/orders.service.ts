@@ -12,6 +12,7 @@ import { ASAAS_PAID_STATUSES, AsaasService } from '../asaas/asaas.service';
 import { CouponsService } from '../coupons/coupons.service';
 import { EmailService } from '../email/email.service';
 import { AbandonedCartService } from '../abandoned-cart/abandoned-cart.service';
+import { MetaCapiService } from '../meta/meta-capi.service';
 import { effectivePrice } from '../products/pricing';
 import { discountPercentFor, parseTiers } from '../products/progressive-discount';
 import { SettingsService } from '../settings/settings.service';
@@ -130,7 +131,8 @@ export class OrdersService {
     private readonly settings: SettingsService,
     private readonly shipping: ShippingService,
     private readonly emailService: EmailService,
-    private readonly abandonedCart: AbandonedCartService
+    private readonly abandonedCart: AbandonedCartService,
+    private readonly metaCapi: MetaCapiService
   ) {}
 
   findAll(query: FindOrdersQueryDto = {}) {
@@ -536,6 +538,8 @@ export class OrdersService {
           couponCode: appliedCoupon,
           total,
           paymentMethod: dto.paymentMethod,
+          metaFbp: dto.metaFbp,
+          metaFbc: dto.metaFbc,
           items: { create: items },
         },
         include: { items: true },
@@ -693,6 +697,11 @@ export class OrdersService {
         // terminado e a lojista achar que tinha vendido.
         if (paidNow) {
           await this.emailService.sendOrderConfirmed(updated, { paid: true });
+          // Cartão aprovado na hora: o dinheiro já entrou, então a compra vale
+          // para a Meta agora. O webhook chega em seguida e não conta de novo —
+          // ele desiste de pedido que já está pago, e o `event_id` é o mesmo
+          // número de pedido nos dois caminhos.
+          await this.metaCapi.sendPurchase(updated);
         } else {
           await this.emailService.sendOrderAwaitingPayment(updated);
         }
@@ -793,6 +802,7 @@ export class OrdersService {
     // "falta o pagamento". A cliente pagou e tudo que ela tem diz que não.
     if (virouPago) {
       await this.emailService.sendPaymentApproved(updated);
+      await this.metaCapi.sendPurchase(updated);
     }
 
     return updated;
@@ -1059,6 +1069,10 @@ export class OrdersService {
 
     if (!updated) return order;
     await this.emailService.sendPaymentApproved(updated);
+    // A compra só vira Purchase quando o dinheiro entra. Pix que ninguém paga
+    // não é venda, e contá-lo ensinaria a Meta a procurar mais gente parecida
+    // com quem abandona o pagamento.
+    await this.metaCapi.sendPurchase(updated);
     return updated;
   }
 

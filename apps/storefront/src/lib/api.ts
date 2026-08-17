@@ -252,11 +252,32 @@ export async function trackAbandonedCart(input: TrackAbandonedCartInput): Promis
   }
 }
 
+/**
+ * Lê um cookie pelo nome. Só existe no navegador.
+ *
+ * Os identificadores de clique da Meta (`_fbp`, `_fbc`) são cookies da loja, e
+ * a API vive em outro domínio — eles não viajam sozinhos. Vão no corpo do
+ * pedido para ficarem guardados junto dele, porque a compra só é mandada à
+ * Meta quando o pagamento confirma, às vezes muito depois, quando não há mais
+ * navegador nenhum por perto.
+ */
+function lerCookie(nome: string): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const achado = document.cookie
+    .split('; ')
+    .find((parte) => parte.startsWith(`${nome}=`));
+  return achado ? decodeURIComponent(achado.slice(nome.length + 1)) : undefined;
+}
+
 export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
   const res = await fetch(`${API_URL}/orders`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      ...input,
+      metaFbp: lerCookie('_fbp'),
+      metaFbc: lerCookie('_fbc'),
+    }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

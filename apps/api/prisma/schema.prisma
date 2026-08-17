@@ -243,6 +243,14 @@ model Order {
   total             Float
   paymentMethod     String
   status            String      @default("aguardando_pagamento")
+  // Identificadores de clique da Meta, copiados dos cookies no checkout.
+  //
+  // Ficam no pedido porque o Purchase da API de Conversoes sai depois - as
+  // vezes minutos depois, quando o webhook do Pix confirma - e ai nao ha mais
+  // requisicao do navegador por perto para ler cookie nenhum. Sem eles, a
+  // venda chega a Meta sem ligacao com o anuncio que a trouxe.
+  metaFbp           String?
+  metaFbc           String?
   asaasCustomerId   String?
   asaasPaymentId    String?
   asaasInvoiceUrl   String?

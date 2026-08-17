@@ -56,6 +56,20 @@ export class CreditCardDto {
 }
 
 export class CreateOrderDto {
+  /**
+   * Identificadores de clique da Meta, lidos dos cookies pelo navegador.
+   *
+   * Vem no corpo porque a loja e a API estao em dominios diferentes: cookie
+   * de primeira parte da loja nao viaja ate aqui sozinho.
+   */
+  @IsOptional()
+  @IsString()
+  metaFbp?: string;
+
+  @IsOptional()
+  @IsString()
+  metaFbc?: string;
+
   @IsString()
   customerName!: string;
 

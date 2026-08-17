@@ -372,7 +372,17 @@ export default function CheckoutPage() {
       //
       // O eventID é o número do pedido: estável e único, então F5 na tela de
       // obrigado não vira uma segunda venda.
-      trackPurchase({ orderNumber: result.order.orderNumber, items: itensDoPixel() });
+      // Só quando o pagamento já entrou — cartão aprovado na hora.
+      //
+      // Pix e boleto criam o pedido sem pagar nada, e disparar Purchase ali
+      // contava como venda o que muitas vezes não vira. A Meta aprende com
+      // isso: passa a procurar mais gente parecida com quem abandona o
+      // pagamento. Nesses casos quem manda a compra é o servidor, quando o
+      // dinheiro de fato entra — com o mesmo número de pedido como `event_id`,
+      // então não conta duas vezes.
+      if (result.paid) {
+        trackPurchase({ orderNumber: result.order.orderNumber, items: itensDoPixel() });
+      }
 
       clearCart();
 
