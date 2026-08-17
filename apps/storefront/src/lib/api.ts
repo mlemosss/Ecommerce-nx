@@ -28,6 +28,7 @@ export interface StoreSettings {
   newsletterTitle: string;
   newsletterSubtitle: string;
   valueProps: ValueProp[];
+  clarityProjectId: string | null;
   gtmId: string | null;
   metaPixelId: string | null;
   googleAdsId: string | null;
@@ -77,6 +78,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     },
     { title: 'Pagamento seguro', description: 'Pix, cartão em até 3x sem juros ou boleto.' },
   ],
+  clarityProjectId: null,
   gtmId: null,
   metaPixelId: null,
   googleAdsId: null,

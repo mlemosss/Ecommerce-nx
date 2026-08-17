@@ -220,6 +220,7 @@ export interface StoreSettings {
   newsletterTitle: string;
   newsletterSubtitle: string;
   valueProps: ValueProp[];
+  clarityProjectId: string | null;
   gtmId: string | null;
   metaPixelId: string | null;
   emailFromName: string;

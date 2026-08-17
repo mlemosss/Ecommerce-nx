@@ -182,6 +182,11 @@ export class UpdateSettingsDto {
   @IsString()
   cnpj?: string;
 
+  /** Mapa de cliques (Microsoft Clarity). */
+  @IsOptional()
+  @IsString()
+  clarityProjectId?: string;
+
   @IsOptional()
   @IsString()
   gtmId?: string;

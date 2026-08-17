@@ -74,6 +74,7 @@ export default async function RootLayout({
           gtmId={settings.gtmId}
           metaPixelId={settings.metaPixelId}
           googleAdsId={settings.googleAdsId}
+          clarityProjectId={settings.clarityProjectId}
         />
         <ProductsProvider>
           <CustomerAuthProvider>

@@ -74,6 +74,12 @@ export default async function PrivacyPage() {
               medição e anúncios — e, no caso da Meta, também os dados embaralhados descritos
               logo abaixo.
             </Item>
+            <Item label="Microsoft Clarity">
+              Somente se você aceitar os cookies de medição. Registra como a página foi usada —
+              cliques, rolagem e caminho percorrido — para a gente entender onde a loja atrapalha.
+              O que você digita em campos de formulário é mascarado automaticamente: senha, CPF,
+              endereço e cartão não são gravados.
+            </Item>
             <Item label="Vercel e Neon">Hospedagem do site e do banco de dados.</Item>
           </ul>
           <p className="mt-4">Não vendemos seus dados para ninguém.</p>

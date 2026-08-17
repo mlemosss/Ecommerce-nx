@@ -69,6 +69,7 @@ export default function SettingsPage() {
         newsletterTitle: settings.newsletterTitle,
         newsletterSubtitle: settings.newsletterSubtitle,
         valueProps: settings.valueProps,
+        clarityProjectId: settings.clarityProjectId || undefined,
         gtmId: settings.gtmId || undefined,
         metaPixelId: settings.metaPixelId || undefined,
         googleAdsId: settings.googleAdsId || undefined,
@@ -408,6 +409,27 @@ export default function SettingsPage() {
 
         <section className="card space-y-3">
           <p className="text-sm font-semibold uppercase tracking-wide text-black/50">Rastreamento</p>
+
+          {/* Mapa de cliques. Diferente dos outros campos desta seção: os
+              demais medem quanto aconteceu, este mostra por que não
+              aconteceu. */}
+          <div>
+            <label className="mb-1 block text-sm font-semibold">
+              Mapa de cliques — Microsoft Clarity (ID do projeto)
+            </label>
+            <input
+              placeholder="abc123xyz"
+              value={settings.clarityProjectId ?? ''}
+              onChange={(e) => update('clarityProjectId', e.target.value)}
+              className="input-field"
+            />
+            <p className="mt-1 text-xs text-black/45">
+              Grátis e sem limite de visitas. Mostra onde a cliente clicou, até onde rolou a página
+              e onde desistiu — dá para assistir a navegação dela. Crie em clarity.microsoft.com e
+              cole o ID do projeto aqui. Vazio, não carrega nada.
+            </p>
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-semibold">Google Tag Manager (ID do contêiner)</label>
             <input

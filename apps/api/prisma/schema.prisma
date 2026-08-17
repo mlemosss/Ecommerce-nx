@@ -346,6 +346,9 @@ model StoreSettings {
   // do que nao mostrar nenhum.
   legalName              String?
   cnpj                   String?
+  // Microsoft Clarity: mapa de cliques e gravacao de sessao. Carrega junto
+  // com o resto da medicao, so depois do aceite de cookies.
+  clarityProjectId       String?
   gtmId                  String?
   metaPixelId             String?
   emailFromName          String   @default("NO EXCUSE")
