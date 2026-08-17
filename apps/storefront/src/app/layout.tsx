@@ -9,6 +9,8 @@ import { PromoBanner } from '../components/promo-banner';
 import { Header } from '../components/header';
 import { Footer } from '../components/footer';
 import { WhatsappButton } from '../components/whatsapp-button';
+import { JsonLd } from '../components/json-ld';
+import { organizationSchema } from '../lib/structured-data';
 import { getSettings } from '../lib/api';
 
 const STOREFRONT_URL = (
@@ -48,6 +50,23 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="flex min-h-screen flex-col font-sans">
+        {/* Quem é a loja, para o Google. Alimenta o painel lateral da busca e
+            liga a marca ao Instagram e ao Facebook — sem isto, o buscador não
+            tem como saber que os três são a mesma NO EXCUSE. */}
+        <JsonLd
+          data={organizationSchema({
+            storeName: 'NO EXCUSE',
+            storefrontUrl: STOREFRONT_URL,
+            logoUrl: `${STOREFRONT_URL}/logo-nx.png`,
+            legalName: settings.legalName,
+            cnpj: settings.cnpj,
+            email: settings.contactEmail,
+            whatsapp: settings.contactWhatsapp,
+            redes: [settings.instagramUrl, settings.facebookUrl].filter(
+              (url): url is string => Boolean(url)
+            ),
+          })}
+        />
         {/* Os scripts de medição vivem aqui dentro, atrás do consentimento.
             O fallback <noscript> foi retirado de propósito: ele dispararia sem
             passar pelo banner, e é exatamente isso que não pode acontecer. */}

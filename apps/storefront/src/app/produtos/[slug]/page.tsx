@@ -11,6 +11,8 @@ import { ProductReviews } from '../../../components/product-reviews';
 import { getProductReviews, getSettings } from '../../../lib/api';
 import { formatPrice } from '../../../lib/format';
 import { summarizeDescription } from '../../../lib/description';
+import { JsonLd } from '../../../components/json-ld';
+import { breadcrumbSchema, productSchema } from '../../../lib/structured-data';
 
 const STOREFRONT_URL = (
   process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://www.noexcusenx.com.br'
@@ -68,6 +70,27 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
 
   return (
     <div className="container-page py-10 sm:py-14">
+      {/* Preço, estoque e estrelas no resultado do Google. Sem isto o link
+          aparece só com título e um pedaço do texto. */}
+      <JsonLd
+        data={productSchema({
+          product,
+          url: `${STOREFRONT_URL}/produtos/${product.slug}`,
+          reviews: { average: reviewsResult.average, count: reviewsResult.count },
+          storeName: 'NO EXCUSE',
+          storefrontUrl: STOREFRONT_URL,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { nome: 'Início', url: STOREFRONT_URL },
+          {
+            nome: product.category,
+            url: `${STOREFRONT_URL}/produtos?categoria=${product.category}`,
+          },
+          { nome: product.name, url: `${STOREFRONT_URL}/produtos/${product.slug}` },
+        ])}
+      />
       <TrackProductView productId={product.id} />
       <nav className="mb-8 text-[11px] uppercase tracking-[0.14em] text-ink/60">
         <Link href="/" className="underline-offset-4 hover:underline">
