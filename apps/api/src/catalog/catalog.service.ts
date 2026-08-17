@@ -62,7 +62,7 @@ export class CatalogService {
   async findAll(category?: string) {
     const products = await this.prisma.product.findMany({
       where: { active: true, ...(category ? { category } : {}) },
-      include: { variants: { select: { color: true, size: true, stock: true, price: true } } },
+      include: { variants: { select: { id: true, color: true, size: true, stock: true, price: true } } },
       orderBy: { name: 'asc' },
     });
     return products.map(toCatalogProduct);
@@ -71,7 +71,7 @@ export class CatalogService {
   async findBySlug(slug: string) {
     const product = await this.prisma.product.findUnique({
       where: { slug },
-      include: { variants: { select: { color: true, size: true, stock: true, price: true } } },
+      include: { variants: { select: { id: true, color: true, size: true, stock: true, price: true } } },
     });
     if (!product || !product.active) throw new NotFoundException('Produto não encontrado');
     return toCatalogProduct(product);
