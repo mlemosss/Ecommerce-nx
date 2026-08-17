@@ -71,11 +71,46 @@ export default async function PrivacyPage() {
             <Item label="Resend">Envio dos e-mails do pedido. Recebe seu e-mail e o conteúdo da mensagem.</Item>
             <Item label="Google e Meta">
               Somente se você aceitar os cookies de medição. Recebem dados de navegação para
-              medição e anúncios.
+              medição e anúncios — e, no caso da Meta, também os dados embaralhados descritos
+              logo abaixo.
             </Item>
             <Item label="Vercel e Neon">Hospedagem do site e do banco de dados.</Item>
           </ul>
           <p className="mt-4">Não vendemos seus dados para ninguém.</p>
+        </Section>
+
+        {/* Exigência da LGPD e da própria Meta: enviar dado de cliente, mesmo
+            embaralhado, precisa estar escrito aqui, com a base legal dita. Sem
+            esta seção o envio não pode ser ligado. */}
+        <Section title="Medição de anúncios pela Meta">
+          <p>
+            Se você aceitar os cookies de medição, enviamos à Meta — dona do Facebook e do
+            Instagram — informações sobre a sua navegação na loja: as peças que você abriu, o que
+            colocou no carrinho e as compras que finalizou.
+          </p>
+          <p className="mt-3">
+            Junto com isso pode ir o seu <strong>e-mail e o seu telefone, embaralhados</strong> por
+            um cálculo matemático chamado SHA-256. Embaralhado quer dizer que a Meta recebe uma
+            sequência de letras e números da qual <strong>não é possível voltar</strong> ao seu
+            e-mail ou ao seu telefone. Ela só consegue comparar essa sequência com a que já tem, para
+            saber se você é a mesma pessoa que viu um anúncio nosso — e é só para isso que serve.
+          </p>
+          <p className="mt-3">
+            <strong>Por que fazemos:</strong> sem essa comparação não temos como saber quais
+            anúncios trazem venda de verdade. É a diferença entre gastar com o que funciona e gastar
+            no escuro.
+          </p>
+          <p className="mt-3">
+            <strong>Base legal:</strong> o seu consentimento, dado no aviso de cookies
+            (art. 7º, I da LGPD). <strong>Nada disso acontece se você recusar</strong>, e você pode
+            mudar de ideia quando quiser, no botão da seção seguinte. Ao revogar, o envio para de
+            imediato.
+          </p>
+          <p className="mt-3">
+            O envio é feito em parte pelo seu navegador e em parte pelo nosso servidor. É o mesmo
+            dado nos dois caminhos; o segundo existe porque o primeiro se perde quando você usa
+            bloqueador de anúncios ou a conexão falha.
+          </p>
         </Section>
 
         <Section title="Cookies">

@@ -99,7 +99,57 @@ function track(evento: string, dados: Record<string, unknown>, eventId: string):
     return;
   }
 
-  window.fbq('track', evento, { ...dados, currency: 'BRL' }, { eventID: eventId });
+  const comMoeda = { ...dados, currency: 'BRL' };
+  window.fbq('track', evento, comMoeda, { eventID: eventId });
+
+  // `Purchase` não vai pelo servidor a partir daqui, de propósito. Ele é o
+  // evento que decide orçamento de campanha, e é justamente o que alguém
+  // tentaria forjar mandando um POST na mão. Ele sai do backend, na confirmação
+  // do pedido, com o valor lido do banco — nunca do que o navegador afirmar.
+  if (evento !== 'Purchase') {
+    enviarAoServidor(evento, comMoeda, eventId);
+  }
+}
+
+/**
+ * O mesmo evento, pelo servidor.
+ *
+ * Existe porque o caminho do navegador se perde: bloqueador de anúncios, rede
+ * que cai no meio, Safari encurtando cookie. O servidor não sofre nada disso.
+ *
+ * O `eventId` é O MESMO dos dois lados — é a única coisa que impede a Meta de
+ * contar a mesma visita duas vezes. Aqui ele viaja como `eventId` e vira
+ * `event_id` no servidor; no `fbq` ele é `eventID`, em camelCase e como quarto
+ * argumento. Três grafias do mesmo valor, e trocar uma delas dobra o número de
+ * conversões sem avisar.
+ *
+ * `keepalive` porque o `InitiateCheckout` sai no momento em que a pessoa está
+ * navegando para outra tela: sem ele, o `fetch` morre junto com a página e o
+ * evento se perde justamente no passo mais valioso do funil.
+ *
+ * Falha aqui não faz nada. É medição, não é a compra.
+ */
+function enviarAoServidor(
+  eventName: string,
+  customData: Record<string, unknown>,
+  eventId: string
+): void {
+  try {
+    void fetch('/api/meta-capi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({
+        eventName,
+        eventId,
+        eventTime: Math.floor(Date.now() / 1000),
+        sourceUrl: window.location.href,
+        customData,
+      }),
+    }).catch(() => undefined);
+  } catch {
+    // Navegador sem `keepalive` ou com fetch bloqueado: o pixel já foi.
+  }
 }
 
 /** Página de produto aberta, ou variação trocada. */

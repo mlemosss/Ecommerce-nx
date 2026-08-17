@@ -30,6 +30,34 @@ export function Analytics({
     return () => window.removeEventListener(CONSENT_EVENT, sync);
   }, []);
 
+  /**
+   * Guarda o clique do anúncio como cookie `_fbc`.
+   *
+   * Quem chega por um anúncio do Meta vem com `?fbclid=` na URL. Esse é o
+   * identificador mais forte de atribuição que existe — é o que liga a compra
+   * ao anúncio que a trouxe. O pixel grava sozinho quando carrega; se ele for
+   * bloqueado, ninguém grava, e a venda vira "tráfego direto".
+   *
+   * O formato tem quatro partes: `fb.1.<quando>.<fbclid>`. Grava-se uma vez, e
+   * não a cada evento — refazer a cada disparo produziria um `creation_time`
+   * diferente para o mesmo clique, e a Meta usa esse tempo na conta.
+   *
+   * O `fbclid` vai como veio: é sensível a maiúsculas e não aceita nenhuma
+   * alteração. Nada de `trim`, nada de minúsculo, nada de decodificar.
+   *
+   * Roda depois do aceite, junto com o resto — é identificador publicitário.
+   */
+  useEffect(() => {
+    if (!accepted) return;
+    const fbclid = new URLSearchParams(window.location.search).get('fbclid');
+    if (!fbclid) return;
+    if (document.cookie.includes('_fbc=')) return;
+
+    const noventaDias = 90 * 24 * 60 * 60;
+    document.cookie =
+      `_fbc=fb.1.${Date.now()}.${fbclid}; path=/; max-age=${noventaDias}; SameSite=Lax`;
+  }, [accepted]);
+
   if (!accepted) return null;
 
   return (
