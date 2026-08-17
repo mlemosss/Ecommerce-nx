@@ -1,12 +1,18 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '../../lib/cart-context';
 import { useProducts } from '../../lib/products-context';
 import { useCustomerAuth } from '../../lib/customer-auth-context';
 import { getVariantPrice } from '../../lib/products';
+import { findVariant } from '../../lib/availability';
+import {
+  trackInitiateCheckout,
+  trackPurchase,
+  type PixelItem,
+} from '../../lib/pixel';
 import { formatPrice } from '../../lib/format';
 import { discountPercentFor, parseTiers } from '../../lib/progressive-discount';
 import {
@@ -111,6 +117,47 @@ export default function CheckoutPage() {
       setDocument((prev) => prev || perfil.documentNumber || '');
     });
   }, [customer]);
+
+  /**
+   * O carrinho traduzido para o que o Pixel entende.
+   *
+   * `content_ids` precisa trazer o id da VARIAÇÃO — o mesmo da coluna `id` do
+   * feed do catálogo. Cor e tamanho vêm do carrinho como texto; a variação é
+   * localizada no catálogo carregado. Item cuja variação não existir mais fica
+   * de fora: id inventado casa com nada e só suja a taxa de correspondência.
+   */
+  function itensDoPixel(): PixelItem[] {
+    return items.flatMap((item) => {
+      const product = products.find((p) => p.id === item.productId);
+      const variante = product && findVariant(product, item.color, item.size);
+      if (!product || !variante) return [];
+      return [
+        {
+          variantId: variante.id,
+          quantity: item.quantity,
+          unitPrice: getVariantPrice(product, item.color, item.size),
+        },
+      ];
+    });
+  }
+
+  /**
+   * InitiateCheckout, uma vez por visita à tela.
+   *
+   * É o evento de otimização com volume de verdade: compra é rara demais para
+   * a Meta aprender, e "chegou no checkout" acontece muitas vezes mais. Espera
+   * o catálogo carregar, senão sairia sem `content_ids`.
+   */
+  const checkoutDisparado = useRef(false);
+  useEffect(() => {
+    if (checkoutDisparado.current) return;
+    if (!isLoaded || items.length === 0 || products.length === 0) return;
+    const doPixel = itensDoPixel();
+    if (doPixel.length === 0) return;
+    checkoutDisparado.current = true;
+    trackInitiateCheckout(doPixel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, items.length, products.length]);
 
   const availablePayments = PAYMENT_OPTIONS.filter((option) => settings[option.enabledKey]);
 
@@ -317,6 +364,15 @@ export default function CheckoutPage() {
             }
           : {}),
       });
+
+      // Purchase antes de esvaziar o carrinho: é a última vez que os itens
+      // existem nesta tela, e a de confirmação só recebe número e total pela
+      // URL — sem `content_ids` o Meta registra a venda mas o catálogo não a
+      // enxerga, que é exatamente o sintoma de correspondência 0%.
+      //
+      // O eventID é o número do pedido: estável e único, então F5 na tela de
+      // obrigado não vira uma segunda venda.
+      trackPurchase({ orderNumber: result.order.orderNumber, items: itensDoPixel() });
 
       clearCart();
 

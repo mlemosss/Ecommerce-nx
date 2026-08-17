@@ -6,17 +6,24 @@ import { getConsent } from '../lib/cookie-consent';
 declare global {
   interface Window {
     dataLayer?: Record<string, unknown>[];
-    fbq?: (...args: unknown[]) => void;
     gtag?: (...args: unknown[]) => void;
   }
 }
 
 /**
- * Dispara a compra para o GTM e para o Meta Pixel.
+ * Dispara a compra para o GTM e para o Google Ads.
  *
- * Sem isto, o Pixel e o GTM registram apenas visita de página: o Google Ads não
- * consegue medir conversão e o Meta não tem evento de compra para otimizar. O
- * evento respeita o consentimento — sem aceite, nada é enviado.
+ * O Meta saiu daqui de propósito.
+ *
+ * Esta tela recebe só número do pedido e total, pela URL — os itens já foram
+ * embora com o carrinho. O `fbq('track','Purchase')` que existia aqui ia sem
+ * `content_ids`, e é por isso que o Gerenciador de Eventos mostrava 2 compras
+ * enquanto o Commerce Manager insistia que não recebia nenhuma: sem os ids das
+ * variações, o evento existe para a Meta e não existe para o catálogo. Era o
+ * sintoma da taxa de correspondência em 0%.
+ *
+ * A compra agora sai do checkout, onde os itens ainda estão em mãos, com
+ * `content_ids` e `eventID` = número do pedido. Ver `lib/pixel.ts`.
  */
 export function PurchaseEvent({
   orderNumber,
@@ -48,8 +55,6 @@ export function PurchaseEvent({
         currency: 'BRL',
       },
     });
-
-    window.fbq?.('track', 'Purchase', { value: total, currency: 'BRL' });
 
     // Conversão do Google Ads. A tag base sozinha só mede visita: é este evento,
     // com o rótulo da ação de conversão, que registra a venda.

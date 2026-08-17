@@ -15,11 +15,17 @@ function toCatalogProduct(product: {
   compareAtPrice: number | null;
   images: string;
   createdAt: Date;
-  variants: { color: string; size: string; stock: number; price: number | null }[];
+  variants: { id: string; color: string; size: string; stock: number; price: number | null }[];
 }) {
   const images = toPublicImageUrls(product.id, parseImages(product.images));
 
   const variants = product.variants.map((v) => ({
+    // O id da variação vai para o navegador porque é a chave que o catálogo do
+    // Meta usa: o `content_ids` dos eventos do Pixel precisa ser exatamente o
+    // mesmo valor da coluna `id` do feed. Divergiu, a taxa de correspondência
+    // fica em 0% para sempre e o anúncio dinâmico não acha a peça que a pessoa
+    // acabou de ver.
+    id: v.id,
     color: v.color,
     size: v.size,
     stock: v.stock,

@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Product } from '../lib/types';
 import { useCart } from '../lib/cart-context';
 import { getVariantPrice } from '../lib/products';
 import { formatInstallments, formatPrice } from '../lib/format';
+import { trackAddToCart, trackViewContent } from '../lib/pixel';
 import { describeBlocks } from '../lib/description';
 import {
+  findVariant,
   availabilityOf,
   colorsForDisplay,
   defaultSelection,
@@ -58,9 +60,44 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
 
   function handleAdd() {
     if (!podeComprar) return;
-    addItem({ productId: product.id, size, color, quantity: Math.min(quantity, maximo) });
+    const qtd = Math.min(quantity, maximo);
+    addItem({ productId: product.id, size, color, quantity: qtd });
     setAdded(true);
+
+    // Depois de a peça entrar no carrinho, não no clique cru: disparar antes
+    // contaria como carrinho a tentativa em combinação sem estoque, e o
+    // público de retargeting encheria de gente que nunca chegou a escolher
+    // nada.
+    const variante = findVariant(product, color, size);
+    if (variante) {
+      trackAddToCart(
+        { variantId: variante.id, quantity: qtd, unitPrice: price },
+        `${product.name} — ${color} ${size}`
+      );
+    }
   }
+
+  /**
+   * `ViewContent` da variação em tela.
+   *
+   * Dispara na abertura e a cada troca de cor ou tamanho, porque para o Meta
+   * cada variação é um item de catálogo diferente — é o `content_ids` dela que
+   * liga o anúncio dinâmico à peça que a pessoa olhou. Vários por página é o
+   * esperado, não é bug.
+   */
+  const varianteEmTela = findVariant(product, color, size);
+  useEffect(() => {
+    if (!varianteEmTela) return;
+    trackViewContent({
+      variantId: varianteEmTela.id,
+      name: `${product.name} — ${color} ${size}`,
+      category: product.category,
+      price,
+    });
+    // Só o id da variação na dependência: cor e tamanho já estão dentro dele, e
+    // `price` muda junto sem precisar reagir sozinho.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [varianteEmTela?.id]);
 
   return (
     <div className="flex flex-col gap-7">

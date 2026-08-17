@@ -7,6 +7,8 @@ export type Category =
   | 'acessorios';
 
 export interface ProductVariant {
+  /** Chave da variação. É o `content_ids` que o Pixel manda para o catálogo. */
+  id: string;
   color: string;
   size: string;
   stock: number;

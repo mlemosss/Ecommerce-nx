@@ -41,7 +41,8 @@ export interface CatalogProduct {
   images: string[];
   colors: string[];
   sizes: string[];
-  variants: { color: string; size: string; stock: number; price: number }[];
+  /** `id` é o da variação — a chave que o catálogo do Meta usa nos eventos. */
+  variants: { id: string; color: string; size: string; stock: number; price: number }[];
   priceRange: { min: number; max: number } | null;
   isNew: boolean;
 }
