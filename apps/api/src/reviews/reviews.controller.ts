@@ -43,6 +43,12 @@ export class ReviewsController {
     return this.reviewsService.findAll();
   }
 
+  /** Quem já recebeu a peça e ainda não avaliou — a lista de quem pedir. */
+  @Get('pendentes')
+  pendingRequests() {
+    return this.reviewsService.pendingRequests();
+  }
+
   @CustomerAccessible()
   @Post()
   create(@Req() req: CustomerRequest, @Body() dto: CreateReviewDto) {

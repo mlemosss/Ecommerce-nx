@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { TopBar } from '../../components/top-bar';
+import { PedirAvaliacao } from '../../components/pedir-avaliacao';
 import { api } from '../../lib/api';
 import { formatDate } from '../../lib/format';
 import type { ProductReview } from '../../lib/types';
@@ -33,6 +34,20 @@ export default function ReviewsPage() {
       <TopBar title="Avaliações" />
 
       <div className="px-4 pt-4">
+        {/* Pedir vem antes de aprovar, e não é ordem alfabética: a loja tem
+            zero avaliações. Aprovar só importa quando existe o que aprovar. */}
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-black/50">
+          Pedir avaliação
+        </h2>
+        <div className="mt-3">
+          <PedirAvaliacao />
+        </div>
+
+        <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
+          Avaliações recebidas
+        </h2>
+        <div className="mt-3" />
+
         {pendingCount > 0 && (
           <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
             {pendingCount} avaliação(ões) aguardando aprovação.

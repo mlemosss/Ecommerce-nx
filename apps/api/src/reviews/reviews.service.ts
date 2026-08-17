@@ -37,6 +37,61 @@ export class ReviewsService {
     });
   }
 
+  /**
+   * Quem já recebeu a peça e ainda não avaliou.
+   *
+   * A loja tem zero avaliações, e é o que mais pesa numa marca que ninguém
+   * conhece: roupa fitness se compra sem provar, e a única coisa que resolve é
+   * outra mulher dizendo que serviu.
+   *
+   * O link por pedido já existia — mas só dentro do pedido, um a um. Quem
+   * quisesse pedir a dez clientes precisava abrir dez pedidos e lembrar em qual
+   * tinha parado. Aqui sai a lista pronta, na ordem de quem recebeu primeiro:
+   * é quem já usou a peça e tem o que dizer.
+   *
+   * Só pedido `enviado`. Pedido pago e não postado ainda não chegou na casa de
+   * ninguém, e pedir avaliação de peça que a pessoa não viu é o jeito mais
+   * rápido de receber uma avaliação ruim merecida.
+   */
+  async pendingRequests() {
+    const pedidos = await this.prisma.order.findMany({
+      where: { status: 'enviado', shippedAt: { not: null } },
+      select: {
+        id: true,
+        orderNumber: true,
+        customerName: true,
+        customerPhone: true,
+        reviewToken: true,
+        shippedAt: true,
+        reviewRequestSentAt: true,
+        items: { select: { productName: true } },
+      },
+      orderBy: { shippedAt: 'asc' },
+    });
+
+    // Um pedido some da lista quando qualquer peça dele já foi avaliada: já deu
+    // o que tinha para dar, e insistir vira cobrança.
+    const avaliados = await this.prisma.productReview.findMany({
+      where: { orderId: { in: pedidos.map((p) => p.id) } },
+      select: { orderId: true },
+    });
+    const jaAvaliou = new Set(avaliados.map((a) => a.orderId));
+
+    return pedidos
+      .filter((p) => !jaAvaliou.has(p.id))
+      .map((p) => ({
+        id: p.id,
+        orderNumber: p.orderNumber,
+        customerName: p.customerName,
+        customerPhone: p.customerPhone,
+        reviewToken: p.reviewToken,
+        shippedAt: p.shippedAt,
+        /** Já saiu o e-mail automático? Serve para não parecer insistência. */
+        emailEnviadoEm: p.reviewRequestSentAt,
+        produtos: [...new Set(p.items.map((i) => i.productName))],
+      }));
+  }
+
   async create(customerId: string, customerName: string, dto: CreateReviewDto) {
     const product = await this.prisma.product.findUnique({ where: { id: dto.productId } });
     if (!product) throw new NotFoundException('Produto não encontrado');
