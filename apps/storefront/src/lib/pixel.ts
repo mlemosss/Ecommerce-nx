@@ -73,6 +73,32 @@ function contents(items: PixelItem[]) {
  */
 function track(evento: string, dados: Record<string, unknown>, eventId: string): void {
   if (typeof window === 'undefined' || typeof window.fbq !== 'function') return;
+
+  /**
+   * Nenhum evento sai com id vazio. Evento com id nulo é pior que evento
+   * nenhum.
+   *
+   * Ele não deixa de existir: entra no **denominador** da taxa de
+   * correspondência do catálogo, casa com nada, e puxa a taxa para baixo. Um
+   * evento a menos apenas não conta.
+   *
+   * Já aconteceu: uma captura em produção pegou `content_ids: [null]` no
+   * AddToCart de um produto e o id certo em outro, no mesmo fluxo. A causa era
+   * o `select` do Prisma, que não trazia o id da variação — e as páginas de
+   * produto revalidam em janelas separadas, então umas já tinham a correção e
+   * outras ainda serviam a versão sem id. `[undefined]` vira `[null]` no JSON;
+   * dentro de `contents` o campo some. Foi exatamente o sintoma capturado.
+   *
+   * A causa está corrigida. A guarda fica porque a próxima vez que um id
+   * faltar — produto novo, cache velho depois de um deploy — o estrago é
+   * silencioso, e ninguém olha a taxa de correspondência todo dia.
+   */
+  const ids = dados.content_ids;
+  if (!Array.isArray(ids) || ids.length === 0 || ids.some((id) => !id)) {
+    console.warn(`[pixel] ${evento} abortado: content_ids vazio ou com id nulo.`, ids);
+    return;
+  }
+
   window.fbq('track', evento, { ...dados, currency: 'BRL' }, { eventID: eventId });
 }
 

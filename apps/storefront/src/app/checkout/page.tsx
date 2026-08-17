@@ -130,7 +130,7 @@ export default function CheckoutPage() {
     return items.flatMap((item) => {
       const product = products.find((p) => p.id === item.productId);
       const variante = product && findVariant(product, item.color, item.size);
-      if (!product || !variante) return [];
+      if (!product || !variante?.id) return [];
       return [
         {
           variantId: variante.id,

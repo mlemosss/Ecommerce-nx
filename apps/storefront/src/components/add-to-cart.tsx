@@ -68,8 +68,11 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
     // contaria como carrinho a tentativa em combinação sem estoque, e o
     // público de retargeting encheria de gente que nunca chegou a escolher
     // nada.
+    // `variante?.id` e não só `variante`: a variação pode existir sem o id
+    // ter chegado ao navegador, e aí o evento sairia com `content_ids: [null]`.
+    // A guarda de verdade está em `lib/pixel.ts`; esta evita até a chamada.
     const variante = findVariant(product, color, size);
-    if (variante) {
+    if (variante?.id) {
       trackAddToCart(
         { variantId: variante.id, quantity: qtd, unitPrice: price },
         `${product.name} — ${color} ${size}`
@@ -87,7 +90,7 @@ export function AddToCart({ product, sizeGuide }: { product: Product; sizeGuide?
    */
   const varianteEmTela = findVariant(product, color, size);
   useEffect(() => {
-    if (!varianteEmTela) return;
+    if (!varianteEmTela?.id) return;
     trackViewContent({
       variantId: varianteEmTela.id,
       name: `${product.name} — ${color} ${size}`,
