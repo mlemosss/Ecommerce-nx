@@ -23,6 +23,64 @@ function disponibilidade(product: Product): string {
     : 'https://schema.org/OutOfStock';
 }
 
+/**
+ * Prazo de arrependimento do Código de Defesa do Consumidor, art. 49.
+ *
+ * Sete dias corridos a contar do recebimento, para compra fora do
+ * estabelecimento — o que inclui toda venda pela internet. Quem devolve nesse
+ * prazo recebe tudo de volta, e o frete da devolução é por conta da loja: a lei
+ * fala em valores "monetariamente atualizados", e a jurisprudência entende que
+ * cobrar o retorno esvaziaria o direito.
+ *
+ * É o piso legal, não uma política que a loja escolheu. Qualquer prazo maior é
+ * decisão da lojista e vai em Configurações; menor não existe.
+ */
+export const DIAS_DE_ARREPENDIMENTO = 7;
+
+/**
+ * Política de devolução, do jeito que o Google entende.
+ *
+ * Sem este bloco a peça aparece na busca com aviso de dado faltando, e nas
+ * listagens gratuitas do Shopping o Google passa a exigir — anúncio sem
+ * política declarada é reprovado.
+ */
+function politicaDeDevolucao(): Record<string, unknown> {
+  return {
+    '@type': 'MerchantReturnPolicy',
+    applicableCountry: 'BR',
+    returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+    merchantReturnDays: DIAS_DE_ARREPENDIMENTO,
+    returnMethod: 'https://schema.org/ReturnByMail',
+    returnFees: 'https://schema.org/FreeReturn',
+  };
+}
+
+/**
+ * Frete, só a parte que é verdade sempre.
+ *
+ * Abaixo do mínimo o valor sai da cotação por CEP e muda de cliente para
+ * cliente — declarar um número fixo ali seria anunciar um frete que a loja não
+ * pratica, e é isso que derruba a página do resultado enriquecido. Então
+ * declara-se apenas a faixa em que a resposta é certa: acima do mínimo, zero.
+ */
+function freteGratisAcimaDe(minimo: number): Record<string, unknown> {
+  return {
+    '@type': 'OfferShippingDetails',
+    shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'BR' },
+    shippingRate: {
+      '@type': 'MonetaryAmount',
+      value: 0,
+      currency: MOEDA,
+    },
+    // A condição que torna a taxa zero honesta.
+    eligibleTransactionVolume: {
+      '@type': 'PriceSpecification',
+      priceCurrency: MOEDA,
+      minPrice: minimo,
+    },
+  };
+}
+
 export interface ProductSchemaInput {
   product: Product;
   url: string;
@@ -30,6 +88,8 @@ export interface ProductSchemaInput {
   reviews: { average: number; count: number };
   storeName: string;
   storefrontUrl: string;
+  /** A partir de quanto o frete é grátis. Vem de Configurações. */
+  freeShippingThreshold: number;
 }
 
 export function productSchema({
@@ -38,10 +98,17 @@ export function productSchema({
   reviews,
   storeName,
   storefrontUrl,
+  freeShippingThreshold,
 }: ProductSchemaInput): Record<string, unknown> {
   const precos = (product.variants ?? []).map((v) => v.price).filter((p) => p > 0);
   const menor = precos.length ? Math.min(...precos) : product.price;
   const maior = precos.length ? Math.max(...precos) : product.price;
+
+  // Vão nas duas formas de oferta: o Google exige em ambas.
+  const condicoes = {
+    hasMerchantReturnPolicy: politicaDeDevolucao(),
+    shippingDetails: freteGratisAcimaDe(freeShippingThreshold),
+  };
 
   return {
     '@context': 'https://schema.org',
@@ -67,6 +134,7 @@ export function productSchema({
             availability: disponibilidade(product),
             itemCondition: 'https://schema.org/NewCondition',
             seller: { '@type': 'Organization', name: storeName, url: storefrontUrl },
+            ...condicoes,
           }
         : {
             '@type': 'AggregateOffer',
@@ -77,6 +145,7 @@ export function productSchema({
             offerCount: precos.length,
             availability: disponibilidade(product),
             seller: { '@type': 'Organization', name: storeName, url: storefrontUrl },
+            ...condicoes,
           },
 
     // Estrelas só quando existem de verdade. Declarar nota sem avaliação é o

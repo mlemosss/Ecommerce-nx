@@ -79,6 +79,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           reviews: { average: reviewsResult.average, count: reviewsResult.count },
           storeName: 'NO EXCUSE',
           storefrontUrl: STOREFRONT_URL,
+          freeShippingThreshold: settings.freeShippingThreshold,
         })}
       />
       <JsonLd
