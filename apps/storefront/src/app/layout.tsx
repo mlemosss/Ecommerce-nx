@@ -7,7 +7,6 @@ import { AnnouncementBar } from '../components/announcement-bar';
 import { CookieBanner } from '../components/cookie-banner';
 import { PromoBanner } from '../components/promo-banner';
 import { Header } from '../components/header';
-import { AvisoInstabilidade } from '../components/aviso-instabilidade';
 import { Footer } from '../components/footer';
 import { WhatsappButton } from '../components/whatsapp-button';
 import { JsonLd } from '../components/json-ld';
@@ -89,7 +88,6 @@ export default async function RootLayout({
                 freeShippingThreshold={settings.freeShippingThreshold}
                 maxInstallments={settings.maxInstallments}
               />
-              <AvisoInstabilidade />
               <Header />
               <main className="flex-1">{children}</main>
               <Footer settings={settings} />

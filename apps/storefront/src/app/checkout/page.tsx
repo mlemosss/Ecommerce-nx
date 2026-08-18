@@ -163,6 +163,10 @@ export default function CheckoutPage() {
 
   const availablePayments = PAYMENT_OPTIONS.filter((option) => settings[option.enabledKey]);
 
+  // Vem preenchido no DEFAULT_SETTINGS: se a API cair, e justamente quando
+  // este numero precisa aparecer.
+  const zapDaLoja = settings.contactWhatsapp?.replace(/\D/g, '');
+
   const freeShipping = subtotal >= settings.freeShippingThreshold;
   const selectedShipping = shippingOptions.find((o) => o.id === selectedShippingId) ?? null;
   // Retirada primeiro: quem busca em maos nao paga frete nem quando a compra
@@ -410,7 +414,15 @@ export default function CheckoutPage() {
       if (result.paymentWarning) params.set('aviso', result.paymentWarning);
       router.push(`/pedido-confirmado?${params.toString()}`);
     } catch (err) {
-      setError(err instanceof OrderError ? err.message : 'Não foi possível finalizar o pedido. Tente novamente.');
+      // Erro do servidor (banco fora, Asaas fora) e erro de preenchimento
+      // pedem respostas diferentes. `OrderError` diz o que a pessoa tem que
+      // corrigir; o resto e problema nosso, e ai o certo e abrir o WhatsApp em
+      // vez de pedir para ela tentar de novo contra uma parede.
+      setError(
+        err instanceof OrderError
+          ? err.message
+          : 'Não conseguimos concluir o pedido agora — o problema é do nosso lado. Fale com a gente no WhatsApp que a gente fecha por lá, com as mesmas peças e o mesmo preço.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -857,7 +869,23 @@ export default function CheckoutPage() {
             <span className="eyebrow">Total</span>
             <span className="text-xl font-black tracking-tight">{formatPrice(total)}</span>
           </div>
-          {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+          {error && (
+            <div className="mt-4 text-sm text-red-600">
+              <p>{error}</p>
+              {zapDaLoja && (
+                <a
+                  href={`https://wa.me/${zapDaLoja}?text=${encodeURIComponent(
+                    'Oi! Tentei finalizar meu pedido no site e não consegui. Podem me ajudar?'
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block font-semibold underline underline-offset-4"
+                >
+                  Abrir o WhatsApp
+                </a>
+              )}
+            </div>
+          )}
           <button type="submit" disabled={submitting} className="btn-primary mt-6 w-full disabled:opacity-60">
             {submitting ? 'Processando...' : 'Confirmar pedido'}
           </button>
