@@ -11,6 +11,7 @@ import type { StoreSettings } from '../../lib/types';
 export default function SettingsPage() {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [saving, setSaving] = useState(false);
+  const [buscandoCep, setBuscandoCep] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
@@ -21,6 +22,53 @@ export default function SettingsPage() {
   function update<K extends keyof StoreSettings>(key: K, value: StoreSettings[K]) {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
     setSaved(false);
+  }
+
+  /**
+   * O CEP de origem preenche o resto do endereço de quem posta.
+   *
+   * São seis campos que só existem para a etiqueta, e digitar bairro na mão é
+   * como se escreve "Sta. Cecília" onde a transportadora espera "Santa
+   * Cecília". O CEP resolve cinco deles; só o número da porta sobra.
+   *
+   * Sobrescreve o que estiver lá: CEP novo é endereço novo, e um bairro antigo
+   * misturado com uma rua nova é pior do que campo vazio.
+   */
+  async function buscarEnderecoDeOrigem(cep: string) {
+    const digits = cep.replace(/\D/g, '');
+    if (digits.length !== 8) return;
+
+    setBuscandoCep(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const data = res.ok
+        ? ((await res.json()) as {
+            logradouro?: string;
+            bairro?: string;
+            localidade?: string;
+            uf?: string;
+            erro?: boolean;
+          })
+        : null;
+      if (!data || data.erro) return;
+
+      setSettings((prev) =>
+        prev
+          ? {
+              ...prev,
+              shippingOriginStreet: data.logradouro || prev.shippingOriginStreet,
+              shippingOriginDistrict: data.bairro || prev.shippingOriginDistrict,
+              shippingOriginCity: data.localidade || prev.shippingOriginCity,
+              shippingOriginState: data.uf || prev.shippingOriginState,
+            }
+          : prev
+      );
+      setSaved(false);
+    } catch {
+      // ViaCEP fora do ar: a lojista digita. Não vale travar a tela por isso.
+    } finally {
+      setBuscandoCep(false);
+    }
   }
 
   function updateValueProp(index: number, field: 'title' | 'description', value: string) {
@@ -195,10 +243,14 @@ export default function SettingsPage() {
             <label className="mb-1 block text-sm font-semibold">CEP de origem (de onde você despacha)</label>
             <input
               value={settings.shippingOriginZip ?? ''}
-              onChange={(e) => update('shippingOriginZip', e.target.value)}
+              onChange={(e) => {
+                update('shippingOriginZip', e.target.value);
+                buscarEnderecoDeOrigem(e.target.value);
+              }}
               placeholder="00000-000"
               className="input-field"
             />
+            {buscandoCep && <p className="mt-1 text-xs text-black/50">Buscando endereço...</p>}
             <p className="mt-1 text-xs text-black/60">
               É daqui que a cotação do Melhor Envio é calculada. Se estiver errado, o cliente paga um
               frete diferente do que você vai pagar na etiqueta.

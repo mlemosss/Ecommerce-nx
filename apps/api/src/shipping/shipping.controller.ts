@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { Public } from '../auth/public.decorator';
 import { EtiquetaService } from './etiqueta.service';
 import { ShippingService } from './shipping.service';
@@ -26,5 +26,11 @@ export class ShippingController {
   @Post('etiqueta/:orderId')
   gerarEtiqueta(@Param('orderId') orderId: string) {
     return this.etiqueta.gerar(orderId);
+  }
+
+  /** Saldo da carteira, para o painel avisar antes de acabar. */
+  @Get('saldo')
+  saldo() {
+    return this.etiqueta.saldo();
   }
 }

@@ -57,6 +57,7 @@ export function OrdersPageClient() {
   const [tracking, setTracking] = useState<Record<string, string>>({});
   const [emitindo, setEmitindo] = useState<string | null>(null);
   const [erroEtiqueta, setErroEtiqueta] = useState<Record<string, string>>({});
+  const [saldo, setSaldo] = useState<number | null>(null);
 
   function linkAvaliacao(order: Order): string {
     return `${lojaUrl}/avaliar/${order.reviewToken}`;
@@ -134,6 +135,20 @@ export function OrdersPageClient() {
 
     return () => clearTimeout(handle);
   }, [statusFilter, search, reloadKey]);
+
+  /**
+   * Saldo da carteira do Melhor Envio, junto com a lista.
+   *
+   * Aparece antes de emitir, e não depois de falhar: descobrir que acabou o
+   * crédito com o pacote embalado e a cliente esperando atrasa a entrega por um
+   * dia inteiro. Falha em silêncio — saldo é conforto, não pré-requisito.
+   */
+  useEffect(() => {
+    api
+      .get<{ disponivel: number | null }>('/shipping/saldo')
+      .then((r) => setSaldo(r.disponivel))
+      .catch(() => setSaldo(null));
+  }, [reloadKey]);
 
   function reload() {
     setReloadKey((key) => key + 1);
@@ -231,6 +246,22 @@ export function OrdersPageClient() {
     <div>
       <TopBar title="Pedidos" />
       <div className="px-4 pt-4">
+        {/* Saldo baixo avisa aqui, e não na hora de emitir. R$50 dá umas três
+            etiquetas: é pouco o bastante para reabastecer com calma e muito o
+            bastante para não virar aviso permanente. */}
+        {saldo !== null && saldo < 50 && (
+          <a
+            href="https://melhorenvio.com.br/painel/carteira"
+            target="_blank"
+            rel="noreferrer"
+            className="mb-3 block rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800"
+          >
+            <span className="font-semibold">Saldo no Melhor Envio: {formatPrice(saldo)}</span>
+            <br />
+            Dá para poucas etiquetas. Toque para adicionar crédito antes que falte.
+          </a>
+        )}
+
         <input
           type="search"
           value={search}

@@ -248,6 +248,37 @@ export class EtiquetaService {
     }
   }
 
+  /**
+   * Saldo da carteira do Melhor Envio.
+   *
+   * Existe para o painel avisar antes, e não na hora. Descobrir que acabou o
+   * saldo com o pacote embalado e a cliente esperando é o tipo de surpresa que
+   * atrasa uma entrega por um dia inteiro — e o aviso custa uma consulta.
+   *
+   * Falha em silêncio: saldo é conforto, não pré-requisito. Se o Melhor Envio
+   * não responder, a tela simplesmente não mostra o número.
+   */
+  async saldo(): Promise<{ disponivel: number | null }> {
+    if (!process.env.MELHOR_ENVIO_TOKEN) return { disponivel: null };
+
+    try {
+      const settings = await this.settings.get().catch(() => null);
+      const contato =
+        settings?.emailFromAddress || settings?.contactEmail || 'vendas@noexcusenx.com.br';
+
+      const res = await fetch(`${this.baseUrl()}/api/v2/me/balance`, {
+        headers: this.cabecalhos(contato),
+      });
+      if (!res.ok) return { disponivel: null };
+
+      const data = (await res.json()) as { balance?: number | string };
+      const valor = Number(data.balance);
+      return { disponivel: Number.isFinite(valor) ? valor : null };
+    } catch {
+      return { disponivel: null };
+    }
+  }
+
   /** Mesma tabela da cotação: o peso da etiqueta tem que bater com o cotado. */
   private pesoEstimado(items: { quantity: number }[]): number {
     return Math.max(
