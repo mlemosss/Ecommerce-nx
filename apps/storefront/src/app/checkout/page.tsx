@@ -188,6 +188,7 @@ export default function CheckoutPage() {
       void trackAbandonedCart({
         email,
         name: name || undefined,
+        phone: phone || undefined,
         optIn: true,
         items: items.map((item) => {
           const product = products.find((p) => p.id === item.productId);
@@ -204,7 +205,7 @@ export default function CheckoutPage() {
       });
     }, 1500);
     return () => clearTimeout(timeout);
-  }, [wantsReminder, email, name, items, products, total]);
+  }, [wantsReminder, email, name, phone, items, products, total]);
 
   async function handleApplyCoupon() {
     if (!couponCode.trim()) return;
@@ -487,8 +488,8 @@ export default function CheckoutPage() {
               className="mt-0.5 h-4 w-4 shrink-0 accent-ink"
             />
             <span className="leading-relaxed text-ink/75">
-              Se eu não finalizar agora, quero receber um lembrete deste carrinho por e-mail. Você
-              pode sair da lista com um clique, no próprio e-mail.
+              Se eu não finalizar agora, quero receber um lembrete deste carrinho por e-mail ou
+              WhatsApp. Você pode sair da lista com um clique, no próprio e-mail.
             </span>
           </label>
 

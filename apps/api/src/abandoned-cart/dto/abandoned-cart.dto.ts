@@ -38,6 +38,11 @@ export class TrackAbandonedCartDto {
   @IsString()
   name?: string;
 
+  /** Para o resgate por WhatsApp. Mesmo consentimento do e-mail. */
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

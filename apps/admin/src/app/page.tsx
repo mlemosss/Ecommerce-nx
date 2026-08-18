@@ -6,6 +6,7 @@ const tools = [
   { href: '/pedidos', label: 'Pedidos', icon: 'M6 2h9l3 3v17l-3-2-3 2-3-2-3 2V2Zm3 6h6M9 12h6M9 16h4', color: 'text-emerald-600' },
   { href: '/produtos', label: 'Produtos', icon: 'M20 7 12 3 4 7m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'text-ink' },
   { href: '/estoque', label: 'Estoque', icon: 'M21 8V7l-3-4H6L3 7v1m18 0H3m18 0-1 12H4L3 8', color: 'text-blue-600' },
+  { href: '/carrinhos', label: 'Carrinhos parados', icon: 'M3 3h2l.4 2M7 13h10l3-8H5.4M7 13 5.4 5M7 13l-1.2 4.6A1 1 0 0 0 6.76 19H18M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm9 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z', color: 'text-rose-600' },
   { href: '/avise-me', label: 'Avise-me', icon: 'M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0', color: 'text-amber-600' },
   // Sai de dentro de Gerencial para o menu principal: com o link de avaliação
   // sem login funcionando, aprovar avaliação vira tarefa de rotina.

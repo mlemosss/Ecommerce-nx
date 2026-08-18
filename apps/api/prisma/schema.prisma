@@ -392,6 +392,9 @@ model AbandonedCart {
   // enviado: e-mail de recuperação é marketing, e marketing exige opt-in.
   optIn      Boolean   @default(false)
   name       String?
+  // Telefone, para a lojista chamar no WhatsApp. Guardado sob o mesmo
+  // consentimento do e-mail: a caixa do checkout fala dos dois.
+  phone      String?
   itemsJson  String
   total      Float
   recovered  Boolean   @default(false)

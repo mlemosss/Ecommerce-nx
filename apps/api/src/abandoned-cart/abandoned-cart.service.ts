@@ -11,6 +11,15 @@ import { TrackAbandonedCartDto } from './dto/abandoned-cart.dto';
  */
 const CARENCIA_ENTRE_LEMBRETES_MS = 30 * 24 * 60 * 60 * 1000;
 
+/**
+ * Ate quando um carrinho ainda vale um WhatsApp.
+ *
+ * Sete dias. Chamar alguem por causa de um carrinho de tres semanas atras nao
+ * resgata venda nenhuma - resgata a lembranca de que a loja tem o telefone
+ * dela, que e o oposto do efeito desejado.
+ */
+const JANELA_DE_RESGATE_MS = 7 * 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class AbandonedCartService {
   constructor(private readonly prisma: PrismaService) {}
@@ -50,12 +59,14 @@ export class AbandonedCartService {
       create: {
         email: dto.email,
         name: dto.name,
+        phone: dto.phone,
         itemsJson: JSON.stringify(dto.items),
         total: dto.total,
         optIn: true,
       },
       update: {
         name: dto.name,
+        phone: dto.phone,
         itemsJson: JSON.stringify(dto.items),
         total: dto.total,
         optIn: true,
@@ -66,6 +77,56 @@ export class AbandonedCartService {
       },
     });
     return { ok: true, stored: true };
+  }
+
+  /**
+   * Carrinhos parados, para a lojista chamar no WhatsApp.
+   *
+   * O e-mail automático continua saindo, mas e-mail de loja pequena cai em
+   * "Promoções" e não é lido. Com o volume de hoje são pouquíssimos carrinhos
+   * por semana — automatizar WhatsApp exigiria a API paga da Meta para
+   * resolver um problema de três mensagens. A lista pronta com o botão resolve
+   * igual, de graça, e a mensagem sai de gente e não de robô.
+   *
+   * Só quem deu opt-in e ainda não comprou. Recuperado sai da lista sozinho.
+   */
+  async pendingRecovery() {
+    const carrinhos = await this.prisma.abandonedCart.findMany({
+      where: {
+        optIn: true,
+        recovered: false,
+        updatedAt: { gte: new Date(Date.now() - JANELA_DE_RESGATE_MS) },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return carrinhos.map((c) => {
+      let itens: { productName: string; color: string; size: string; quantity: number }[] = [];
+      try {
+        itens = JSON.parse(c.itemsJson);
+      } catch {
+        itens = [];
+      }
+      return {
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        total: c.total,
+        itens,
+        abandonadoEm: c.updatedAt,
+        emailEnviadoEm: c.remindedAt,
+      };
+    });
+  }
+
+  /** Marca como resolvido sem ter comprado — some da lista de resgate. */
+  async dismiss(id: string) {
+    await this.prisma.abandonedCart.updateMany({
+      where: { id },
+      data: { recovered: true },
+    });
+    return { success: true };
   }
 
   /** Descadastro de um clique, a partir do link no rodapé do e-mail. */
