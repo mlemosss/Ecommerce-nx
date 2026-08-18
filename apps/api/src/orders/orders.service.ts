@@ -548,6 +548,7 @@ export class OrdersService {
           neighborhood: dto.neighborhood,
           state: dto.state,
           shippingServiceId: dto.shippingServiceId,
+          shippingServiceName: dto.shippingServiceName,
           street: dto.street,
           number: dto.number,
           complement: dto.complement,

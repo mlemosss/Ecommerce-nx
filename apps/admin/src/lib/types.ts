@@ -179,6 +179,8 @@ export interface Order {
   shipmentId: string | null;
   shipmentLabelUrl: string | null;
   shippingServiceId: string | null;
+  /** Nome da transportadora, para saber onde postar. */
+  shippingServiceName: string | null;
   /** Token do link de avaliação: /avaliar/&lt;token&gt;. Sem senha, por pedido. */
   reviewToken: string | null;
   reviewRequestSentAt: string | null;

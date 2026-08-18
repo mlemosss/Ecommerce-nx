@@ -437,6 +437,30 @@ export function OrdersPageClient() {
                               dos Correios antes de emitir a etiqueta.
                             </p>
                           )}
+                          {/* Onde postar é a pergunta seguinte a imprimir a
+                              etiqueta, e o pacote não sai sem essa resposta.
+                              Cada transportadora tem seus pontos: SEDEX é
+                              agência dos Correios, Jadlog e Loggi são pontos
+                              parceiros. O link abre o localizador do Melhor
+                              Envio, que filtra pelo seu CEP. */}
+                          {order.shippingServiceName && (
+                            <p className="mt-2 text-xs text-black/60">
+                              Transportadora:{' '}
+                              <span className="font-semibold text-black/80">
+                                {order.shippingServiceName}
+                              </span>{' '}
+                              ·{' '}
+                              <a
+                                href="https://melhorenvio.com.br/onde-postar"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline underline-offset-2"
+                              >
+                                onde postar
+                              </a>
+                            </p>
+                          )}
+
                           <div className="mt-2 flex flex-wrap items-center gap-2">
                             {order.shipmentLabelUrl ? (
                               <a

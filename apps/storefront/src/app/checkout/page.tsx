@@ -420,6 +420,9 @@ export default function CheckoutPage() {
         neighborhood,
         state,
         shippingServiceId: selectedShipping?.id,
+        shippingServiceName: selectedShipping
+          ? `${selectedShipping.company} ${selectedShipping.name}`.trim()
+          : undefined,
         street,
         number,
         complement: complement || undefined,

@@ -274,6 +274,10 @@ model Order {
   // Guardado para a etiqueta sair pela mesma transportadora que ela pagou -
   // comprar outra faz a loja bancar a diferenca sem perceber.
   shippingServiceId String?
+  // Nome legivel da transportadora, do jeito que a cliente viu no checkout.
+  // O id sozinho nao diz onde postar o pacote - e essa e a pergunta que a
+  // lojista faz depois de imprimir a etiqueta.
+  shippingServiceName String?
   // Envio criado no Melhor Envio. Gravado ANTES da compra da etiqueta: se a
   // resposta se perder no caminho, a proxima tentativa reaproveita este id em
   // vez de criar um segundo envio e pagar duas vezes.

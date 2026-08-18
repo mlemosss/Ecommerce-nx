@@ -104,6 +104,11 @@ export class CreateOrderDto {
   @IsString()
   shippingServiceId?: string;
 
+  /** O nome que a cliente viu — "Correios SEDEX", "Jadlog .Package". */
+  @IsOptional()
+  @IsString()
+  shippingServiceName?: string;
+
   @IsOptional()
   @IsString()
   state?: string;
