@@ -109,6 +109,48 @@ export class ReviewsService {
   }
 
   /**
+   * O mural: as fotos que as clientes mandaram, com o que escreveram.
+   *
+   * Foto de cliente vestindo a peça é o formato de prova social que mais
+   * converte em moda, e estava enterrada no fim da página de cada produto —
+   * quem olhava a legging nunca via a foto de quem comprou o top. Reunidas,
+   * viram a única coisa que a loja tem e a foto de estúdio não: a roupa em
+   * gente de verdade, em corpos diferentes, na luz do banheiro de casa.
+   *
+   * Só aprovadas e só com foto — mural com espaço vazio não é mural. Campo a
+   * campo porque isto é endpoint público: `customerId` e `orderId` ficam fora.
+   */
+  async mural(limite = 24) {
+    const fotos = await this.prisma.productReview.findMany({
+      where: { approved: true, photoUrl: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limite, 60),
+      select: {
+        id: true,
+        photoUrl: true,
+        rating: true,
+        comment: true,
+        customerName: true,
+        createdAt: true,
+        product: { select: { name: true, slug: true } },
+      },
+    });
+
+    return fotos.map((f) => ({
+      id: f.id,
+      photoUrl: f.photoUrl as string,
+      rating: f.rating,
+      comment: f.comment,
+      // Só o primeiro nome. É como se assina uma foto entre conhecidas, e
+      // evita que o mural vire uma lista de nomes completos de clientes.
+      customerName: f.customerName.trim().split(/\s+/)[0] ?? '',
+      productName: f.product.name,
+      productSlug: f.product.slug,
+      createdAt: f.createdAt,
+    }));
+  }
+
+  /**
    * Abre a tela de avaliação a partir do token do pedido.
    *
    * Público: a loja é de compra sem cadastro, então quem comprou não tem senha.

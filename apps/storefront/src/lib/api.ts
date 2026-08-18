@@ -405,6 +405,33 @@ export async function submitReviewLink(
   }
 }
 
+export interface FotoDoMural {
+  id: string;
+  photoUrl: string;
+  rating: number;
+  comment: string;
+  customerName: string;
+  productName: string;
+  productSlug: string;
+  createdAt: string;
+}
+
+/**
+ * As fotos que as clientes mandaram, de todas as peças.
+ *
+ * Cache de um minuto, igual ao resto do catálogo: aprovar uma avaliação no
+ * painel tem que refletir na loja rápido, mas não a cada visita.
+ */
+export async function getMural(): Promise<FotoDoMural[]> {
+  try {
+    const res = await fetch(`${API_URL}/reviews/mural`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Avaliação da loja, mandada pelo link público — sem pedido e sem login.
  *

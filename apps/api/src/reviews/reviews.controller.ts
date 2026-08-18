@@ -18,6 +18,13 @@ export class ReviewsController {
     return this.reviewsService.findForProduct(productId);
   }
 
+  /** As fotos aprovadas das clientes, de todas as peças, para o mural. */
+  @Public()
+  @Get('mural')
+  mural() {
+    return this.reviewsService.mural();
+  }
+
   /**
    * Tela de avaliação por link, sem login.
    *

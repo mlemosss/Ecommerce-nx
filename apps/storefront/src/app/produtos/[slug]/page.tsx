@@ -8,7 +8,8 @@ import { TrackProductView } from '../../../components/track-product-view';
 import { RecentlyViewed } from '../../../components/recently-viewed';
 import { FavoriteButton } from '../../../components/favorite-button';
 import { ProductReviews } from '../../../components/product-reviews';
-import { getProductReviews, getSettings } from '../../../lib/api';
+import { MuralDeFotos } from '../../../components/mural-de-fotos';
+import { getMural, getProductReviews, getSettings } from '../../../lib/api';
 import { formatPrice } from '../../../lib/format';
 import { summarizeDescription } from '../../../lib/description';
 import { JsonLd } from '../../../components/json-ld';
@@ -67,6 +68,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
   const related = await getRelatedProducts(product);
   const reviewsResult = await getProductReviews(product.id);
   const settings = await getSettings();
+  const mural = await getMural();
 
   return (
     <div className="container-page py-10 sm:py-14">
@@ -179,6 +181,11 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           </div>
         </section>
       )}
+
+      {/* Depois de "combina com você": quem chegou até aqui já viu a peça e as
+          sugestões. O mural é o último argumento antes de sair da página — e é
+          o único que não vem da loja, vem de quem comprou. */}
+      <MuralDeFotos fotos={mural} />
 
       <RecentlyViewed excludeId={product.id} />
     </div>
