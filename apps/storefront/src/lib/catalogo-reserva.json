@@ -1,0 +1,648 @@
+[
+  {
+    "id": "cmsdfprij001esh8zjmccwj1v",
+    "slug": "legging",
+    "name": "Legging",
+    "category": "leggings",
+    "description": "Legging desenvolvida com tecido de poliamida, possui cós bem alto e firme, e toque macio. \n\nCaracterísticas do produto:\n\n- Conforto térmico: ajuda na condução do suor para o ambiente, evitando que a peça fique encharcada e desconfortável. \n\n- Composição do tecido poliamida e elastano.\n\n- Compressão média.",
+    "price": 169,
+    "priceRange": null,
+    "compareAtPrice": 199,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprij001esh8zjmccwj1v/7352795d6e4b7e83.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprij001esh8zjmccwj1v/53eb084359ab6427.jpg"
+    ],
+    "colors": [
+      "Fúcsia",
+      "Verde Militar",
+      "Preto/gold",
+      "Pink",
+      "Azul marinho",
+      "Capuccino"
+    ],
+    "sizes": [
+      "G",
+      "M",
+      "P",
+      "PP"
+    ],
+    "variants": [
+      {
+        "color": "Fúcsia",
+        "size": "G",
+        "stock": 0,
+        "price": 169
+      },
+      {
+        "color": "Verde Militar",
+        "size": "M",
+        "stock": 2,
+        "price": 169
+      },
+      {
+        "color": "Verde Militar",
+        "size": "P",
+        "stock": 1,
+        "price": 169
+      },
+      {
+        "color": "Preto/gold",
+        "size": "M",
+        "stock": 0,
+        "price": 169
+      },
+      {
+        "color": "Pink",
+        "size": "PP",
+        "stock": 1,
+        "price": 169
+      },
+      {
+        "color": "Azul marinho",
+        "size": "M",
+        "stock": 1,
+        "price": 169
+      },
+      {
+        "color": "Pink",
+        "size": "M",
+        "stock": 2,
+        "price": 169
+      },
+      {
+        "color": "Azul marinho",
+        "size": "G",
+        "stock": 1,
+        "price": 169
+      },
+      {
+        "color": "Capuccino",
+        "size": "PP",
+        "stock": 0,
+        "price": 169
+      },
+      {
+        "color": "Capuccino",
+        "size": "M",
+        "stock": 0,
+        "price": 169
+      }
+    ],
+    "isNew": true
+  },
+  {
+    "id": "cmsdfprj2001psh8zgodlk152",
+    "slug": "legging-runner",
+    "name": "Legging Runner",
+    "category": "leggings",
+    "description": "Legging desenvolvida com tecido de poliamida, toque gelado e macio. \nCom bolso, ótima para colocar celular no bolso ou chave. Possui cós bem alto e firme.\n\nTecnologia inteligente com tecnologia que converte o calor do corpo humano em benefícios para cuidados com a pele e desempenho esportivo. Graças aos minerais bioativos incorporados no fio, absorve o calor do corpo e emana raios infravermelhos longos de volta para a pele, oferecendo propriedades de termorregulação e melhorando a microcirculação sanguínea. \n\nCaracterísticas do produto:\n\n-Proteção solar FPS 50+\n\n- Conforto térmico: ajuda na condução do suor para o ambiente, evitando que a peça fique encharcada e desconfortável. \n\n- Easy care, seca rapidamente, dispensa uso de amaciantes e não necessita passar a ferro.\n\n- Composição tecido 88% poliamida 12% elastano.\n\n- Alta Compressão ",
+    "price": 209,
+    "priceRange": null,
+    "compareAtPrice": 0,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprj2001psh8zgodlk152/0d3b94ee7e3e5f22.jpg"
+    ],
+    "colors": [
+      "Azul marinho brilho"
+    ],
+    "sizes": [
+      "G",
+      "P",
+      "M"
+    ],
+    "variants": [
+      {
+        "color": "Azul marinho brilho",
+        "size": "G",
+        "stock": 2,
+        "price": 209
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "P",
+        "stock": 3,
+        "price": 209
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "M",
+        "stock": 2,
+        "price": 209
+      }
+    ],
+    "isNew": true
+  },
+  {
+    "id": "cmsdfprjc001tsh8z6d5i3sok",
+    "slug": "shorts",
+    "name": "Shorts",
+    "category": "shorts",
+    "description": "Peça com tecido leve e confortável, esse shorts é aquele modelo que você vai usar e não vai apertar nada na hora do treino.\n\nCaracterísticas do produto:\n\n- Compressão média \n\n- Proteção solar FPS 50+\n\n- Conforto térmico: ajudando na condução do suor para o ambiente, evitando que a peça fique encharcada e desconfortável. \n\n- Seca rapidamente, dispensa uso de amaciantes e não necessita passar a ferro.\n\n- Composição tecido poliamida e elastano.\n\n- Cós cintura alta",
+    "price": 129,
+    "priceRange": null,
+    "compareAtPrice": 159,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprjc001tsh8z6d5i3sok/7b198c8618253dde.jpg"
+    ],
+    "colors": [
+      "Pink",
+      "Capuccino",
+      "Verde Militar",
+      "Azul marinho",
+      "Preto"
+    ],
+    "sizes": [
+      "PP",
+      "P",
+      "M",
+      "G"
+    ],
+    "variants": [
+      {
+        "color": "Pink",
+        "size": "PP",
+        "stock": 2,
+        "price": 129
+      },
+      {
+        "color": "Pink",
+        "size": "P",
+        "stock": 3,
+        "price": 129
+      },
+      {
+        "color": "Capuccino",
+        "size": "M",
+        "stock": 1,
+        "price": 129
+      },
+      {
+        "color": "Verde Militar",
+        "size": "P",
+        "stock": 3,
+        "price": 129
+      },
+      {
+        "color": "Azul marinho",
+        "size": "P",
+        "stock": 2,
+        "price": 129
+      },
+      {
+        "color": "Preto",
+        "size": "P",
+        "stock": 1,
+        "price": 129
+      },
+      {
+        "color": "Capuccino",
+        "size": "G",
+        "stock": 0,
+        "price": 129
+      },
+      {
+        "color": "Verde Militar",
+        "size": "M",
+        "stock": 1,
+        "price": 129
+      },
+      {
+        "color": "Pink",
+        "size": "M",
+        "stock": 3,
+        "price": 129
+      },
+      {
+        "color": "Pink",
+        "size": "G",
+        "stock": 1,
+        "price": 129
+      },
+      {
+        "color": "Azul marinho",
+        "size": "PP",
+        "stock": 0,
+        "price": 129
+      },
+      {
+        "color": "Azul marinho",
+        "size": "M",
+        "stock": 2,
+        "price": 129
+      }
+    ],
+    "isNew": true
+  },
+  {
+    "id": "cmsdfprjo0026sh8zhejgp0la",
+    "slug": "shorts-bc",
+    "name": "Shorts BC",
+    "category": "shorts",
+    "description": "Peça com tecido leve e confortável, esse shorts é aquele modelo que você vai usar e não vai apertar nada na hora do treino.\nEsse tecido possui compressão média.\n\nEsse modelo possui cós mais estreito, mas ainda assim, fica alto na cintura.\n\n\nCaracterísticas do produto:\n\n- Proteção solar FPS 50+\n\n- Conforto térmico: ajudando na condução do suor para o ambiente, evitando que a peça fique encharcada e desconfortável. \n\n- Easy care, seca rapidamente, dispensa uso de amaciantes e não necessita passar a ferro.\n\n- Composição tecido 88% poliamida 12% elastano.\n\n- Cós duplo\n\n- Cós cintura alta",
+    "price": 159,
+    "priceRange": null,
+    "compareAtPrice": null,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprjo0026sh8zhejgp0la/3bd01113f6643d27.jpg"
+    ],
+    "colors": [
+      "Azul marinho brilho"
+    ],
+    "sizes": [
+      "M",
+      "P",
+      "PP",
+      "G"
+    ],
+    "variants": [
+      {
+        "color": "Azul marinho brilho",
+        "size": "M",
+        "stock": 3,
+        "price": 159
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "P",
+        "stock": 5,
+        "price": 159
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "PP",
+        "stock": 1,
+        "price": 159
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "G",
+        "stock": 4,
+        "price": 159
+      }
+    ],
+    "isNew": true
+  },
+  {
+    "id": "cmsdfprjy002bsh8z0zdxshzn",
+    "slug": "shorts-runner",
+    "name": "Shorts Runner",
+    "category": "shorts",
+    "description": "Experimente o máximo de funcionalidade e estilo com nosso shorts de comprimento médio, especialmente projetado para a mulher moderna.\nEquipado com bolsos profundos nas laterais, oferece praticidade para carregar seus itens essenciais com segurança. \nO tecido de compressão garante um ajuste firme e confortável, ideal para suportar corridas e treinos intensos. \n\nCaracterísticas do produto\n\n- Bolsos profundos nas laterais\n\n- Cós com tecido duplo e cintura alta, trazendo firmeza e sustentação.\n\n- Comprimento ideal para não subir na coxa durante o exercício.\n\n- Proteção Solar FPS 50+\n\n- Conforto Térmico com tecnologia que ajuda na condução do suor, ele mantém você fresca e confortável, evitando a sensação de desconforto e a aparência de roupa encharcada.\n\n- Easy Care: Seca rapidamente, dispensa o uso de amaciantes e não necessita de passar a ferro.\n\n- Elasticidade premium: permite um ajuste perfeito ao corpo, sem apertar ou limitar movimentos.\n\n- Super confortável: leve e macio, ideal para longos períodos de uso.\n\n- Durabilidade: resiste ao desgaste do dia a dia e mantém sua aparência impecável após várias lavagens.\n\n- Tecnologia Black Out: além de evitar transparência, proporciona maior confiança durante qualquer atividade física.",
+    "price": 179,
+    "priceRange": null,
+    "compareAtPrice": null,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprjy002bsh8z0zdxshzn/af59eb8af3905ab6.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprjy002bsh8z0zdxshzn/21a1e9a015491e40.jpg"
+    ],
+    "colors": [
+      "Azul marinho brilho"
+    ],
+    "sizes": [
+      "M",
+      "PP",
+      "P",
+      "G"
+    ],
+    "variants": [
+      {
+        "color": "Azul marinho brilho",
+        "size": "M",
+        "stock": 2,
+        "price": 179
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "PP",
+        "stock": 1,
+        "price": 179
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "P",
+        "stock": 2,
+        "price": 179
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "G",
+        "stock": 2,
+        "price": 179
+      }
+    ],
+    "isNew": true
+  },
+  {
+    "id": "cmsdfprkw002xsh8zmbmc2icn",
+    "slug": "top-costas",
+    "name": "Top Costas",
+    "category": "tops",
+    "description": "O Top Costas combina conforto e um design super moderno. Com forro duplo, oferece excelente elasticidade, conforto térmico e secagem rápida para acompanhar você em qualquer ocasião.\n\nO destaque fica por conta da abertura nas costas, que proporcionam um visual sofisticado. \n\n- Modelagem anatômica: oferece excelente ajuste ao corpo, proporcionando conforto e liberdade de movimentos.\n\n- Evita transparência proporcionando maior confiança durante qualquer atividade física.\n\n- Entrada para bojo.",
+    "price": 119,
+    "priceRange": null,
+    "compareAtPrice": 149,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprkw002xsh8zmbmc2icn/2bd9c197b4ed02a8.jpg"
+    ],
+    "colors": [
+      "Pink",
+      "Azul marinho",
+      "Verde Militar",
+      "Preto",
+      "Capuccino"
+    ],
+    "sizes": [
+      "G",
+      "P",
+      "M"
+    ],
+    "variants": [
+      {
+        "color": "Pink",
+        "size": "G",
+        "stock": 1,
+        "price": 119
+      },
+      {
+        "color": "Pink",
+        "size": "P",
+        "stock": 0,
+        "price": 119
+      },
+      {
+        "color": "Azul marinho",
+        "size": "P",
+        "stock": 1,
+        "price": 119
+      },
+      {
+        "color": "Verde Militar",
+        "size": "M",
+        "stock": 0,
+        "price": 119
+      },
+      {
+        "color": "Preto",
+        "size": "G",
+        "stock": 0,
+        "price": 119
+      },
+      {
+        "color": "Azul marinho",
+        "size": "M",
+        "stock": 0,
+        "price": 119
+      },
+      {
+        "color": "Capuccino",
+        "size": "M",
+        "stock": 1,
+        "price": 119
+      },
+      {
+        "color": "Pink",
+        "size": "M",
+        "stock": 1,
+        "price": 119
+      },
+      {
+        "color": "Verde Militar",
+        "size": "P",
+        "stock": 2,
+        "price": 119
+      }
+    ],
+    "isNew": true
+  },
+  {
+    "id": "cmsdfprkh002ksh8z4vcndsnc",
+    "slug": "top-basico",
+    "name": "Top Energy",
+    "category": "tops",
+    "description": "O Top Energy combina conforto e versatilidade. Com forro duplo, oferece excelente elasticidade, conforto térmico e secagem rápida para acompanhar você em qualquer ocasião.\n\nO destaque fica por conta das alças finas, que proporcionam um visual funcional e moderno. \n\n- Modelagem anatômica: oferece excelente ajuste ao corpo, proporcionando conforto e liberdade de movimentos.\n\n- Evita transparência proporcionando maior confiança durante qualquer atividade física.\n\n- Entrada para bojo",
+    "price": 109,
+    "priceRange": null,
+    "compareAtPrice": 139,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprkh002ksh8z4vcndsnc/943c68924a41bf13.jpg"
+    ],
+    "colors": [
+      "Verde Militar",
+      "Capuccino",
+      "Azul marinho",
+      "Pink",
+      "Preto/gold",
+      "Preto"
+    ],
+    "sizes": [
+      "M",
+      "P",
+      "G"
+    ],
+    "variants": [
+      {
+        "color": "Verde Militar",
+        "size": "M",
+        "stock": 3,
+        "price": 109
+      },
+      {
+        "color": "Capuccino",
+        "size": "P",
+        "stock": 2,
+        "price": 109
+      },
+      {
+        "color": "Azul marinho",
+        "size": "P",
+        "stock": 2,
+        "price": 109
+      },
+      {
+        "color": "Pink",
+        "size": "G",
+        "stock": 2,
+        "price": 109
+      },
+      {
+        "color": "Pink",
+        "size": "M",
+        "stock": 0,
+        "price": 109
+      },
+      {
+        "color": "Preto/gold",
+        "size": "G",
+        "stock": 0,
+        "price": 109
+      },
+      {
+        "color": "Preto/gold",
+        "size": "P",
+        "stock": 1,
+        "price": 109
+      },
+      {
+        "color": "Verde Militar",
+        "size": "P",
+        "stock": 2,
+        "price": 109
+      },
+      {
+        "color": "Azul marinho",
+        "size": "M",
+        "stock": 3,
+        "price": 109
+      },
+      {
+        "color": "Preto/gold",
+        "size": "M",
+        "stock": 1,
+        "price": 109
+      },
+      {
+        "color": "Capuccino",
+        "size": "M",
+        "stock": 3,
+        "price": 109
+      },
+      {
+        "color": "Preto",
+        "size": "M",
+        "stock": 1,
+        "price": 109
+      }
+    ],
+    "isNew": true
+  },
+  {
+    "id": "cmsdfprl70037sh8zj5fo1363",
+    "slug": "top-regata",
+    "name": "Top Essential",
+    "category": "tops",
+    "description": "Peça com alta sustentação garantida pelas alças largas e elásticos internos.\n\nO top regata é um modelo que além de estiloso é muito confortável. \n\n- Alças firmes para dar alta sustentação\n\n- Proteção solar FPS 50+\n\n- Conforto térmico: ajudando na condução do suor para o ambiente, evitando que a peça fique encharcada e desconfortável. \n\n- Easy care, seca rapidamente, dispensa uso de amaciantes e não necessita passar a ferro.\n\n- Composição tecido 88% poliamida 12% elastano.\n\n- Entrada para bojo.\n",
+    "price": 149,
+    "priceRange": null,
+    "compareAtPrice": null,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprl70037sh8zj5fo1363/1b33f9274f53e953.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprl70037sh8zj5fo1363/8d207a0f9736cc2d.jpg"
+    ],
+    "colors": [
+      "Azul marinho brilho"
+    ],
+    "sizes": [
+      "G",
+      "P",
+      "M"
+    ],
+    "variants": [
+      {
+        "color": "Azul marinho brilho",
+        "size": "G",
+        "stock": 2,
+        "price": 149
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "P",
+        "stock": 1,
+        "price": 149
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "M",
+        "stock": 0,
+        "price": 149
+      }
+    ],
+    "isNew": true
+  },
+  {
+    "id": "cmsdfprlh003bsh8z11t9cuy4",
+    "slug": "top-strapy",
+    "name": "Top Urban",
+    "category": "tops",
+    "description": "Esse top é um modelo que além de estiloso e super confortável, possui quatro alças que trazem ainda mais firmeza e sustentação pra peça.\n\nProjetado para atender às necessidades da mulher moderna, é um modelo ideal para atividades dinâmicas e momentos de lazer. Uma peça que garante durabilidade e elasticidade, moldando-se ao corpo com um toque suave.\n\n- Alças com Elástico: Oferecem alta sustentação, garantindo que você se sinta segura e confiante em qualquer movimento.\n\n- Entrada para bojo.\n\n- Elástico na Cintura: Proporciona uma firmeza extra.\n\n- Proteção Solar FPS 50+: este top oferece proteção eficaz contra os raios UV.\n\n- Conforto Térmico: Com tecnologia que ajuda na condução do suor, ele mantém você fresca e confortável, evitando a sensação de desconforto e a aparência de roupa encharcada.\n\n- Easy Care: seca rapidamente, dispensa o uso de amaciantes e não necessita de passar a ferro.\n\n- Composição: Feito com uma mistura premium de 88% poliamida e 12% elastano.\n\n- Tecido de brilho com aspecto encorpado e firme.\n\n\n",
+    "price": 149,
+    "priceRange": null,
+    "compareAtPrice": null,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprlh003bsh8z11t9cuy4/96f45c9ebf9efef1.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprlh003bsh8z11t9cuy4/27777701171b4ac5.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprlh003bsh8z11t9cuy4/b74a86ed12510cf7.jpg"
+    ],
+    "colors": [
+      "Azul marinho brilho"
+    ],
+    "sizes": [
+      "P",
+      "M",
+      "G"
+    ],
+    "variants": [
+      {
+        "color": "Azul marinho brilho",
+        "size": "P",
+        "stock": 2,
+        "price": 149
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "M",
+        "stock": 3,
+        "price": 149
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "G",
+        "stock": 3,
+        "price": 149
+      }
+    ],
+    "isNew": true
+  },
+  {
+    "id": "cmsdfprk8002gsh8zdduu9vym",
+    "slug": "top-aberto",
+    "name": "Top beach",
+    "category": "tops",
+    "description": "O Top Beach combina conforto e um design moderno. Com forro duplo e tecido de toque macio, oferece excelente elasticidade, proteção solar FPS 50+, tecnologia anti odor, conforto térmico e secagem rápida para acompanhar você em qualquer ocasião.\n\nO destaque fica por conta das costas abertas, que proporcionam um visual sofisticado e maior ventilação durante os treinos. \n\n- Modelagem anatômica: oferece excelente ajuste ao corpo, proporcionando conforto e liberdade de movimentos.\n\n- Durabilidade: resiste ao desgaste do dia a dia e mantém sua aparência impecável após várias lavagens.\n\n- Proteção Solar FPS 50+: este top oferece proteção eficaz contra os raios UV.\n\n- Tecnologia Black Out: além de evitar transparência, proporciona maior confiança durante qualquer atividade física.\n\n- Entrada para bojo.",
+    "price": 139,
+    "priceRange": null,
+    "compareAtPrice": null,
+    "images": [
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprk8002gsh8zdduu9vym/1c4501ca710520c3.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprk8002gsh8zdduu9vym/ad7522ea073b4eb2.jpg"
+    ],
+    "colors": [
+      "Azul marinho brilho"
+    ],
+    "sizes": [
+      "G",
+      "P",
+      "M"
+    ],
+    "variants": [
+      {
+        "color": "Azul marinho brilho",
+        "size": "G",
+        "stock": 3,
+        "price": 139
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "P",
+        "stock": 4,
+        "price": 139
+      },
+      {
+        "color": "Azul marinho brilho",
+        "size": "M",
+        "stock": 3,
+        "price": 139
+      }
+    ],
+    "isNew": true
+  }
+]

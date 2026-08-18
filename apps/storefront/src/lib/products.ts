@@ -1,4 +1,5 @@
 import type { Category, Product } from './types';
+import catalogoReserva from './catalogo-reserva.json';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 
@@ -66,26 +67,64 @@ export function toProduct(item: CatalogProduct): Product {
   };
 }
 
+/**
+ * Catalogo de reserva, gravado no bundle a cada build.
+ *
+ * Em 18/08/2026 o banco (Neon) ficou inalcancavel e a API respondeu 500 em
+ * tudo por horas. A loja nao ficou lenta: ficou sem produto nenhum, com
+ * "Essa pagina saiu de linha" no lugar de cada peca, porque o catch daqui
+ * devolvia lista vazia e a pagina chamava notFound().
+ *
+ * Vitrine nao precisa de banco. Nome, preco, foto e descricao mudam uma vez
+ * por semana - manter uma copia no bundle custa 20 KB e mantem a loja de pe
+ * quando o banco cai. As fotos continuam aparecendo porque quem as serve e o
+ * otimizador de imagem da Vercel, que guarda as versoes ja processadas.
+ *
+ * O que NAO da para servir da copia e estoque, cupom e pedido - por isso o
+ * aviso no topo manda a pessoa para o WhatsApp em vez de fingir que a compra
+ * vai completar.
+ */
+const RESERVA = catalogoReserva as CatalogProduct[];
+
 export async function getProducts(category?: string): Promise<Product[]> {
   try {
     const qs = category ? `?category=${encodeURIComponent(category)}` : '';
     const res = await fetch(`${API_URL}/catalog/products${qs}`, { next: { revalidate: 60 } });
-    if (!res.ok) return [];
+    if (!res.ok) throw new Error(`catalogo respondeu ${res.status}`);
     const data: CatalogProduct[] = await res.json();
     return data.map(toProduct);
   } catch {
-    return [];
+    const lista = category ? RESERVA.filter((p) => p.category === category) : RESERVA;
+    return lista.map(toProduct);
   }
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   try {
     const res = await fetch(`${API_URL}/catalog/products/${slug}`, { next: { revalidate: 60 } });
-    if (!res.ok) return undefined;
+    // 404 e resposta legitima: a peca nao existe mesmo, e a copia nao deve
+    // ressuscitar um endereco que saiu do catalogo de proposito. So erro de
+    // servidor cai para a reserva.
+    if (res.status === 404) return undefined;
+    if (!res.ok) throw new Error(`catalogo respondeu ${res.status}`);
     const data: CatalogProduct = await res.json();
     return toProduct(data);
   } catch {
-    return undefined;
+    const guardado = RESERVA.find((p) => p.slug === slug);
+    return guardado ? toProduct(guardado) : undefined;
+  }
+}
+
+/**
+ * A API esta respondendo? Chamada barata, cacheada por 30s, para o aviso de
+ * instabilidade saber se aparece.
+ */
+export async function catalogoOnline(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/catalog/products`, { next: { revalidate: 30 } });
+    return res.ok;
+  } catch {
+    return false;
   }
 }
 

@@ -46,8 +46,13 @@ export interface StoreSettings {
 
 export const DEFAULT_SETTINGS: StoreSettings = {
   storeName: 'NO EXCUSE',
-  contactEmail: null,
-  contactWhatsapp: null,
+  // Contato preenchido, e nao nulo, de proposito. Estes valores so entram em
+  // cena quando a API nao responde - e foi exatamente ai, na queda de
+  // 18/08/2026, que o botao do WhatsApp sumiu do rodape. O unico canal que
+  // continuava funcionando desapareceu justamente quando era o unico que
+  // restava. Se mudar em Configuracoes, mudar aqui tambem.
+  contactEmail: 'noexcusenx@gmail.com',
+  contactWhatsapp: '5511999520369',
   legalName: null,
   cnpj: null,
   shippingFee: 19.9,

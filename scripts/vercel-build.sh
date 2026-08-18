@@ -8,4 +8,8 @@ set -e
 # any extra indirection here.
 cd "$(git rev-parse --show-toplevel)"
 
+# Copia do catalogo para a loja continuar de pe se o banco cair. Nunca
+# derruba o build: sem API, mantem a copia que ja esta versionada.
+node scripts/atualizar-catalogo-reserva.mjs
+
 npx nx build storefront
