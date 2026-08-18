@@ -787,6 +787,52 @@ export class OrdersService {
     }
   }
 
+  /**
+   * Devolve o dinheiro e cancela o pedido, nessa ordem.
+   *
+   * A ordem e o ponto. Cancelar primeiro e estornar depois deixa a janela em
+   * que o pedido consta cancelado, a peca voltou ao estoque, e o dinheiro
+   * continua na conta da loja - e ninguem vai atras, porque a tela ja diz
+   * cancelado. Estornando primeiro, uma falha para o processo inteiro e o
+   * pedido segue pago, que e verdade.
+   *
+   * Nao aceita pedido ja cancelado nem pedido sem cobranca no Asaas. Pagamento
+   * combinado por fora (Pix na mao, dinheiro) nao tem o que estornar aqui: o
+   * caminho e cancelar e devolver por onde recebeu.
+   */
+  async refund(id: string) {
+    const order = await this.findOne(id);
+
+    if (order.status === 'cancelado') {
+      throw new BadRequestException('Este pedido já está cancelado.');
+    }
+    if (!order.asaasPaymentId) {
+      throw new BadRequestException(
+        'Este pedido não tem cobrança no Asaas. Cancele e devolva o valor pelo mesmo caminho em que recebeu.'
+      );
+    }
+
+    await this.asaas.refundPayment(
+      order.asaasPaymentId,
+      `Estorno do pedido ${order.orderNumber} — NO EXCUSE`
+    );
+
+    // Só depois do dinheiro devolvido: a peça volta ao estoque e o uso do
+    // cupom é liberado, pelos mesmos helpers do webhook.
+    const cancelado = await this.prisma.$transaction(async (tx) => {
+      await this.syncStock(tx, order, 'cancelado');
+      await this.syncCouponUsage(tx, order, 'cancelado');
+      return tx.order.update({
+        where: { id },
+        data: { status: 'cancelado' },
+        include: { items: true },
+      });
+    });
+
+    this.logger.log(`Pedido ${order.orderNumber} estornado no Asaas e cancelado.`);
+    return cancelado;
+  }
+
   async updateStatus(id: string, dto: UpdateOrderStatusDto) {
     const current = await this.findOne(id);
     // Só quem realmente moveu o pedido para "pago" avisa a cliente. Comparar

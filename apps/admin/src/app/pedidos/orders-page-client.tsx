@@ -58,6 +58,7 @@ export function OrdersPageClient() {
   const [emitindo, setEmitindo] = useState<string | null>(null);
   const [erroEtiqueta, setErroEtiqueta] = useState<Record<string, string>>({});
   const [saldo, setSaldo] = useState<number | null>(null);
+  const [estornando, setEstornando] = useState<string | null>(null);
 
   function linkAvaliacao(order: Order): string {
     return `${lojaUrl}/avaliar/${order.reviewToken}`;
@@ -211,6 +212,37 @@ export function OrdersPageClient() {
       }));
     } finally {
       setEmitindo(null);
+    }
+  }
+
+  /**
+   * Devolve o dinheiro no Asaas e cancela o pedido.
+   *
+   * A confirmação diz o valor e para quem, porque estorno de cartão não tem
+   * botão de desfazer: o dinheiro sai da conta da loja e volta para a fatura da
+   * cliente. O servidor estorna primeiro e só depois cancela — se o Asaas
+   * recusar, o pedido continua pago, que é a verdade.
+   */
+  async function estornar(order: Order) {
+    const confirmado = window.confirm(
+      [
+        `Estornar ${formatPrice(order.total)} do pedido ${order.orderNumber}?`,
+        '',
+        `O valor volta para ${order.customerName} e o pedido é cancelado.`,
+        'A peça retorna ao estoque. Estorno de cartão não tem como desfazer.',
+      ].join('\n')
+    );
+    if (!confirmado) return;
+
+    setEstornando(order.id);
+    setError('');
+    try {
+      await api.post(`/orders/${order.id}/estornar`, {});
+      reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível estornar agora.');
+    } finally {
+      setEstornando(null);
     }
   }
 
@@ -510,6 +542,12 @@ export function OrdersPageClient() {
                           Marcar como enviado
                         </button>
                       )}
+                      {/* Estornar e cancelar são coisas diferentes, e a
+                          diferença é dinheiro. "Cancelar" mexe só aqui: devolve
+                          a peça ao estoque e fecha o pedido. "Estornar"
+                          devolve o valor no Asaas antes de fazer tudo isso.
+                          Pedido pago sem estorno deixa o dinheiro na conta e
+                          ninguém vai atrás, porque a tela já diz cancelado. */}
                       {order.status !== 'cancelado' && (
                         <button
                           type="button"
@@ -517,7 +555,17 @@ export function OrdersPageClient() {
                           onClick={() => updateStatus(order, 'cancelado')}
                           className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 disabled:opacity-50"
                         >
-                          Cancelar pedido
+                          Cancelar sem estornar
+                        </button>
+                      )}
+                      {order.status === 'pago' && (
+                        <button
+                          type="button"
+                          disabled={estornando === order.id}
+                          onClick={() => estornar(order)}
+                          className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                        >
+                          {estornando === order.id ? 'Estornando...' : 'Estornar e cancelar'}
                         </button>
                       )}
                       {order.status !== 'aguardando_pagamento' && (

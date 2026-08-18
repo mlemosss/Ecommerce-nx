@@ -160,4 +160,18 @@ export class AsaasService {
   getPixQrCode(paymentId: string): Promise<AsaasPixQrCode> {
     return this.request<AsaasPixQrCode>(`/payments/${paymentId}/pixQrCode`);
   }
+
+  /**
+   * Devolve o dinheiro da cobrança.
+   *
+   * Sem `value`, estorna tudo. O Asaas devolve a cobrança com status
+   * `REFUNDED`, e é esse retorno — e não o nosso otimismo — que autoriza marcar
+   * o pedido como cancelado.
+   */
+  refundPayment(paymentId: string, description?: string): Promise<AsaasPayment> {
+    return this.request<AsaasPayment>(`/payments/${paymentId}/refund`, {
+      method: 'POST',
+      body: JSON.stringify(description ? { description } : {}),
+    });
+  }
 }

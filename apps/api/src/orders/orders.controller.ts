@@ -32,6 +32,15 @@ export class OrdersController {
     return this.ordersService.findOne(id);
   }
 
+  /**
+   * Estorna e cancela. Devolve dinheiro de verdade — sem `@Public()`, cai no
+   * guard global, so o painel autenticado chega aqui.
+   */
+  @Post(':id/estornar')
+  refund(@Param('id') id: string) {
+    return this.ordersService.refund(id);
+  }
+
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto) {
     return this.ordersService.updateStatus(id, dto);
