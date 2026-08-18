@@ -16,6 +16,8 @@ export interface OrderForEmail {
   shipping: number;
   /** Retirada em maos: o e-mail nao fala em entrega nem em rastreio. */
   pickup?: boolean;
+  /** Cartao volta em ate 10 dias uteis; Pix volta em um. O aviso muda. */
+  paymentMethod?: string;
   trackingCode?: string | null;
   items: OrderItemLike[];
 }
@@ -224,6 +226,44 @@ export function paymentApprovedTemplate(
   return {
     subject: `Pagamento aprovado — pedido #${order.orderNumber}`,
     html: layout(storeName, 'Pagamento aprovado', body, storefrontUrl),
+  };
+}
+
+/**
+ * Aviso de estorno.
+ *
+ * O prazo é o assunto do e-mail inteiro. Dinheiro devolvido no cartão não
+ * aparece na hora: leva até dez dias úteis, e é nesses dez dias que a cliente
+ * escreve "cadê meu dinheiro" — três vezes, cada vez mais brava, porque
+ * ninguém disse a ela que ia demorar.
+ *
+ * Dizer antes transforma três mensagens em nenhuma.
+ */
+export function orderRefundedTemplate(
+  storeName: string,
+  storefrontUrl: string,
+  order: OrderForEmail
+): EmailTemplate {
+  const body = `
+    <p style="color:#333;font-size:14px;line-height:1.6;">
+      Oi, ${firstName(order.customerName)}. O pedido <strong>#${order.orderNumber}</strong> foi cancelado e
+      estornamos <strong>${money(order.total)}</strong> para você.
+    </p>
+    <p style="color:#333;font-size:14px;line-height:1.6;">
+      ${
+        order.paymentMethod === 'cartao'
+          ? 'O valor volta para o mesmo cartão usado na compra. <strong>Pode levar até 10 dias úteis</strong> para aparecer na sua fatura — o prazo é do banco emissor, e nem nós nem o Asaas conseguimos acelerar. Dependendo da data de fechamento, pode cair como crédito na fatura seguinte.'
+          : 'O valor volta para a mesma conta de onde saiu o pagamento, normalmente em até um dia útil.'
+      }
+    </p>
+    ${itemsTable(order.items)}
+    <p style="color:#666;font-size:13px;line-height:1.6;margin-top:16px;">
+      Se passar do prazo e você não vir o estorno, responde este e-mail que a gente resolve.
+    </p>`;
+
+  return {
+    subject: `Estorno do pedido #${order.orderNumber}`,
+    html: layout(storeName, 'Estorno a caminho', body, storefrontUrl),
   };
 }
 

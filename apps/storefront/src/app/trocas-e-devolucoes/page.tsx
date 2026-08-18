@@ -69,6 +69,28 @@ export default async function TrocasPage() {
           </p>
         </section>
 
+        {/* O prazo do estorno é a pergunta que mais chega depois de uma
+            devolução, e ela chega três vezes: no terceiro dia, no quinto e no
+            oitavo. Dizer antes transforma três mensagens em nenhuma — e o
+            número é do banco emissor, não nosso, então prometer menos seria
+            prometer o que não depende da gente. */}
+        <section>
+          <h2 className="text-sm font-bold uppercase tracking-[0.14em]">
+            Quando o dinheiro volta
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-ink/70">
+            Assim que a devolução é aprovada, o estorno é feito no mesmo dia. No{' '}
+            <strong>cartão de crédito</strong>, o valor pode levar{' '}
+            <strong>até 10 dias úteis</strong> para aparecer na fatura — o prazo é do banco emissor,
+            e dependendo da data de fechamento pode entrar como crédito na fatura seguinte. No{' '}
+            <strong>Pix</strong>, volta para a mesma conta, normalmente em até um dia útil.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-ink/70">
+            Compra parcelada é estornada inteira, de uma vez — você não continua pagando parcelas de
+            uma peça devolvida.
+          </p>
+        </section>
+
         <section>
           <h2 className="text-sm font-bold uppercase tracking-[0.14em]">Como pedir</h2>
           <p className="mt-3 text-sm leading-relaxed text-ink/70">

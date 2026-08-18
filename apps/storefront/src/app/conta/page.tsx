@@ -160,6 +160,18 @@ export default function AccountPage() {
                   </div>
                 </div>
 
+                {/* Cancelado é onde a pessoa vem procurar o dinheiro. Sem o
+                    prazo aqui, ela escreve no WhatsApp no terceiro dia, no
+                    quinto e no oitavo — cada vez achando que foi esquecida. */}
+                {order.status === 'cancelado' && (
+                  <p className="mt-3 bg-paper px-4 py-3 text-xs leading-relaxed text-ink/70">
+                    Pedido cancelado e valor estornado. No cartão de crédito o estorno pode levar{' '}
+                    <strong>até 10 dias úteis</strong> para aparecer na fatura — o prazo é do banco
+                    emissor. No Pix, volta em até um dia útil. Passou disso e não apareceu? Fale com
+                    a gente.
+                  </p>
+                )}
+
                 {/* A nota do pedido. Antes a conta mostrava só número, status e
                     total — quem quisesse conferir o que comprou, em que tamanho,
                     ou se o cupom entrou, precisava caçar o e-mail de confirmação. */}

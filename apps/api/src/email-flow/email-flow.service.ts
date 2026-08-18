@@ -44,6 +44,15 @@ const STEP_DEFINITIONS: EmailFlowStepDefinition[] = [
     defaultEnabled: false,
   },
   {
+    key: 'pedido_estornado',
+    order: 6,
+    name: 'Estorno enviado',
+    description:
+      'Avisa que o valor foi devolvido e, principalmente, quanto tempo leva para aparecer na fatura.',
+    trigger: 'Enviado quando você estorna o pedido pelo painel.',
+    defaultEnabled: true,
+  },
+  {
     key: 'boleto_vencido',
     order: 5,
     name: 'Boleto vencido',

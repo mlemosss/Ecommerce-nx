@@ -839,6 +839,16 @@ export class OrdersService {
       });
     });
 
+    // O e-mail sai depois do estorno confirmado e do pedido fechado. Falhar
+    // aqui nao pode desfazer um dinheiro que ja voltou.
+    try {
+      await this.emailService.sendOrderRefunded(cancelado);
+    } catch (erro) {
+      this.logger.error(
+        `Estorno do pedido ${order.orderNumber} feito, mas o aviso por e-mail falhou: ${erro}`
+      );
+    }
+
     this.logger.log(`Pedido ${order.orderNumber} estornado no Asaas e cancelado.`);
     return cancelado;
   }

@@ -45,6 +45,11 @@ function perguntas(freteGratis: number, parcelas: number) {
       resposta: `Pode. Você tem ${DIAS_DE_ARREPENDIMENTO} dias corridos, contados do recebimento, para trocar ou devolver sem precisar dar motivo — é o direito de arrependimento do Código de Defesa do Consumidor. Devolvemos o valor inteiro, e o frete da volta é por nossa conta. A peça precisa estar sem uso e com a etiqueta.`,
     },
     {
+      pergunta: 'Devolvi a peça. Quando o dinheiro volta?',
+      resposta:
+        'O estorno é feito no mesmo dia em que a devolução é aprovada. No cartão de crédito, o valor pode levar até 10 dias úteis para aparecer na fatura — esse prazo é do banco emissor, e dependendo da data de fechamento pode entrar como crédito na fatura seguinte. No Pix, volta para a mesma conta, normalmente em até um dia útil. Compra parcelada é estornada inteira de uma vez: você não continua pagando parcelas de uma peça devolvida.',
+    },
+    {
       pergunta: 'A legging fica transparente no agachamento?',
       resposta:
         'Não. Provamos cada modelo antes de colocar na loja, e o agachamento é justamente o teste que a gente faz. As peças têm compressão média a alta e tecido de gramatura suficiente para não abrir.',

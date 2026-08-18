@@ -12,6 +12,7 @@ import {
   orderShippedTemplate,
   OrderForEmail,
   passwordSetupTemplate,
+  orderRefundedTemplate,
   paymentApprovedTemplate,
   reviewRequestTemplate,
   EmailTemplate,
@@ -132,6 +133,19 @@ export class EmailService {
     const { storeName } = await this.getSender();
     const template = paymentApprovedTemplate(storeName, this.getStorefrontUrl(), order);
     await this.sendIfEnabled('pagamento_aprovado', order.customerEmail, template);
+  }
+
+  /**
+   * Aviso de estorno.
+   *
+   * O prazo é o assunto do e-mail inteiro: dinheiro de cartão leva até dez dias
+   * úteis para aparecer na fatura, e é nesses dez dias que a cliente escreve
+   * "cadê meu dinheiro" — cada vez mais brava, porque ninguém avisou.
+   */
+  async sendOrderRefunded(order: OrderForEmail & { customerEmail: string }): Promise<void> {
+    const { storeName } = await this.getSender();
+    const template = orderRefundedTemplate(storeName, this.getStorefrontUrl(), order);
+    await this.sendIfEnabled('pedido_estornado', order.customerEmail, template);
   }
 
   /**
