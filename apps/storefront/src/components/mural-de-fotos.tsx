@@ -34,7 +34,12 @@ export function MuralDeFotos({ fotos }: { fotos: FotoDoMural[] }) {
         </Link>
       </div>
 
-      <div className="mt-10 grid grid-cols-2 gap-px bg-line sm:grid-cols-3 lg:grid-cols-4">
+      {/* Grade com espaço entre as fotos, e não a malha de 1px do resto do
+          site. Aquela pinta o fundo do container inteiro e conta com as células
+          cobrirem tudo — com duas fotos numa fileira de quatro, o que sobra
+          vira um bloco cinza do tamanho da tela. Aqui o que falta é só branco,
+          e o mural funciona com duas fotos ou com quarenta. */}
+      <div className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
         {fotos.map((foto) => (
           <Link
             key={foto.id}
@@ -48,6 +53,14 @@ export function MuralDeFotos({ fotos }: { fotos: FotoDoMural[] }) {
               loading="lazy"
               className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
             />
+
+            {/* Etiqueta da peça, como a marcação de produto numa foto do
+                Instagram. Não é enfeite: sem ela a pessoa vê um corpo bonito
+                numa roupa preta e não sabe qual das nossas é — e a foto que
+                deveria vender vira só decoração. */}
+            <span className="absolute left-3 top-3 bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-ink">
+              {foto.productName}
+            </span>
 
             {/* Véu de baixo para cima: o texto precisa de fundo escuro para ser
                 legível sobre qualquer foto, mas escurecer a imagem inteira
@@ -63,7 +76,7 @@ export function MuralDeFotos({ fotos }: { fotos: FotoDoMural[] }) {
               </p>
 
               <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-white/80">
-                {foto.customerName} · {foto.productName}
+                {foto.customerName}
               </p>
             </div>
           </Link>
