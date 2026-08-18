@@ -16,7 +16,17 @@ export default function SettingsPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get<StoreSettings>('/settings').then(setSettings);
+    api.get<StoreSettings>('/settings').then((carregadas) => {
+      setSettings(carregadas);
+      // O CEP de origem já existia e os campos novos nasceram vazios. Sem isto,
+      // a tela só preencheria se a lojista redigitasse o CEP — e ninguém
+      // redigita um campo que já está certo. Ela abre, vê tudo em branco e não
+      // tem como saber que basta tocar ali.
+      if (carregadas.shippingOriginZip && !carregadas.shippingOriginStreet) {
+        buscarEnderecoDeOrigem(carregadas.shippingOriginZip);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function update<K extends keyof StoreSettings>(key: K, value: StoreSettings[K]) {

@@ -486,6 +486,10 @@ export default function CheckoutPage() {
 
       const params = new URLSearchParams({
         pedido: result.order.orderNumber,
+        // O id vai junto para a tela seguinte poder perguntar se o Pix caiu.
+        // É um cuid, tão adivinhável quanto uma senha — é ele que autoriza a
+        // consulta, sem exigir login de quem comprou sem cadastro.
+        id: result.order.id,
         total: total.toFixed(2),
       });
       // Cartão aprovado na hora não precisa da fatura do Asaas.

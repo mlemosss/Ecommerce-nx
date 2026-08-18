@@ -33,6 +33,23 @@ export class OrdersController {
   }
 
   /**
+   * O pedido foi pago? Só isso, e nada mais.
+   *
+   * Público porque a tela de "pedido recebido" é aberta por quem acabou de
+   * comprar, sem login — a loja aceita compra sem cadastro. O id é um cuid, tão
+   * adivinhável quanto uma senha, e é ele que faz as vezes de credencial: a
+   * mesma escolha do link de avaliação.
+   *
+   * Devolve um booleano. Nome, valor, endereço e itens ficam de fora: quem tem
+   * o link sabe se pagou, não consulta o pedido.
+   */
+  @Public()
+  @Get(':id/pago')
+  isPaid(@Param('id') id: string) {
+    return this.ordersService.isPaid(id);
+  }
+
+  /**
    * Estorna e cancela. Devolve dinheiro de verdade — sem `@Public()`, cai no
    * guard global, so o painel autenticado chega aqui.
    */

@@ -800,6 +800,21 @@ export class OrdersService {
    * combinado por fora (Pix na mao, dinheiro) nao tem o que estornar aqui: o
    * caminho e cancelar e devolver por onde recebeu.
    */
+  /**
+   * Só responde se o pedido já foi pago.
+   *
+   * A tela de confirmação pergunta isso de tempos em tempos enquanto a cliente
+   * paga o Pix em outro aplicativo. Uma coluna, um booleano — nada mais sai
+   * daqui, porque o endereço é público.
+   */
+  async isPaid(id: string): Promise<{ pago: boolean }> {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    return { pago: order ? DEBITED_STATUSES.has(order.status) : false };
+  }
+
   async refund(id: string) {
     const order = await this.findOne(id);
 
