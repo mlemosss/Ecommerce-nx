@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Testimonial } from '../lib/api';
 
 export function TestimonialsSection({ testimonials }: { testimonials: Testimonial[] }) {
@@ -10,7 +11,22 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
 
       <div className="mt-10 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
         {testimonials.map((testimonial) => (
-          <figure key={testimonial.id} className="flex flex-col bg-white p-6">
+          <figure key={testimonial.id} className="flex flex-col bg-white">
+            {/* A foto que a cliente manda é dela usando a peça — é a prova
+                social que mais decide compra em moda. Cabia numa bolinha de 36
+                pixels ao lado do nome, onde não dava para ver nem a roupa nem o
+                caimento. Agora abre o cartão, no tamanho em que serve para
+                alguma coisa. `unoptimized`: vem como dataURL do banco. */}
+            {testimonial.photoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={testimonial.photoUrl}
+                alt={`Foto enviada por ${testimonial.customerName}`}
+                className="aspect-[4/5] w-full object-cover"
+              />
+            )}
+
+            <div className="flex flex-1 flex-col p-6">
             <div className="text-sm tracking-[0.2em] text-ink" aria-label={`${testimonial.rating} de 5 estrelas`}>
               <span aria-hidden>
                 {'★'.repeat(testimonial.rating)}
@@ -21,21 +37,27 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
               &ldquo;{testimonial.quote}&rdquo;
             </blockquote>
             <figcaption className="mt-6 flex items-center gap-3 border-t border-line pt-4">
-              {testimonial.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={testimonial.photoUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
-              ) : (
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-paper text-xs font-bold text-ink/70">
-                  {testimonial.customerName.charAt(0).toUpperCase()}
-                </span>
-              )}
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-paper text-xs font-bold text-ink/70">
+                {testimonial.customerName.charAt(0).toUpperCase()}
+              </span>
               <span className="text-xs font-semibold uppercase tracking-wide">
                 {testimonial.customerName}
               </span>
             </figcaption>
+            </div>
           </figure>
         ))}
       </div>
+
+      {/* Quem lê avaliação é quem mais tende a escrever uma. O convite fica no
+          fim da seção, depois de ela ver que outras escreveram — e não numa
+          página que ninguém procura. */}
+      <p className="mt-8 text-sm text-ink/60">
+        Também já treinou com uma peça nossa?{' '}
+        <Link href="/avaliar-loja" className="font-semibold text-ink underline underline-offset-4">
+          Conte como foi
+        </Link>
+      </p>
     </section>
   );
 }

@@ -126,6 +126,35 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
             {product.name}
           </h1>
 
+          {/* Nota logo abaixo do nome, antes do preço.
+              As avaliações ficavam só no fim da página, depois da grade de
+              tamanhos e do botão de comprar — quem decide pela opinião das
+              outras decidia sem ver que existia opinião. Aqui a nota entra no
+              mesmo golpe de vista do nome e do preço, e o link leva direto
+              para os textos. Sem nenhuma avaliação, o espaço vira convite:
+              quem já usou a peça é quem pode escrever a primeira. */}
+          {reviewsResult.count > 0 ? (
+            <a href="#avaliacoes" className="mt-3 inline-flex items-center gap-2 text-sm">
+              <span aria-hidden className="tracking-[0.15em] text-ink">
+                {'★'.repeat(Math.round(reviewsResult.average))}
+                <span className="text-ink/25">
+                  {'★'.repeat(5 - Math.round(reviewsResult.average))}
+                </span>
+              </span>
+              <span className="text-ink/70 underline-offset-4 hover:underline">
+                {reviewsResult.average.toFixed(1)} · {reviewsResult.count}{' '}
+                {reviewsResult.count === 1 ? 'avaliação' : 'avaliações'}
+              </span>
+            </a>
+          ) : (
+            <Link
+              href="/avaliar-loja"
+              className="mt-3 inline-block text-sm text-ink/60 underline-offset-4 hover:underline"
+            >
+              Ainda sem avaliações — já usou? Conte para as próximas
+            </Link>
+          )}
+
           <div className="mt-8">
             <AddToCart product={product} sizeGuide={settings.sizeGuide} />
           </div>

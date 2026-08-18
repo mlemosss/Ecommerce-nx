@@ -213,6 +213,20 @@ export default function AccountPage() {
                 {order.status === 'aguardando_pagamento' && (
                   <OrderPaymentPanel orderId={order.id} token={authToken} />
                 )}
+
+                {/* O convite para avaliar vive no e-mail que sai depois da
+                    entrega — e e-mail de loja pequena cai em "Promoções". Quem
+                    volta aqui para conferir o pedido é justamente quem já
+                    recebeu a peça; o caminho para escrever tem que estar
+                    debaixo do pedido, não só numa caixa de entrada. */}
+                {order.status === 'enviado' && (
+                  <Link
+                    href="/avaliar-loja"
+                    className="mt-4 inline-block text-sm font-semibold underline underline-offset-4"
+                  >
+                    Avaliar esta compra
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

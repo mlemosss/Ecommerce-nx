@@ -66,7 +66,7 @@ export function ProductReviews({
   }
 
   return (
-    <section className="mt-16 border-t border-line pt-12">
+    <section id="avaliacoes" className="mt-16 scroll-mt-24 border-t border-line pt-12">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="eyebrow text-ink/50">Opiniões</p>
@@ -77,7 +77,9 @@ export function ProductReviews({
               {count === 1 ? 'avaliação' : 'avaliações'})
             </p>
           ) : (
-            <p className="mt-2 text-sm text-ink/60">Ainda sem avaliações.</p>
+            <p className="mt-2 text-sm text-ink/60">
+              Ainda sem avaliações desta peça — a sua pode ser a primeira.
+            </p>
           )}
         </div>
 
@@ -86,16 +88,32 @@ export function ProductReviews({
             Avaliar produto
           </button>
         )}
+        {/* Quem comprou antes do site não tem conta, e "entre para avaliar"
+            fecha a porta justamente para quem mais tem o que dizer. O segundo
+            link resolve isso sem confundir: um avalia a peça, o outro a loja. */}
         {isLoaded && !customer && (
-          <Link href="/conta/entrar" className="text-sm font-semibold underline underline-offset-4">
-            Entre para avaliar
-          </Link>
+          <div className="text-right text-sm">
+            <Link href="/conta/entrar" className="font-semibold underline underline-offset-4">
+              Entre para avaliar
+            </Link>
+            <Link
+              href="/avaliar-loja"
+              className="mt-1 block text-ink/60 underline-offset-4 hover:underline"
+            >
+              Comprou com a gente antes do site? Avalie por aqui
+            </Link>
+          </div>
         )}
       </div>
 
+      {/* Dizer que foi salva não basta: a avaliação não aparece na hora, e a
+          pessoa que atualiza a página e não vê nada conclui que não gravou.
+          Aqui a mensagem diz onde ela está — recebida, esperando a leitura da
+          loja — em vez de deixar o silêncio explicar. */}
       {sent && (
         <p className="mt-4 bg-paper px-4 py-3 text-sm text-ink/75" role="status">
-          Obrigado! Sua avaliação foi enviada e será exibida após aprovação.
+          Recebemos, obrigada! Ela está guardada e entra nesta página assim que a gente ler — em
+          geral no mesmo dia.
         </p>
       )}
 
