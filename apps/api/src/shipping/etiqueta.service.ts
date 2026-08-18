@@ -100,16 +100,26 @@ export class EtiquetaService {
     const settings = await this.settings.get();
     const contato = settings.emailFromAddress || settings.contactEmail || 'vendas@noexcusenx.com.br';
 
-    const faltando: string[] = [];
-    if (!settings.shippingOriginZip) faltando.push('CEP');
-    if (!settings.shippingOriginStreet) faltando.push('rua');
-    if (!settings.shippingOriginNumber) faltando.push('número');
-    if (!settings.shippingOriginDistrict) faltando.push('bairro');
-    if (!settings.shippingOriginCity) faltando.push('cidade');
-    if (!settings.shippingOriginState) faltando.push('UF');
-    if (faltando.length > 0) {
+    if (!settings.shippingOriginZip) {
       throw new BadRequestException(
-        `Complete o endereço de quem posta em Configurações → Frete: falta ${faltando.join(', ')}.`
+        'Preencha o CEP de origem em Configurações → Frete antes de emitir.'
+      );
+    }
+
+    // Rua, bairro, cidade e UF saem do CEP. Pedir que a lojista digite quatro
+    // campos que os Correios já sabem é convidar a "Sta. Cecília" onde a
+    // transportadora espera "Santa Cecília" — e é um passo a mais entre a venda
+    // e o pacote postado. Fica gravado: a consulta acontece uma vez só.
+    const origem = await this.completarOrigem(settings);
+
+    if (!origem.number) {
+      throw new BadRequestException(
+        'Falta o número do endereço de quem posta. Preencha em Configurações → Frete (o resto o CEP já preencheu).'
+      );
+    }
+    if (!origem.street || !origem.district || !origem.city || !origem.state) {
+      throw new BadRequestException(
+        'Não consegui completar o endereço de origem pelo CEP. Preencha à mão em Configurações → Frete.'
       );
     }
     if (!settings.cnpj) {
@@ -139,12 +149,12 @@ export class EtiquetaService {
             phone: (settings.contactWhatsapp ?? '').replace(/\D/g, ''),
             email: contato,
             company_document: (settings.cnpj ?? '').replace(/\D/g, ''),
-            address: settings.shippingOriginStreet,
+            address: origem.street,
             complement: settings.shippingOriginComplement ?? '',
-            number: settings.shippingOriginNumber,
-            district: settings.shippingOriginDistrict,
-            city: settings.shippingOriginCity,
-            state_abbr: settings.shippingOriginState,
+            number: origem.number,
+            district: origem.district,
+            city: origem.city,
+            state_abbr: origem.state,
             country_id: 'BR',
             postal_code: (settings.shippingOriginZip ?? '').replace(/\D/g, ''),
           },
@@ -245,6 +255,77 @@ export class EtiquetaService {
       return data[shipmentId]?.tracking ?? null;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Completa o endereço de origem pelo CEP e grava o que faltava.
+   *
+   * O CEP sabe rua, bairro, cidade e UF; só o número da porta é que ninguém
+   * adivinha. Fazer isto no servidor tira quatro campos do caminho entre a
+   * venda e o pacote postado — e tira também a chance de a abreviação digitada
+   * à mão não bater com o que a transportadora espera.
+   *
+   * Grava o resultado: a consulta acontece uma vez, não a cada etiqueta. Se o
+   * ViaCEP não responder, devolve o que já existe e quem decide o que fazer é
+   * quem chamou.
+   */
+  private async completarOrigem(settings: {
+    shippingOriginZip: string | null;
+    shippingOriginStreet: string | null;
+    shippingOriginNumber: string | null;
+    shippingOriginDistrict: string | null;
+    shippingOriginCity: string | null;
+    shippingOriginState: string | null;
+  }) {
+    const atual = {
+      street: settings.shippingOriginStreet,
+      number: settings.shippingOriginNumber,
+      district: settings.shippingOriginDistrict,
+      city: settings.shippingOriginCity,
+      state: settings.shippingOriginState,
+    };
+
+    const completo = atual.street && atual.district && atual.city && atual.state;
+    if (completo) return atual;
+
+    const cep = (settings.shippingOriginZip ?? '').replace(/D/g, '');
+    if (cep.length !== 8) return atual;
+
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!res.ok) return atual;
+      const data = (await res.json()) as {
+        logradouro?: string;
+        bairro?: string;
+        localidade?: string;
+        uf?: string;
+        erro?: boolean;
+      };
+      if (data.erro) return atual;
+
+      const completado = {
+        street: atual.street || data.logradouro || null,
+        number: atual.number,
+        district: atual.district || data.bairro || null,
+        city: atual.city || data.localidade || null,
+        state: atual.state || data.uf || null,
+      };
+
+      await this.prisma.storeSettings.update({
+        where: { id: 'singleton' },
+        data: {
+          shippingOriginStreet: completado.street,
+          shippingOriginDistrict: completado.district,
+          shippingOriginCity: completado.city,
+          shippingOriginState: completado.state,
+        },
+      });
+
+      return completado;
+    } catch {
+      // ViaCEP fora do ar não pode ser o motivo de uma etiqueta não sair.
+      return atual;
     }
   }
 
