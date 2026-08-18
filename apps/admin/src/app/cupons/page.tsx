@@ -6,6 +6,22 @@ import { api, ApiError } from '../../lib/api';
 import { formatDate, formatPrice } from '../../lib/format';
 import type { Coupon, CouponDiscountType } from '../../lib/types';
 
+/**
+ * Fecha o cupom no fim do dia escolhido, no horário de Brasília.
+ *
+ * O campo de data devolve "2026-08-31", e `new Date("2026-08-31")` é meia-noite
+ * em UTC — ou seja, 21h do dia 30 aqui. Um cupom marcado para valer até hoje
+ * nascia expirado, e o site respondia "Este cupom expirou" para um código
+ * criado cinco minutos antes.
+ *
+ * "Expira em 31/08" quer dizer que 31/08 inteiro ainda vale. O Brasil não tem
+ * mais horário de verão, então -03:00 é o ano todo.
+ */
+function fimDoDiaEmBrasilia(data: string): string | undefined {
+  if (!data) return undefined;
+  return new Date(`${data}T23:59:59.999-03:00`).toISOString();
+}
+
 export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[] | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -14,6 +30,7 @@ export default function CouponsPage() {
   const [discountValue, setDiscountValue] = useState('');
   const [minOrderValue, setMinOrderValue] = useState('');
   const [usageLimit, setUsageLimit] = useState('');
+  const [limitePorCpf, setLimitePorCpf] = useState('');
   const [firstPurchaseOnly, setFirstPurchaseOnly] = useState(false);
   const [expiresAt, setExpiresAt] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -36,13 +53,15 @@ export default function CouponsPage() {
         discountValue: Number(discountValue),
         minOrderValue: minOrderValue ? Number(minOrderValue) : undefined,
         usageLimit: usageLimit ? Number(usageLimit) : undefined,
+        usageLimitPerDocument: limitePorCpf ? Number(limitePorCpf) : undefined,
         firstPurchaseOnly,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
+        expiresAt: fimDoDiaEmBrasilia(expiresAt),
       });
       setCode('');
       setDiscountValue('');
       setMinOrderValue('');
       setUsageLimit('');
+      setLimitePorCpf('');
       setFirstPurchaseOnly(false);
       setExpiresAt('');
       setShowForm(false);
@@ -135,9 +154,21 @@ export default function CouponsPage() {
               <input
                 type="number"
                 min="1"
-                placeholder="Limite de usos (opcional)"
+                placeholder="Limite total de usos (opcional)"
                 value={usageLimit}
                 onChange={(e) => setUsageLimit(e.target.value)}
+                className="input-field"
+              />
+              {/* Limite por CPF é outra coisa: o de cima é quantas vezes a loja
+                  aceita o cupom no total, este é quantas vezes a mesma pessoa
+                  aceita. Sem ele, um código de 10% divulgado no Instagram vira
+                  desconto permanente para quem guardar. */}
+              <input
+                type="number"
+                min="1"
+                placeholder="Usos por CPF (opcional)"
+                value={limitePorCpf}
+                onChange={(e) => setLimitePorCpf(e.target.value)}
                 className="input-field"
               />
               <input
@@ -184,6 +215,9 @@ export default function CouponsPage() {
                     Usado {coupon.usageCount}
                     {coupon.usageLimit ? `/${coupon.usageLimit}` : ''} vez(es)
                     {coupon.expiresAt ? ` · expira em ${formatDate(coupon.expiresAt)}` : ''}
+                    {coupon.usageLimitPerDocument
+                      ? ` · ${coupon.usageLimitPerDocument}x por CPF`
+                      : ''}
                     {coupon.firstPurchaseOnly ? ' · só na 1ª compra (1 por CPF)' : ''}
                   </p>
                 </div>

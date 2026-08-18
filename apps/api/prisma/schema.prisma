@@ -220,6 +220,13 @@ model Coupon {
   discountValue  Float
   minOrderValue  Float?
   usageLimit     Int?
+  // Quantas vezes o MESMO CPF pode usar. Diferente de `usageLimit`, que e o
+  // total da loja: um cupom de 10% sem esta trava e desconto permanente para
+  // quem descobrir o codigo, e o codigo esta impresso em toda pagina.
+  //
+  // Tambem diferente de `firstPurchaseOnly`, que so vale para quem nunca
+  // comprou. Aqui quem ja e cliente usa - uma vez, ou quantas o numero disser.
+  usageLimitPerDocument Int?
   usageCount     Int       @default(0)
   // Cupom de estreia: vale uma vez por CPF. A checagem é pelo documento, não
   // pelo e-mail nem pela conta — criar e-mail novo custa segundos, e o cupom

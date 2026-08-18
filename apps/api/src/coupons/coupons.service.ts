@@ -28,6 +28,7 @@ export class CouponsService {
         discountValue: dto.discountValue,
         minOrderValue: dto.minOrderValue,
         usageLimit: dto.usageLimit,
+        usageLimitPerDocument: dto.usageLimitPerDocument,
         firstPurchaseOnly: dto.firstPurchaseOnly ?? false,
         active: dto.active ?? true,
         startsAt: dto.startsAt ? new Date(dto.startsAt) : undefined,
@@ -55,6 +56,9 @@ export class CouponsService {
         ...(dto.discountValue !== undefined ? { discountValue: dto.discountValue } : {}),
         ...(dto.minOrderValue !== undefined ? { minOrderValue: dto.minOrderValue } : {}),
         ...(dto.usageLimit !== undefined ? { usageLimit: dto.usageLimit } : {}),
+        ...(dto.usageLimitPerDocument !== undefined
+          ? { usageLimitPerDocument: dto.usageLimitPerDocument }
+          : {}),
         ...(dto.firstPurchaseOnly !== undefined ? { firstPurchaseOnly: dto.firstPurchaseOnly } : {}),
         ...(dto.active !== undefined ? { active: dto.active } : {}),
         ...(dto.startsAt !== undefined ? { startsAt: new Date(dto.startsAt) } : {}),
@@ -97,6 +101,26 @@ export class CouponsService {
     return pedido !== null;
   }
 
+  /**
+   * Quantas vezes este CPF ja usou este cupom.
+   *
+   * Conta pedido, e nao `usageCount`, que e o total da loja. Pedido cancelado
+   * nao gasta uso: quem teve o boleto vencido ou o cartao recusado nao chegou
+   * a comprar com o desconto.
+   */
+  private async usosDoDocumento(code: string, documentNumber: string | undefined): Promise<number> {
+    const documento = (documentNumber ?? '').replace(/D/g, '');
+    if (!documento) return Number.POSITIVE_INFINITY;
+
+    return this.prisma.order.count({
+      where: {
+        couponCode: code,
+        customerDocument: documento,
+        status: { notIn: ['cancelado'] },
+      },
+    });
+  }
+
   async validate(dto: ValidateCouponDto) {
     const code = dto.code.trim().toUpperCase();
     const coupon = await this.prisma.coupon.findUnique({ where: { code } });
@@ -133,6 +157,19 @@ export class CouponsService {
     }
     if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
       return { valid: false, message: 'Este cupom atingiu o limite de usos.' };
+    }
+    if (
+      coupon.usageLimitPerDocument !== null &&
+      (await this.usosDoDocumento(coupon.code, dto.customerDocument)) >=
+        coupon.usageLimitPerDocument
+    ) {
+      return {
+        valid: false,
+        // Mesma mensagem para CPF no limite e CPF nao informado, pelo mesmo
+        // motivo do cupom de estreia: este endereco e publico, e distinguir os
+        // dois casos entregaria de graca se um CPF conhecido ja comprou aqui.
+        message: 'Este cupom já foi usado por este CPF. Confira o CPF informado.',
+      };
     }
     if (coupon.minOrderValue !== null && dto.orderTotal < coupon.minOrderValue) {
       return {

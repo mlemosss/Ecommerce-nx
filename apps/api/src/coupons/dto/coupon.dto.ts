@@ -44,6 +44,11 @@ export class CreateCouponDto {
   startsAt?: string;
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  usageLimitPerDocument?: number;
+
+  @IsOptional()
   @IsISO8601()
   expiresAt?: string;
 }
@@ -84,6 +89,11 @@ export class UpdateCouponDto {
   @IsOptional()
   @IsISO8601()
   startsAt?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  usageLimitPerDocument?: number;
 
   @IsOptional()
   @IsISO8601()

@@ -123,6 +123,8 @@ export interface Coupon {
   discountValue: number;
   minOrderValue: number | null;
   usageLimit: number | null;
+  /** Quantas vezes o mesmo CPF pode usar. */
+  usageLimitPerDocument: number | null;
   firstPurchaseOnly: boolean;
   usageCount: number;
   active: boolean;
