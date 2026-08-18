@@ -94,6 +94,15 @@ export class CreateOrderDto {
   @IsString()
   city!: string;
 
+  /** Opcionais porque pedido antigo nao tem, e nao ha o que preencher neles. */
+  @IsOptional()
+  @IsString()
+  neighborhood?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
+
   @IsString()
   street!: string;
 

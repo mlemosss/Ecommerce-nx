@@ -198,6 +198,8 @@ export interface CreateOrderInput {
   customerDocument: string;
   zipCode: string;
   city: string;
+  neighborhood?: string;
+  state?: string;
   street: string;
   number: string;
   complement?: string;

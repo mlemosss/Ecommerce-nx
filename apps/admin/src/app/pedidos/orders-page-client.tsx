@@ -137,6 +137,32 @@ export function OrdersPageClient() {
     setReloadKey((key) => key + 1);
   }
 
+  /**
+   * Os dados de envio num bloco só, prontos para colar.
+   *
+   * A loja não emite etiqueta: quem emite é o Melhor Envio ou o site dos
+   * Correios, e ali os campos são preenchidos um a um. Redigitar endereço de
+   * uma tela para outra é como se troca o número da casa sem perceber — e o
+   * pacote volta duas semanas depois.
+   */
+  function copiarParaEtiqueta(order: Order) {
+    const linhas = [
+      order.customerName,
+      `CPF: ${order.customerDocument}`,
+      `Telefone: ${order.customerPhone}`,
+      '',
+      `${order.street}, ${order.number}${order.complement ? ` - ${order.complement}` : ''}`,
+      order.neighborhood ?? '',
+      `${order.city}${order.state ? ` - ${order.state}` : ''}`,
+      `CEP ${order.zipCode}`,
+      '',
+      `Pedido ${order.orderNumber}`,
+    ];
+
+    navigator.clipboard?.writeText(linhas.join('\n'));
+    setCopiado(order.id);
+  }
+
   async function updateStatus(order: Order, status: OrderStatus, trackingCode?: string) {
     setUpdatingId(order.id);
     setError('');
@@ -297,11 +323,29 @@ export function OrdersPageClient() {
                           </p>
                         </>
                       ) : (
-                        <p className="text-black/60">
-                          {order.street}, {order.number}
-                          {order.complement ? ` - ${order.complement}` : ''} · {order.city} ·{' '}
-                          {order.zipCode}
-                        </p>
+                        <>
+                          <p className="text-black/60">
+                            {order.street}, {order.number}
+                            {order.complement ? ` - ${order.complement}` : ''}
+                            {order.neighborhood ? ` · ${order.neighborhood}` : ''}
+                            <br />
+                            {order.city}
+                            {order.state ? ` - ${order.state}` : ''} · CEP {order.zipCode}
+                          </p>
+                          {(!order.neighborhood || !order.state) && (
+                            <p className="mt-1 text-xs text-amber-700">
+                              Bairro/UF não foram perguntados neste pedido. Consulte o CEP no site
+                              dos Correios antes de emitir a etiqueta.
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => copiarParaEtiqueta(order)}
+                            className="mt-2 rounded-lg bg-black/10 px-3 py-1.5 text-xs font-semibold text-black/70"
+                          >
+                            {copiado === order.id ? 'Copiado!' : 'Copiar dados de envio'}
+                          </button>
+                        </>
                       )}
                     </div>
                     <div>

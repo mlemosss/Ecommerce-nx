@@ -66,6 +66,8 @@ export default function CheckoutPage() {
   const [document, setDocument] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [city, setCity] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [state, setState] = useState('');
   const [street, setStreet] = useState('');
   const [number, setNumber] = useState('');
   const [complement, setComplement] = useState('');
@@ -288,9 +290,23 @@ export default function CheckoutPage() {
     let cancelled = false;
     fetch(`https://viacep.com.br/ws/${digits}/json/`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: { logradouro?: string; localidade?: string; erro?: boolean } | null) => {
+      .then(
+        (
+          data: {
+            logradouro?: string;
+            localidade?: string;
+            bairro?: string;
+            uf?: string;
+            erro?: boolean;
+          } | null
+        ) => {
         if (cancelled || !data || data.erro) return;
         if (data.localidade) setCity(data.localidade);
+        // Bairro e UF entram na etiqueta dos Correios. O CEP resolve os dois na
+        // maioria dos casos; cidade de CEP único devolve vazio, e aí quem
+        // preenche é a cliente — por isso o campo fica visível.
+        if (data.uf) setState(data.uf);
+        if (data.bairro) setNeighborhood((prev) => prev || data.bairro || '');
         if (data.logradouro) setStreet((prev) => prev || data.logradouro || '');
       })
       .catch(() => {
@@ -340,6 +356,8 @@ export default function CheckoutPage() {
         customerDocument: document,
         zipCode,
         city,
+        neighborhood,
+        state,
         street,
         number,
         complement: complement || undefined,
@@ -515,11 +533,31 @@ export default function CheckoutPage() {
                 onChange={(e) => setZipCode(e.target.value)}
                 className="input-field"
               />
+              <div className="grid grid-cols-[1fr,5rem] gap-2">
+                <input
+                  required
+                  placeholder="Cidade"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="input-field"
+                />
+                {/* UF e bairro entram na etiqueta dos Correios. O CEP preenche
+                    os dois quase sempre; cidade de CEP único devolve vazio, e aí
+                    quem preenche é a cliente — por isso os campos aparecem. */}
+                <input
+                  required
+                  placeholder="UF"
+                  maxLength={2}
+                  value={state}
+                  onChange={(e) => setState(e.target.value.toUpperCase())}
+                  className="input-field uppercase"
+                />
+              </div>
               <input
                 required
-                placeholder="Cidade"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                placeholder="Bairro"
+                value={neighborhood}
+                onChange={(e) => setNeighborhood(e.target.value)}
                 className="input-field"
               />
               <input

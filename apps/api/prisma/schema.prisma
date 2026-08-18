@@ -252,6 +252,11 @@ model Order {
   customerDocument  String
   zipCode           String
   city              String
+  // Bairro e UF nao existiam, e sem eles nao se posta encomenda: a etiqueta
+  // dos Correios exige os dois. Dava para deduzir pelo CEP, ate a cliente
+  // morar em cidade de CEP unico - ai o bairro so existe se ela tiver escrito.
+  neighborhood      String?
+  state             String?
   street            String
   number            String
   complement        String?

@@ -157,6 +157,9 @@ export interface Order {
   customerDocument: string;
   zipCode: string;
   city: string;
+  /** Nulos em pedido anterior a 18/08/2026, quando passaram a ser perguntados. */
+  neighborhood: string | null;
+  state: string | null;
   street: string;
   number: string;
   complement: string | null;

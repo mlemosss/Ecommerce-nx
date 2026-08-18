@@ -494,6 +494,8 @@ export class OrdersService {
         phone: onlyDigits(dto.customerPhone) || undefined,
         documentNumber: onlyDigits(dto.customerDocument) || undefined,
         city: dto.city || undefined,
+        neighborhood: dto.neighborhood || undefined,
+        state: dto.state || undefined,
         zipCode: dto.zipCode || undefined,
         street: dto.street || undefined,
         number: dto.number || undefined,
@@ -505,6 +507,8 @@ export class OrdersService {
         phone: onlyDigits(dto.customerPhone),
         documentNumber: onlyDigits(dto.customerDocument),
         city: dto.city,
+        neighborhood: dto.neighborhood,
+        state: dto.state,
         zipCode: dto.zipCode,
         street: dto.street,
         number: dto.number,
@@ -538,6 +542,11 @@ export class OrdersService {
           customerDocument: onlyDigits(dto.customerDocument),
           zipCode: dto.zipCode,
           city: dto.city,
+          // Sem bairro e UF não se emite etiqueta dos Correios. Ficam no
+          // pedido, e não só no cadastro: o endereço de quem comprou é o do
+          // dia da compra, e o cadastro muda quando a pessoa se muda.
+          neighborhood: dto.neighborhood,
+          state: dto.state,
           street: dto.street,
           number: dto.number,
           complement: dto.complement,
