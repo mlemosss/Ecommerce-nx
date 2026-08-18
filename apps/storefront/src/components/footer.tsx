@@ -108,6 +108,14 @@ export function Footer({ settings }: { settings: StoreSettings }) {
               </Link>
             </li>
             <li>
+              <Link
+                href="/perguntas-frequentes"
+                className="underline-offset-4 transition hover:text-white hover:underline"
+              >
+                Perguntas frequentes
+              </Link>
+            </li>
+            <li>
               {/* Exigida pelo decreto do e-commerce e pelo Google: peça sem
                   política declarada é reprovada nas listagens gratuitas. */}
               <Link

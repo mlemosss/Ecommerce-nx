@@ -164,6 +164,31 @@ export function productSchema({
   };
 }
 
+/**
+ * Perguntas frequentes, do jeito que o Google entende.
+ *
+ * Quando ele aceita, a busca passa a mostrar as perguntas abertas embaixo do
+ * link — a loja ocupa mais espaço no resultado e responde a dúvida antes do
+ * clique. Quem chega já sabe do frete e da troca.
+ *
+ * A resposta declarada aqui precisa ser a MESMA que está visível na página.
+ * Texto só no dado estruturado é considerado engano, e a punição é sumir do
+ * resultado enriquecido sem aviso.
+ */
+export function faqSchema(
+  perguntas: { pergunta: string; resposta: string }[]
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: perguntas.map((p) => ({
+      '@type': 'Question',
+      name: p.pergunta,
+      acceptedAnswer: { '@type': 'Answer', text: p.resposta },
+    })),
+  };
+}
+
 /** O caminho até a peça, igual ao que a página desenha em cima do título. */
 export function breadcrumbSchema(
   trilha: { nome: string; url: string }[]
