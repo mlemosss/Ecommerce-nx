@@ -1,9 +1,29 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { CONSENT_EVENT, getConsent } from '../lib/cookie-consent';
 
-const MENSAGEM = 'Oi! Vim pelo site da NO EXCUSE e queria tirar uma dúvida.';
+const MENSAGEM_PADRAO = 'Oi! Vim pelo site da NO EXCUSE e queria tirar uma dúvida.';
+
+/**
+ * A mensagem já diz de qual peça ela está falando.
+ *
+ * Antes era sempre a mesma frase, e a conversa começava com a lojista
+ * perguntando "qual peça?" — uma ida e volta em toda dúvida, justamente no
+ * momento em que a cliente está decidindo. O nome sai do título da página, que
+ * o Next já mantém certo a cada navegação; sem plumbing novo e sem o botão
+ * precisar conhecer o catálogo.
+ */
+function mensagemDaPagina(caminho: string): string {
+  if (!caminho.startsWith('/produtos/')) return MENSAGEM_PADRAO;
+
+  // "Legging Energy — NO EXCUSE" vira "Legging Energy".
+  const peca = document.title.split('—')[0]?.trim();
+  if (!peca || peca.toUpperCase().includes('NO EXCUSE')) return MENSAGEM_PADRAO;
+
+  return `Oi! Estou vendo a ${peca} no site e queria tirar uma dúvida.`;
+}
 
 /**
  * Atalho de WhatsApp fixo na tela.
@@ -18,6 +38,10 @@ const MENSAGEM = 'Oi! Vim pelo site da NO EXCUSE e queria tirar uma dúvida.';
  */
 export function WhatsappButton({ phone }: { phone?: string | null }) {
   const [bannerAberto, setBannerAberto] = useState(false);
+  // O titulo da pagina so existe no navegador, entao a mensagem e montada
+  // depois da montagem — e refeita a cada troca de rota.
+  const [mensagem, setMensagem] = useState(MENSAGEM_PADRAO);
+  const caminho = usePathname();
 
   useEffect(() => {
     const sync = () => setBannerAberto(getConsent() === null);
@@ -26,12 +50,16 @@ export function WhatsappButton({ phone }: { phone?: string | null }) {
     return () => window.removeEventListener(CONSENT_EVENT, sync);
   }, []);
 
+  useEffect(() => {
+    setMensagem(mensagemDaPagina(caminho));
+  }, [caminho]);
+
   const digits = phone?.replace(/\D/g, '');
   if (!digits) return null;
 
   return (
     <a
-      href={`https://wa.me/${digits}?text=${encodeURIComponent(MENSAGEM)}`}
+      href={`https://wa.me/${digits}?text=${encodeURIComponent(mensagem)}`}
       target="_blank"
       rel="noreferrer"
       aria-label="Falar com a gente no WhatsApp"

@@ -1,11 +1,28 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { Public } from '../auth/public.decorator';
 import { TestimonialsService } from './testimonials.service';
-import { CreateTestimonialDto, UpdateTestimonialDto } from './dto/testimonial.dto';
+import {
+  CreateTestimonialDto,
+  SubmitTestimonialDto,
+  UpdateTestimonialDto,
+} from './dto/testimonial.dto';
 
 @Controller('testimonials')
 export class TestimonialsController {
   constructor(private readonly testimonialsService: TestimonialsService) {}
+
+  /**
+   * A cliente avaliando a loja, pelo link publico.
+   *
+   * Aberto de proposito: avaliacao da LOJA e sobre atendimento, entrega e
+   * embalagem, e quem tem o que dizer sobre isso nao e so quem tem pedido
+   * aberto no sistema. Nada entra no ar sozinho - a lojista aprova antes.
+   */
+  @Public()
+  @Post('avaliar')
+  submit(@Body() dto: SubmitTestimonialDto) {
+    return this.testimonialsService.submit(dto);
+  }
 
   @Public()
   @Get()

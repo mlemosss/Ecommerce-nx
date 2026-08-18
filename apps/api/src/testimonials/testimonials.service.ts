@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTestimonialDto, UpdateTestimonialDto } from './dto/testimonial.dto';
+import {
+  CreateTestimonialDto,
+  SubmitTestimonialDto,
+  UpdateTestimonialDto,
+} from './dto/testimonial.dto';
 
 @Injectable()
 export class TestimonialsService {
@@ -27,6 +31,44 @@ export class TestimonialsService {
 
   create(dto: CreateTestimonialDto) {
     return this.prisma.testimonial.create({ data: dto });
+  }
+
+  /**
+   * Avaliação da loja mandada pela própria cliente, pelo link público.
+   *
+   * Diferente da avaliação de produto, que exige o token de um pedido: esta é
+   * sobre a experiência de comprar aqui — atendimento, entrega, embalagem — e
+   * quem tem o que dizer sobre isso não é só quem tem um pedido aberto no
+   * sistema. Por isso o link é aberto, e por isso nada entra no ar sozinho.
+   *
+   * `active: false` sempre. A lojista aprova em Depoimentos antes de aparecer
+   * na home. É a única defesa que importa: link público sem aprovação é mural
+   * de recados da internet.
+   */
+  async submit(dto: SubmitTestimonialDto) {
+    // Campo isca preenchido: só robô faz isso. Responde como se tivesse dado
+    // certo — dizer "recusado" ensinaria a contornar.
+    if (dto.website?.trim()) {
+      return { success: true };
+    }
+
+    // Texto com link é spam em 100% dos casos aqui: ninguém avalia legging
+    // colando URL. Vale a mesma resposta silenciosa.
+    if (/https?:\/\/|www\.|\.com|\.net|\.ru/i.test(dto.quote)) {
+      return { success: true };
+    }
+
+    await this.prisma.testimonial.create({
+      data: {
+        customerName: dto.customerName.trim(),
+        quote: dto.quote.trim(),
+        rating: dto.rating,
+        photoUrl: dto.photoUrl?.trim() || null,
+        active: false,
+      },
+    });
+
+    return { success: true };
   }
 
   async update(id: string, dto: UpdateTestimonialDto) {
