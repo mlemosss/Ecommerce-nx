@@ -405,6 +405,37 @@ export async function submitReviewLink(
   }
 }
 
+/**
+ * Avaliação da loja, mandada pelo link público — sem pedido e sem login.
+ *
+ * Existe porque as primeiras clientes compraram antes de o site existir: elas
+ * não têm pedido no sistema, e são justamente quem tem o que dizer. O servidor
+ * grava sempre como pendente; a lojista aprova em Depoimentos.
+ */
+export async function submitStoreReview(data: {
+  customerName?: string;
+  anonima?: boolean;
+  email: string;
+  rating: number;
+  quote: string;
+  photoUrl?: string;
+  website?: string;
+}): Promise<{ ok: true } | { ok: false; erro: string }> {
+  try {
+    const res = await fetch(`${API_URL}/testimonials/avaliar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) return { ok: true };
+    const body = await res.json().catch(() => ({}));
+    const message = Array.isArray(body?.message) ? body.message[0] : body?.message;
+    return { ok: false, erro: message || 'Não foi possível enviar agora. Tente de novo.' };
+  } catch {
+    return { ok: false, erro: 'Não foi possível enviar agora. Tente de novo.' };
+  }
+}
+
 export interface OrderPayment {
   id: string;
   orderNumber: string;

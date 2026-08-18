@@ -32,7 +32,12 @@ interface CustomerAuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   toggleFavorite: (productId: string) => Promise<void>;
-  submitReview: (productId: string, rating: number, comment: string) => Promise<void>;
+  submitReview: (
+    productId: string,
+    rating: number,
+    comment: string,
+    photoUrl?: string
+  ) => Promise<void>;
 }
 
 const CustomerAuthContext = createContext<CustomerAuthContextValue | undefined>(undefined);
@@ -164,13 +169,13 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
   );
 
   const submitReview = useCallback(
-    async (productId: string, rating: number, comment: string) => {
+    async (productId: string, rating: number, comment: string, photoUrl?: string) => {
       if (!token) {
         throw new Error('Faça login para avaliar produtos.');
       }
       await request('/reviews', token, {
         method: 'POST',
-        body: JSON.stringify({ productId, rating, comment }),
+        body: JSON.stringify({ productId, rating, comment, photoUrl: photoUrl || undefined }),
       });
     },
     [token]

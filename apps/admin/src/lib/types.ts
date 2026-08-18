@@ -252,6 +252,8 @@ export interface ProductReview {
   comment: string;
   approved: boolean;
   createdAt: string;
+  /** Foto da cliente usando a peça, quando ela mandou. */
+  photoUrl: string | null;
 }
 
 export type QuoteStatus = 'aberto' | 'aceito' | 'recusado';

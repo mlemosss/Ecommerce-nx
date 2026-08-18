@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useCustomerAuth } from '../lib/customer-auth-context';
+import { comprimirImagem } from '../lib/comprimir-imagem';
 import type { ProductReview } from '../lib/api';
 
 function Stars({ rating }: { rating: number }) {
@@ -30,19 +31,32 @@ export function ProductReviews({
   const [showForm, setShowForm] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
+
+  async function escolherFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError('');
+    try {
+      setPhotoUrl(await comprimirImagem(file));
+    } catch {
+      setError('Não consegui ler essa imagem. Tente outra.');
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setSubmitting(true);
     try {
-      await submitReview(productId, rating, comment);
+      await submitReview(productId, rating, comment, photoUrl || undefined);
       setSent(true);
       setShowForm(false);
       setComment('');
+      setPhotoUrl('');
       setRating(5);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível enviar sua avaliação.');
@@ -113,6 +127,37 @@ export function ProductReviews({
             rows={3}
             className="input-field"
           />
+
+          {/* Foto usando a peça. É o que mais decide compra em moda: quem está
+              em dúvida no tamanho quer ver a roupa num corpo parecido com o
+              dela, não em foto de estúdio. A imagem é reduzida no navegador —
+              foto de celular sai com 4 a 8 MB e travaria o envio. */}
+          <div>
+            <label className="mb-1 block text-sm font-semibold">Foto usando (opcional)</label>
+            {photoUrl ? (
+              <div className="flex items-start gap-3">
+                <div className="relative h-24 w-20 shrink-0 overflow-hidden border border-line">
+                  <Image src={photoUrl} alt="Sua foto" fill className="object-cover" unoptimized />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPhotoUrl('')}
+                  className="text-sm underline underline-offset-4 hover:no-underline"
+                >
+                  Trocar foto
+                </button>
+              </div>
+            ) : (
+              <label className="inline-flex cursor-pointer items-center gap-2 border border-ink/20 px-4 py-3 text-sm transition hover:border-ink">
+                <input type="file" accept="image/*" onChange={escolherFoto} className="sr-only" />
+                Escolher foto
+              </label>
+            )}
+            <p className="mt-2 text-xs text-ink/45">
+              A foto aparece junto da sua avaliação nesta página. Mande só se quiser.
+            </p>
+          </div>
+
           <button type="submit" disabled={submitting} className="btn-primary w-full">
             {submitting ? 'Enviando...' : 'Enviar avaliação'}
           </button>

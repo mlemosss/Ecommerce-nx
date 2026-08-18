@@ -366,6 +366,10 @@ model StoreSettings {
 model Testimonial {
   id           String   @id @default(cuid())
   customerName String
+  // E-mail de quem avaliou. Nunca aparece no site: existe para a loja poder
+  // agradecer, ou procurar quem nao gostou antes que a nota vire reclamacao
+  // publica. Por isso a listagem publica seleciona campos um a um.
+  email        String?
   photoUrl     String?
   quote        String
   rating       Int      @default(5)
