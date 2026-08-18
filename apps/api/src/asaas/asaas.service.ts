@@ -62,6 +62,15 @@ interface AsaasPayment {
   status: string;
   invoiceUrl: string;
   bankSlipUrl?: string;
+  /**
+   * Id do parcelamento, quando a cobranca faz parte de um.
+   *
+   * Compra em 2x ou 3x no cartao nao vira uma cobranca: vira um parcelamento
+   * com uma cobranca por parcela. O Asaas recusa estornar uma delas sozinha —
+   * "Nao e possivel estornar individualmente esta cobranca" — e exige estornar
+   * o parcelamento inteiro.
+   */
+  installment?: string | null;
 }
 
 export interface AsaasPixQrCode {
@@ -173,5 +182,21 @@ export class AsaasService {
       method: 'POST',
       body: JSON.stringify(description ? { description } : {}),
     });
+  }
+
+  getPayment(paymentId: string): Promise<AsaasPayment> {
+    return this.request<AsaasPayment>(`/payments/${paymentId}`);
+  }
+
+  /**
+   * Estorna o parcelamento inteiro.
+   *
+   * Compra em 2x ou 3x no cartao vira um parcelamento com uma cobranca por
+   * parcela, e o Asaas se recusa a estornar uma delas isolada. Devolver "a
+   * primeira parcela" tambem nao seria o que a cliente quer: ela quer o
+   * dinheiro de volta, e o dinheiro e a compra toda.
+   */
+  refundInstallment(installmentId: string): Promise<unknown> {
+    return this.request(`/installments/${installmentId}/refund`, { method: 'POST' });
   }
 }

@@ -812,10 +812,20 @@ export class OrdersService {
       );
     }
 
-    await this.asaas.refundPayment(
-      order.asaasPaymentId,
-      `Estorno do pedido ${order.orderNumber} — NO EXCUSE`
-    );
+    // Parcelado no cartão é um parcelamento com uma cobrança por parcela, e o
+    // Asaas recusa estornar uma delas sozinha. Descobrir isso antes evita a
+    // mensagem "Não é possível estornar individualmente esta cobrança", que não
+    // diz o que fazer a seguir.
+    const cobranca = await this.asaas.getPayment(order.asaasPaymentId);
+
+    if (cobranca.installment) {
+      await this.asaas.refundInstallment(cobranca.installment);
+    } else {
+      await this.asaas.refundPayment(
+        order.asaasPaymentId,
+        `Estorno do pedido ${order.orderNumber} — NO EXCUSE`
+      );
+    }
 
     // Só depois do dinheiro devolvido: a peça volta ao estoque e o uso do
     // cupom é liberado, pelos mesmos helpers do webhook.
