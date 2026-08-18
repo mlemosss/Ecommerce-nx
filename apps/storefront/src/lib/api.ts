@@ -200,6 +200,8 @@ export interface CreateOrderInput {
   city: string;
   neighborhood?: string;
   state?: string;
+  /** Qual transportadora ela escolheu — a etiqueta tem que sair pela mesma. */
+  shippingServiceId?: string;
   street: string;
   number: string;
   complement?: string;

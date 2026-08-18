@@ -68,6 +68,9 @@ export default function CheckoutPage() {
   const [city, setCity] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [state, setState] = useState('');
+  const [cepStatus, setCepStatus] = useState<
+    'parado' | 'incompleto' | 'buscando' | 'encontrado' | 'nao-encontrado' | 'indisponivel'
+  >('parado');
   const [street, setStreet] = useState('');
   const [number, setNumber] = useState('');
   const [complement, setComplement] = useState('');
@@ -283,11 +286,32 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zipCode, subtotal, items.length, freeShipping]);
 
-  // Preenche endereço automaticamente pelo CEP (ViaCEP), como as boas lojas fazem.
+  /**
+   * Busca o endereço pelo CEP assim que os oito dígitos aparecem.
+   *
+   * Não é conveniência: bairro e UF são obrigatórios na etiqueta dos Correios,
+   * e o primeiro pedido de verdade chegou sem os dois. Deixar a cliente digitar
+   * é como o endereço erra — ela abrevia o bairro, troca a UF, e o pacote volta
+   * duas semanas depois.
+   *
+   * Cidade, UF e bairro vêm do CEP e são sobrescritos: sobre eles o CEP é a
+   * autoridade, e um CEP novo é um endereço novo. A rua respeita o que já foi
+   * digitado, porque CEP de cidade pequena não traz logradouro e o que a pessoa
+   * escreveu é a única informação que existe.
+   *
+   * O estado da busca aparece na tela. Silêncio depois de digitar o CEP é o que
+   * faz a pessoa achar que o site travou.
+   */
   useEffect(() => {
     const digits = zipCode.replace(/\D/g, '');
-    if (digits.length !== 8) return;
+    if (digits.length !== 8) {
+      setCepStatus(digits.length === 0 ? 'parado' : 'incompleto');
+      return;
+    }
+
     let cancelled = false;
+    setCepStatus('buscando');
+
     fetch(`https://viacep.com.br/ws/${digits}/json/`)
       .then((r) => (r.ok ? r.json() : null))
       .then(
@@ -300,18 +324,24 @@ export default function CheckoutPage() {
             erro?: boolean;
           } | null
         ) => {
-        if (cancelled || !data || data.erro) return;
-        if (data.localidade) setCity(data.localidade);
-        // Bairro e UF entram na etiqueta dos Correios. O CEP resolve os dois na
-        // maioria dos casos; cidade de CEP único devolve vazio, e aí quem
-        // preenche é a cliente — por isso o campo fica visível.
-        if (data.uf) setState(data.uf);
-        if (data.bairro) setNeighborhood((prev) => prev || data.bairro || '');
-        if (data.logradouro) setStreet((prev) => prev || data.logradouro || '');
-      })
+          if (cancelled) return;
+          if (!data || data.erro) {
+            setCepStatus('nao-encontrado');
+            return;
+          }
+          if (data.localidade) setCity(data.localidade);
+          if (data.uf) setState(data.uf);
+          if (data.bairro) setNeighborhood(data.bairro);
+          if (data.logradouro) setStreet((prev) => prev || data.logradouro || '');
+          setCepStatus('encontrado');
+        }
+      )
       .catch(() => {
-        // sem CEP válido: o cliente digita o endereço manualmente.
+        // ViaCEP fora do ar não pode travar a compra: a pessoa digita o
+        // endereço na mão e segue.
+        if (!cancelled) setCepStatus('indisponivel');
       });
+
     return () => {
       cancelled = true;
     };
@@ -326,6 +356,37 @@ export default function CheckoutPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+
+    /**
+     * CEP que não existe não passa daqui.
+     *
+     * Antes o pedido era aceito e o problema só aparecia na hora de postar,
+     * dias depois — com a peça separada, o dinheiro cobrado e ninguém para
+     * receber. Um CEP errado descoberto agora custa dez segundos.
+     *
+     * `indisponivel` passa: ali quem falhou foi a consulta, não o CEP dela, e
+     * derrubar a venda por causa de um serviço externo fora do ar seria trocar
+     * um problema raro por um pior.
+     */
+    if (!pickup) {
+      const cepDigits = zipCode.replace(/\D/g, '');
+      if (cepDigits.length !== 8) {
+        setError('O CEP tem oito dígitos. Confira o que você digitou.');
+        return;
+      }
+      if (cepStatus === 'nao-encontrado') {
+        setError('Esse CEP não existe nos Correios. Confira o número antes de continuar.');
+        return;
+      }
+      if (cepStatus === 'buscando') {
+        setError('Só um instante, estou conferindo o CEP.');
+        return;
+      }
+      if (!neighborhood.trim() || !state.trim()) {
+        setError('Preencha o bairro e o estado — sem eles a transportadora não entrega.');
+        return;
+      }
+    }
 
     if (payment === 'cartao') {
       const digits = cardNumber.replace(/\D/g, '');
@@ -358,6 +419,7 @@ export default function CheckoutPage() {
         city,
         neighborhood,
         state,
+        shippingServiceId: selectedShipping?.id,
         street,
         number,
         complement: complement || undefined,
@@ -526,13 +588,34 @@ export default function CheckoutPage() {
           <fieldset className="border border-line p-6 sm:p-7">
             <legend className="px-2 text-[11px] font-bold uppercase tracking-[0.18em]">Endereço de entrega</legend>
             <div className="grid gap-4 sm:grid-cols-2">
-              <input
-                required
-                placeholder="CEP"
-                value={zipCode}
-                onChange={(e) => setZipCode(e.target.value)}
-                className="input-field"
-              />
+              <div>
+                <input
+                  required
+                  inputMode="numeric"
+                  placeholder="CEP"
+                  value={zipCode}
+                  onChange={(e) => setZipCode(e.target.value)}
+                  className="input-field w-full"
+                />
+                {cepStatus === 'buscando' && (
+                  <span className="mt-1 block text-xs text-ink/50">Buscando endereço...</span>
+                )}
+                {cepStatus === 'encontrado' && (
+                  <span className="mt-1 block text-xs text-ink/50">
+                    Endereço preenchido. Confira antes de continuar.
+                  </span>
+                )}
+                {cepStatus === 'nao-encontrado' && (
+                  <span className="mt-1 block text-xs text-red-600">
+                    CEP não encontrado. Confira o número ou preencha o endereço à mão.
+                  </span>
+                )}
+                {cepStatus === 'indisponivel' && (
+                  <span className="mt-1 block text-xs text-ink/50">
+                    Não consegui buscar agora — preencha o endereço à mão.
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-[1fr,5rem] gap-2">
                 <input
                   required

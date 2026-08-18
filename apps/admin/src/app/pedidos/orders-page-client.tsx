@@ -55,6 +55,8 @@ export function OrdersPageClient() {
   const [error, setError] = useState('');
   // Rastreio digitado por pedido, antes de salvar.
   const [tracking, setTracking] = useState<Record<string, string>>({});
+  const [emitindo, setEmitindo] = useState<string | null>(null);
+  const [erroEtiqueta, setErroEtiqueta] = useState<Record<string, string>>({});
 
   function linkAvaliacao(order: Order): string {
     return `${lojaUrl}/avaliar/${order.reviewToken}`;
@@ -161,6 +163,40 @@ export function OrdersPageClient() {
 
     navigator.clipboard?.writeText(linhas.join('\n'));
     setCopiado(order.id);
+  }
+
+  /**
+   * Compra a etiqueta no Melhor Envio. Gasta o saldo da carteira.
+   *
+   * Confirmação obrigatória, com o valor do frete na frente: é a única ação do
+   * painel que tira dinheiro da conta, e um clique sem querer aqui vira um
+   * pagamento sem volta. O servidor grava o envio antes de pagar, então nem
+   * clique duplo nem recarregar a página compram duas.
+   */
+  async function gerarEtiqueta(order: Order) {
+    const confirmado = window.confirm(
+      [
+        `Comprar a etiqueta do pedido ${order.orderNumber}?`,
+        '',
+        'O valor sai do saldo da sua carteira no Melhor Envio.',
+        `Frete cobrado da cliente: ${formatPrice(order.shipping)}`,
+      ].join('\n')
+    );
+    if (!confirmado) return;
+
+    setEmitindo(order.id);
+    setErroEtiqueta((prev) => ({ ...prev, [order.id]: '' }));
+    try {
+      await api.post(`/shipping/etiqueta/${order.id}`, {});
+      setReloadKey((k) => k + 1);
+    } catch (err) {
+      setErroEtiqueta((prev) => ({
+        ...prev,
+        [order.id]: err instanceof Error ? err.message : 'Não consegui emitir agora.',
+      }));
+    } finally {
+      setEmitindo(null);
+    }
   }
 
   async function updateStatus(order: Order, status: OrderStatus, trackingCode?: string) {
@@ -338,13 +374,37 @@ export function OrdersPageClient() {
                               dos Correios antes de emitir a etiqueta.
                             </p>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => copiarParaEtiqueta(order)}
-                            className="mt-2 rounded-lg bg-black/10 px-3 py-1.5 text-xs font-semibold text-black/70"
-                          >
-                            {copiado === order.id ? 'Copiado!' : 'Copiar dados de envio'}
-                          </button>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {order.shipmentLabelUrl ? (
+                              <a
+                                href={order.shipmentLabelUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white"
+                              >
+                                Abrir etiqueta (PDF)
+                              </a>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => gerarEtiqueta(order)}
+                                disabled={emitindo === order.id || order.status !== 'pago'}
+                                className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+                              >
+                                {emitindo === order.id ? 'Emitindo...' : 'Gerar etiqueta'}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => copiarParaEtiqueta(order)}
+                              className="rounded-lg bg-black/10 px-3 py-1.5 text-xs font-semibold text-black/70"
+                            >
+                              {copiado === order.id ? 'Copiado!' : 'Copiar dados de envio'}
+                            </button>
+                          </div>
+                          {erroEtiqueta[order.id] && (
+                            <p className="mt-1 text-xs text-red-600">{erroEtiqueta[order.id]}</p>
+                          )}
                         </>
                       )}
                     </div>

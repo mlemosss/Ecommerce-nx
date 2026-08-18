@@ -99,6 +99,11 @@ export class CreateOrderDto {
   @IsString()
   neighborhood?: string;
 
+  /** Servico de frete escolhido, para a etiqueta sair pela mesma transportadora. */
+  @IsOptional()
+  @IsString()
+  shippingServiceId?: string;
+
   @IsOptional()
   @IsString()
   state?: string;

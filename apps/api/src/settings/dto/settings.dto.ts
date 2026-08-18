@@ -158,6 +158,34 @@ export class UpdateSettingsDto {
   @IsString()
   shippingOriginZip?: string;
 
+  /**
+   * Endereco completo de quem posta. O CEP sozinho cota o frete; a etiqueta
+   * exige rua, numero, bairro, cidade e UF do remetente.
+   */
+  @IsOptional()
+  @IsString()
+  shippingOriginStreet?: string;
+
+  @IsOptional()
+  @IsString()
+  shippingOriginNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  shippingOriginComplement?: string;
+
+  @IsOptional()
+  @IsString()
+  shippingOriginDistrict?: string;
+
+  @IsOptional()
+  @IsString()
+  shippingOriginCity?: string;
+
+  @IsOptional()
+  @IsString()
+  shippingOriginState?: string;
+
   @IsOptional()
   @IsInt()
   @Min(1)

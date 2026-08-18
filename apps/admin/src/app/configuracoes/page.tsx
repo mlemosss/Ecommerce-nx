@@ -51,6 +51,12 @@ export default function SettingsPage() {
         aboutHeadline: settings.aboutHeadline || undefined,
         aboutBody: settings.aboutBody || undefined,
         shippingOriginZip: settings.shippingOriginZip || undefined,
+        shippingOriginStreet: settings.shippingOriginStreet || undefined,
+        shippingOriginNumber: settings.shippingOriginNumber || undefined,
+        shippingOriginComplement: settings.shippingOriginComplement || undefined,
+        shippingOriginDistrict: settings.shippingOriginDistrict || undefined,
+        shippingOriginCity: settings.shippingOriginCity || undefined,
+        shippingOriginState: settings.shippingOriginState || undefined,
         packageHeightCm: settings.packageHeightCm,
         packageWidthCm: settings.packageWidthCm,
         packageLengthCm: settings.packageLengthCm,
@@ -196,6 +202,59 @@ export default function SettingsPage() {
             <p className="mt-1 text-xs text-black/60">
               É daqui que a cotação do Melhor Envio é calculada. Se estiver errado, o cliente paga um
               frete diferente do que você vai pagar na etiqueta.
+            </p>
+          </div>
+
+          {/* O CEP sozinho cota o frete, mas não emite etiqueta: os Correios
+              querem o endereço inteiro de quem posta. Sem isso preenchido, o
+              botão "Gerar etiqueta" no pedido avisa e não tenta. */}
+          <div>
+            <label className="mb-1 block text-sm font-semibold">
+              Endereço de quem posta (para a etiqueta)
+            </label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <input
+                value={settings.shippingOriginStreet ?? ''}
+                onChange={(e) => update('shippingOriginStreet', e.target.value)}
+                placeholder="Rua"
+                className="input-field sm:col-span-2"
+              />
+              <input
+                value={settings.shippingOriginNumber ?? ''}
+                onChange={(e) => update('shippingOriginNumber', e.target.value)}
+                placeholder="Número"
+                className="input-field"
+              />
+              <input
+                value={settings.shippingOriginComplement ?? ''}
+                onChange={(e) => update('shippingOriginComplement', e.target.value)}
+                placeholder="Complemento (opcional)"
+                className="input-field"
+              />
+              <input
+                value={settings.shippingOriginDistrict ?? ''}
+                onChange={(e) => update('shippingOriginDistrict', e.target.value)}
+                placeholder="Bairro"
+                className="input-field"
+              />
+              <div className="grid grid-cols-[1fr,5rem] gap-2">
+                <input
+                  value={settings.shippingOriginCity ?? ''}
+                  onChange={(e) => update('shippingOriginCity', e.target.value)}
+                  placeholder="Cidade"
+                  className="input-field"
+                />
+                <input
+                  value={settings.shippingOriginState ?? ''}
+                  onChange={(e) => update('shippingOriginState', e.target.value.toUpperCase())}
+                  placeholder="UF"
+                  maxLength={2}
+                  className="input-field uppercase"
+                />
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-black/60">
+              É o remetente impresso na etiqueta. Sem ele completo, a emissão automática não sai.
             </p>
           </div>
 

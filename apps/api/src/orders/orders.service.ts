@@ -547,6 +547,7 @@ export class OrdersService {
           // dia da compra, e o cadastro muda quando a pessoa se muda.
           neighborhood: dto.neighborhood,
           state: dto.state,
+          shippingServiceId: dto.shippingServiceId,
           street: dto.street,
           number: dto.number,
           complement: dto.complement,

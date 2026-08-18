@@ -175,6 +175,10 @@ export interface Order {
   asaasInvoiceUrl: string | null;
   shippedAt: string | null;
   trackingCode: string | null;
+  /** Envio criado no Melhor Envio, e o PDF depois de comprado. */
+  shipmentId: string | null;
+  shipmentLabelUrl: string | null;
+  shippingServiceId: string | null;
   /** Token do link de avaliação: /avaliar/&lt;token&gt;. Sem senha, por pedido. */
   reviewToken: string | null;
   reviewRequestSentAt: string | null;
@@ -209,6 +213,12 @@ export interface StoreSettings {
   googleAdsConversionLabel: string | null;
   /** CEP de onde a loja despacha; base da cotação do Melhor Envio. */
   shippingOriginZip: string | null;
+  shippingOriginStreet: string | null;
+  shippingOriginNumber: string | null;
+  shippingOriginComplement: string | null;
+  shippingOriginDistrict: string | null;
+  shippingOriginCity: string | null;
+  shippingOriginState: string | null;
   packageHeightCm: number;
   packageWidthCm: number;
   packageLengthCm: number;

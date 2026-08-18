@@ -270,6 +270,16 @@ model Order {
   // descobriria pelo frete zerado, que tambem acontece em compra acima do
   // minimo de frete gratis.
   pickup            Boolean     @default(false)
+  // Servico de frete que a cliente escolheu e pagou (id do Melhor Envio).
+  // Guardado para a etiqueta sair pela mesma transportadora que ela pagou -
+  // comprar outra faz a loja bancar a diferenca sem perceber.
+  shippingServiceId String?
+  // Envio criado no Melhor Envio. Gravado ANTES da compra da etiqueta: se a
+  // resposta se perder no caminho, a proxima tentativa reaproveita este id em
+  // vez de criar um segundo envio e pagar duas vezes.
+  shipmentId        String?
+  // PDF da etiqueta, depois de comprada.
+  shipmentLabelUrl  String?
   paymentMethod     String
   status            String      @default("aguardando_pagamento")
   // Identificadores de clique da Meta, copiados dos cookies no checkout.
@@ -367,6 +377,15 @@ model StoreSettings {
   // Frete: origem e embalagem padrão usadas na cotação do Melhor Envio.
   // Vazio aqui = cai na env MELHOR_ENVIO_FROM_CEP e, por último, no padrão do código.
   shippingOriginZip      String?
+  // Endereco completo do remetente. O CEP sozinho cota o frete, mas nao emite
+  // etiqueta: os Correios querem rua, numero, bairro, cidade e UF de quem
+  // posta. Vazio = o botao de gerar etiqueta avisa e nao tenta.
+  shippingOriginStreet   String?
+  shippingOriginNumber   String?
+  shippingOriginComplement String?
+  shippingOriginDistrict String?
+  shippingOriginCity     String?
+  shippingOriginState    String?
   packageHeightCm        Int      @default(10)
   packageWidthCm         Int      @default(16)
   packageLengthCm        Int      @default(20)
