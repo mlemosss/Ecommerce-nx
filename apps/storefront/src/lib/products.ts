@@ -116,12 +116,19 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
 }
 
 /**
- * A API esta respondendo? Chamada barata, cacheada por 30s, para o aviso de
- * instabilidade saber se aparece.
+ * O banco esta de pe? E o que decide se o aviso de instabilidade aparece.
+ *
+ * `no-store` de proposito: uma resposta guardada diria que esta tudo bem
+ * durante a queda, e diria que caiu depois que voltou — nos dois casos o aviso
+ * mente. Custa pouco porque `/health` roda um `SELECT 1`, que nao le linha
+ * nenhuma; perguntar isso ao catalogo seria repetir em escala menor o erro que
+ * derrubou o banco.
+ *
+ * Erro de rede conta como fora do ar; erro ao interpretar a resposta, nao.
  */
 export async function catalogoOnline(): Promise<boolean> {
   try {
-    const res = await fetch(`${API_URL}/catalog/products`, { next: { revalidate: 30 } });
+    const res = await fetch(`${API_URL}/health`, { cache: 'no-store' });
     return res.ok;
   } catch {
     return false;

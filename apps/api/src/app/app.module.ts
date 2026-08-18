@@ -16,6 +16,7 @@ import { ImportModule } from '../imports/import.module';
 import { CustomerAuthModule } from '../customer-auth/customer-auth.module';
 import { CatalogModule } from '../catalog/catalog.module';
 import { TestimonialsModule } from '../testimonials/testimonials.module';
+import { HealthModule } from '../health/health.module';
 import { ReviewsModule } from '../reviews/reviews.module';
 import { ShopeeModule } from '../shopee/shopee.module';
 import { IntegrationsModule } from '../integrations/integrations.module';
@@ -46,6 +47,7 @@ import { StockAlertsModule } from '../stock-alerts/stock-alerts.module';
     CustomerAuthModule,
     CatalogModule,
     TestimonialsModule,
+    HealthModule,
     ReviewsModule,
     ShopeeModule,
     IntegrationsModule,
