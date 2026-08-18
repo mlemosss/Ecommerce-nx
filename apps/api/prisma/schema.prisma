@@ -27,6 +27,18 @@ model Product {
   price           Float
   compareAtPrice  Float?
   images          String            @default("[]")
+  // Só o hash e a extensão de cada foto, para montar a URL sem arrastar a
+  // foto inteira para fora do banco.
+  //
+  // As fotos moram em `images` como dataURL em base64, e o hash que vai na
+  // URL é calculado sobre a dataURL inteira. Resultado: toda leitura do
+  // catálogo puxava ~3,7 MB de Postgres só para montar dez strings. Em 18
+  // dias isso queimou os 5 GB de transferência do plano e suspendeu o banco.
+  //
+  // NULL quer dizer "ainda não calculado" — diferente de "[]", que é produto
+  // sem foto nenhuma. A diferença importa: sem ela, produto sem foto voltaria
+  // a ser lido por inteiro em toda visita.
+  imageMeta       String?
   active          Boolean           @default(true)
   shopeeItemId    BigInt?
   createdAt       DateTime          @default(now())

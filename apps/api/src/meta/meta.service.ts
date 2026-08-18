@@ -1,6 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildCatalogItems, toCsv, type CatalogItem } from './catalog-item';
+import {
+  buildImageMeta,
+  parseImageMeta,
+  parseImages,
+  urlsFromMeta,
+} from '../products/product-images';
 
 const GRAPH_API_VERSION = 'v21.0';
 const GRAPH_BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
@@ -75,17 +81,53 @@ export class MetaService {
    * imagem, e um lote inteiro voltando com erro não diz qual peça faltou.
    */
   private async collectItems(): Promise<{ items: CatalogItem[]; withoutImage: string[] }> {
+    // Sem `select`, a linha inteira vem — e nesta tabela ela traz as fotos em
+    // base64. O Meta relê este feed de hora em hora, de vários lugares: era a
+    // leitura mais cara e mais frequente do banco. Aqui só a ficha das fotos
+    // atravessa, e as fotos ficam onde estão.
     const products = await this.prisma.product.findMany({
       where: { active: true },
-      include: { variants: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        category: true,
+        description: true,
+        price: true,
+        compareAtPrice: true,
+        imageMeta: true,
+        variants: true,
+      },
       orderBy: { name: 'asc' },
     });
+
+    // Produto que ainda não passou pelo catálogo depois da mudança não tem
+    // ficha. Só esses pagam uma leitura das fotos; o catálogo grava a ficha na
+    // primeira visita e eles somem desta lista.
+    const semFicha = products.filter((p) => p.imageMeta === null).map((p) => p.id);
+    const pendentes = semFicha.length
+      ? await this.prisma.product.findMany({
+          where: { id: { in: semFicha } },
+          select: { id: true, images: true },
+        })
+      : [];
+    const fotosPendentes = new Map(
+      pendentes.map((p) => [p.id, buildImageMeta(parseImages(p.images))])
+    );
 
     const withoutImage: string[] = [];
     const storefrontUrl = this.storefrontUrl();
 
     const items = products.flatMap((product) => {
-      const built = buildCatalogItems(product, storefrontUrl, IMAGE_BASE_URL);
+      const meta = fotosPendentes.get(product.id) ?? parseImageMeta(product.imageMeta) ?? [];
+      // `buildCatalogItems` recebe `images` como JSON de strings e deixa URL
+      // http passar intacta — então entregar as URLs prontas dispensa mudar a
+      // assinatura dele e o teste que cobre a conversão.
+      const built = buildCatalogItems(
+        { ...product, images: JSON.stringify(urlsFromMeta(product.id, meta, IMAGE_BASE_URL)) },
+        storefrontUrl,
+        IMAGE_BASE_URL
+      );
       if (built.length === 0 && product.variants.length > 0) withoutImage.push(product.name);
       return built;
     });

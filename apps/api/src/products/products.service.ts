@@ -7,7 +7,12 @@ import {
   UpdateProductDto,
   UpdateStockDto,
 } from './dto/product.dto';
-import { parseImages, toPublicImageUrls, toStoredImages } from './product-images';
+import {
+  buildImageMeta,
+  parseImages,
+  toPublicImageUrls,
+  toStoredImages,
+} from './product-images';
 
 function slugify(text: string): string {
   return text
@@ -103,6 +108,9 @@ export class ProductsService {
         price: dto.price,
         compareAtPrice: dto.compareAtPrice,
         images: JSON.stringify(dto.images ?? []),
+        // A ficha sai junto com a foto. Gravada aqui, o catálogo nunca precisa
+        // ler a imagem inteira para montar a URL dela.
+        imageMeta: JSON.stringify(buildImageMeta(dto.images ?? [])),
         active: dto.active ?? true,
         variants: {
           create: dto.variants.map((v) => ({
@@ -146,7 +154,12 @@ export class ProductsService {
         ...(dto.costPrice !== undefined ? { costPrice: dto.costPrice } : {}),
         ...(dto.price !== undefined ? { price: dto.price } : {}),
         ...(dto.compareAtPrice !== undefined ? { compareAtPrice: dto.compareAtPrice } : {}),
-        ...(images !== undefined ? { images: JSON.stringify(images) } : {}),
+        ...(images !== undefined
+          ? {
+              images: JSON.stringify(images),
+              imageMeta: JSON.stringify(buildImageMeta(images)),
+            }
+          : {}),
         ...(dto.active !== undefined ? { active: dto.active } : {}),
       },
       include: { variants: true },
@@ -324,6 +337,7 @@ export class ProductsService {
               price: mode(prices),
               costPrice: mode(costs),
               images: '[]',
+              imageMeta: '[]',
               active: true,
               variants: {
                 create: p.variants.map((v) => ({

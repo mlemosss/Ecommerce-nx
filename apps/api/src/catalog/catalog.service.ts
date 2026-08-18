@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { parseImages, toPublicImageUrls } from '../products/product-images';
+import {
+  buildImageMeta,
+  parseImageMeta,
+  parseImages,
+  urlsFromMeta,
+} from '../products/product-images';
 import { effectivePrice } from '../products/pricing';
 
 const NEW_WINDOW_DAYS = 14;
@@ -13,12 +18,10 @@ function toCatalogProduct(product: {
   description: string;
   price: number;
   compareAtPrice: number | null;
-  images: string;
+  images: string[];
   createdAt: Date;
   variants: { id: string; color: string; size: string; stock: number; price: number | null }[];
 }) {
-  const images = toPublicImageUrls(product.id, parseImages(product.images));
-
   const variants = product.variants.map((v) => ({
     // O id da variação vai para o navegador porque é a chave que o catálogo do
     // Meta usa: o `content_ids` dos eventos do Pixel precisa ser exatamente o
@@ -47,7 +50,7 @@ function toCatalogProduct(product: {
     price: minPrice,
     priceRange: minPrice === maxPrice ? null : { min: minPrice, max: maxPrice },
     compareAtPrice: product.compareAtPrice,
-    images,
+    images: product.images,
     colors,
     sizes,
     variants,
@@ -55,25 +58,86 @@ function toCatalogProduct(product: {
   };
 }
 
+/**
+ * Colunas que o catálogo precisa — e `images` não é uma delas.
+ *
+ * Sem este `select`, o Prisma devolve a linha inteira, e nesta tabela a linha
+ * inteira inclui as fotos em base64. Cada leitura do catálogo arrastava ~3,7 MB
+ * de dentro do Postgres para montar dez strings de URL. A resposta que chegava
+ * ao navegador era pequena, então ninguém via — mas a conta de transferência do
+ * banco via, e em 18 dias ela estourou os 5 GB do plano e suspendeu o banco.
+ */
+const CAMPOS_DO_CATALOGO = {
+  id: true,
+  name: true,
+  slug: true,
+  category: true,
+  description: true,
+  price: true,
+  compareAtPrice: true,
+  imageMeta: true,
+  active: true,
+  createdAt: true,
+  variants: { select: { id: true, color: true, size: true, stock: true, price: true } },
+} as const;
+
 @Injectable()
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Calcula a ficha das fotos de quem ainda não tem, uma vez só.
+   *
+   * `imageMeta` nulo é produto que nunca passou por aqui depois da mudança.
+   * Estes — e só estes — pagam uma leitura das fotos, que já sai gravada. Da
+   * segunda visita em diante ninguém mais lê base64 nenhum.
+   */
+  private async fichaDasFotos(ids: string[]): Promise<Map<string, string[]>> {
+    if (ids.length === 0) return new Map();
+
+    const pendentes = await this.prisma.product.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, images: true },
+    });
+
+    const porProduto = new Map<string, string[]>();
+    for (const p of pendentes) {
+      const meta = buildImageMeta(parseImages(p.images));
+      porProduto.set(p.id, urlsFromMeta(p.id, meta));
+      await this.prisma.product.update({
+        where: { id: p.id },
+        data: { imageMeta: JSON.stringify(meta) },
+      });
+    }
+    return porProduto;
+  }
+
+  private async comFotos<T extends { id: string; imageMeta: string | null }>(produtos: T[]) {
+    const semFicha = produtos.filter((p) => p.imageMeta === null).map((p) => p.id);
+    const calculadas = await this.fichaDasFotos(semFicha);
+
+    return produtos.map((p) => ({
+      ...p,
+      images: calculadas.get(p.id) ?? urlsFromMeta(p.id, parseImageMeta(p.imageMeta) ?? []),
+    }));
+  }
+
   async findAll(category?: string) {
     const products = await this.prisma.product.findMany({
       where: { active: true, ...(category ? { category } : {}) },
-      include: { variants: { select: { id: true, color: true, size: true, stock: true, price: true } } },
+      select: CAMPOS_DO_CATALOGO,
       orderBy: { name: 'asc' },
     });
-    return products.map(toCatalogProduct);
+    return (await this.comFotos(products)).map(toCatalogProduct);
   }
 
   async findBySlug(slug: string) {
     const product = await this.prisma.product.findUnique({
       where: { slug },
-      include: { variants: { select: { id: true, color: true, size: true, stock: true, price: true } } },
+      select: CAMPOS_DO_CATALOGO,
     });
     if (!product || !product.active) throw new NotFoundException('Produto não encontrado');
-    return toCatalogProduct(product);
+    const [comFotos] = await this.comFotos([product]);
+    return toCatalogProduct(comFotos);
   }
 }

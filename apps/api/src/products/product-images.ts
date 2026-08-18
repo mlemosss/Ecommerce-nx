@@ -60,6 +60,54 @@ export function toPublicImageUrls(
 }
 
 /**
+ * A ficha de uma foto: o suficiente para montar a URL, e nada do peso dela.
+ *
+ * `h` e a impressao digital do conteudo e `e` a extensao, para as fotos
+ * gravadas em base64. `u` guarda o endereco inteiro das que ja chegaram como
+ * URL externa e passam intactas.
+ */
+export type ImageMeta = { h: string; e: string } | { u: string };
+
+/** Calcula a ficha das fotos. Roda uma vez, na hora de gravar. */
+export function buildImageMeta(images: string[]): ImageMeta[] {
+  return images.map((image) => {
+    const match = DATA_URL.exec(image);
+    if (!match) return { u: image };
+    return {
+      h: fingerprint(image),
+      e: EXTENSIONS[match[1].toLowerCase()] ?? 'jpg',
+    };
+  });
+}
+
+export function parseImageMeta(raw: string | null): ImageMeta[] | null {
+  if (raw === null || raw === undefined) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as ImageMeta[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Monta as URLs a partir da ficha, sem tocar nas fotos.
+ *
+ * E o caminho que o catalogo e o feed usam. O caminho antigo, que le as fotos
+ * inteiras, so sobrou para calcular a ficha de quem ainda nao tem.
+ */
+export function urlsFromMeta(
+  productId: string,
+  meta: ImageMeta[],
+  baseOverride?: string
+): string[] {
+  const base = baseOverride ?? apiBaseUrl();
+  return meta.map((item) =>
+    'u' in item ? item.u : `${base}/images/${productId}/${item.h}.${item.e}`
+  );
+}
+
+/**
  * Caminho inverso: o admin devolve no PATCH as mesmas URLs que recebeu no GET.
  * Cada URL nossa volta a ser o dataURL correspondente já gravado — sem isso,
  * salvar um produto trocaria a foto pela URL dela e apagaria a imagem.
