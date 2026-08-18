@@ -151,6 +151,54 @@ export class ReviewsService {
   }
 
   /**
+   * Todas as avaliações aprovadas, para a página que reúne tudo.
+   *
+   * Espalhadas uma peça por vez, dez avaliações parecem dez lojas com uma
+   * avaliação cada. Juntas, com a média e o total na frente, viram o número
+   * que a pessoa procura antes de comprar de uma marca que não conhece.
+   *
+   * Mesmo cuidado do mural: campo a campo, sem `customerId` nem `orderId`, e
+   * só o primeiro nome.
+   */
+  async publicas() {
+    const aprovadas = await this.prisma.productReview.findMany({
+      where: { approved: true },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      select: {
+        id: true,
+        photoUrl: true,
+        rating: true,
+        comment: true,
+        customerName: true,
+        createdAt: true,
+        orderId: true,
+        product: { select: { name: true, slug: true } },
+      },
+    });
+
+    const soma = aprovadas.reduce((total, r) => total + r.rating, 0);
+
+    return {
+      total: aprovadas.length,
+      media: aprovadas.length ? soma / aprovadas.length : 0,
+      avaliacoes: aprovadas.map((r) => ({
+        id: r.id,
+        photoUrl: r.photoUrl,
+        rating: r.rating,
+        comment: r.comment,
+        customerName: r.customerName.trim().split(/\s+/)[0] ?? '',
+        productName: r.product.name,
+        productSlug: r.product.slug,
+        createdAt: r.createdAt,
+        // Veio pelo link do pedido, então há compra confirmada por trás. É a
+        // diferença entre "alguém escreveu" e "alguém que comprou escreveu".
+        compraVerificada: r.orderId !== null,
+      })),
+    };
+  }
+
+  /**
    * Abre a tela de avaliação a partir do token do pedido.
    *
    * Público: a loja é de compra sem cadastro, então quem comprou não tem senha.

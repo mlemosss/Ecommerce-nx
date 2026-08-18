@@ -116,6 +116,14 @@ export function Footer({ settings }: { settings: StoreSettings }) {
               </Link>
             </li>
             <li>
+              <Link
+                href="/avaliacoes"
+                className="underline-offset-4 transition hover:text-white hover:underline"
+              >
+                Avaliações
+              </Link>
+            </li>
+            <li>
               {/* Aberto a quem comprou antes de o site existir — essas clientes
                   não têm pedido no sistema e são justamente quem tem o que
                   dizer. Nada entra no ar sem aprovação. */}

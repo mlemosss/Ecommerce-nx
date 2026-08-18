@@ -16,7 +16,14 @@ import type { FotoDoMural } from '../lib/api';
  * computador e fica sempre visível no celular, onde hover não existe — cada
  * foto é um link para a peça, então o dedo que toca já está comprando.
  */
-export function MuralDeFotos({ fotos }: { fotos: FotoDoMural[] }) {
+export function MuralDeFotos({
+  fotos,
+  /** Desligado dentro da própria página de avaliações, que já é o destino. */
+  mostrarLinkParaTodas = true,
+}: {
+  fotos: FotoDoMural[];
+  mostrarLinkParaTodas?: boolean;
+}) {
   if (fotos.length === 0) return null;
 
   return (
@@ -26,12 +33,19 @@ export function MuralDeFotos({ fotos }: { fotos: FotoDoMural[] }) {
           <p className="eyebrow text-ink/50">Na vida real</p>
           <h2 className="section-title mt-3">Em quem usa</h2>
         </div>
-        <Link
-          href="/avaliar-loja"
-          className="text-sm font-semibold underline underline-offset-4 hover:no-underline"
-        >
-          Mandar a minha foto
-        </Link>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          {mostrarLinkParaTodas && (
+            <Link href="/avaliacoes" className="font-semibold underline underline-offset-4 hover:no-underline">
+              Confira as avaliações
+            </Link>
+          )}
+          <Link
+            href="/avaliar-loja"
+            className="text-ink/60 underline-offset-4 hover:underline"
+          >
+            Mandar a minha foto
+          </Link>
+        </div>
       </div>
 
       {/* Grade com espaço entre as fotos, e não a malha de 1px do resto do

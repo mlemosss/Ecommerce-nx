@@ -405,6 +405,33 @@ export async function submitReviewLink(
   }
 }
 
+export interface AvaliacaoPublica {
+  id: string;
+  photoUrl: string | null;
+  rating: number;
+  comment: string;
+  customerName: string;
+  productName: string;
+  productSlug: string;
+  createdAt: string;
+  compraVerificada: boolean;
+}
+
+/** Tudo que foi aprovado, com média e total, para a página de avaliações. */
+export async function getAvaliacoesPublicas(): Promise<{
+  total: number;
+  media: number;
+  avaliacoes: AvaliacaoPublica[];
+}> {
+  try {
+    const res = await fetch(`${API_URL}/reviews/publicas`, { next: { revalidate: 60 } });
+    if (!res.ok) return { total: 0, media: 0, avaliacoes: [] };
+    return await res.json();
+  } catch {
+    return { total: 0, media: 0, avaliacoes: [] };
+  }
+}
+
 export interface FotoDoMural {
   id: string;
   photoUrl: string;

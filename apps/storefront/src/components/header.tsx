@@ -21,6 +21,10 @@ const navLinks = [
     .map((c) => ({ href: `/produtos?categoria=${c.value}`, label: c.label })),
   { href: '/sale', label: 'Sale' },
   { href: '/em-breve', label: 'Em breve' },
+  // Marca desconhecida perde venda por desconfiança, não por preço. O caminho
+  // para as opiniões precisa estar no menu, e não escondido no fim da página
+  // de cada peça.
+  { href: '/avaliacoes', label: 'Avaliações' },
   { href: '/quem-somos', label: 'Quem somos' },
 ];
 

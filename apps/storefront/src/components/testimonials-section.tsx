@@ -49,15 +49,20 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
         ))}
       </div>
 
-      {/* Quem lê avaliação é quem mais tende a escrever uma. O convite fica no
-          fim da seção, depois de ela ver que outras escreveram — e não numa
-          página que ninguém procura. */}
-      <p className="mt-8 text-sm text-ink/60">
-        Também já treinou com uma peça nossa?{' '}
-        <Link href="/avaliar-loja" className="font-semibold text-ink underline underline-offset-4">
-          Conte como foi
+      {/* Quem lê avaliação é quem mais tende a escrever uma — e quem quer ler
+          mais precisa de um lugar que reúna tudo. Os dois caminhos ficam no fim
+          da seção, depois de ela ver que outras escreveram. */}
+      <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <Link href="/avaliacoes" className="btn-secondary">
+          Confira as avaliações
         </Link>
-      </p>
+        <Link
+          href="/avaliar-loja"
+          className="text-sm text-ink/60 underline-offset-4 hover:underline"
+        >
+          Também já treinou com uma peça nossa? Conte como foi
+        </Link>
+      </div>
     </section>
   );
 }

@@ -18,6 +18,13 @@ export class ReviewsController {
     return this.reviewsService.findForProduct(productId);
   }
 
+  /** Tudo que foi aprovado, com média e total, para a página de avaliações. */
+  @Public()
+  @Get('publicas')
+  publicas() {
+    return this.reviewsService.publicas();
+  }
+
   /** As fotos aprovadas das clientes, de todas as peças, para o mural. */
   @Public()
   @Get('mural')

@@ -6,7 +6,8 @@ import { NewsletterForm } from '../components/newsletter-form';
 import { SeaBackdrop } from '../components/sea-backdrop';
 import { SaleIntro } from '../components/sale-intro';
 import { TestimonialsSection } from '../components/testimonials-section';
-import { getSettings, getTestimonials } from '../lib/api';
+import { MuralDeFotos } from '../components/mural-de-fotos';
+import { getMural, getSettings, getTestimonials } from '../lib/api';
 import { formatPrice } from '../lib/format';
 import type { Category, Product } from '../lib/types';
 
@@ -36,6 +37,7 @@ export default async function HomePage() {
   const products = await getProducts();
   const settings = await getSettings();
   const testimonials = await getTestimonials();
+  const mural = await getMural();
 
   const featured = products.slice(0, 8);
 
@@ -228,6 +230,12 @@ export default async function HomePage() {
       </section>
 
       <TestimonialsSection testimonials={testimonials} />
+
+      {/* As clientes vestindo as pecas, na home. Depoimento em texto a
+          loja poderia ter escrito; foto de cliente, nao. */}
+      <div className="container-page">
+        <MuralDeFotos fotos={mural} />
+      </div>
 
       {/* ---------------- NEWSLETTER ---------------- */}
       <section className="border-t border-line bg-paper py-20 sm:py-24">
