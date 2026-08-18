@@ -199,6 +199,8 @@ export interface CreateOrderInput {
   items: CreateOrderItemInput[];
   subtotal: number;
   shipping: number;
+  /** Retirada em maos: o servidor zera o frete e a lojista combina a entrega. */
+  pickup?: boolean;
   discount: number;
   couponCode?: string;
   total: number;

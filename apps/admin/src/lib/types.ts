@@ -163,6 +163,8 @@ export interface Order {
   discount: number;
   couponCode: string | null;
   total: number;
+  /** Retirada em maos, combinada por fora. Nao posta. */
+  pickup: boolean;
   paymentMethod: OrderPaymentMethod;
   status: OrderStatus;
   asaasInvoiceUrl: string | null;

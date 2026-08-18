@@ -14,6 +14,8 @@ export interface OrderForEmail {
   total: number;
   subtotal: number;
   shipping: number;
+  /** Retirada em maos: o e-mail nao fala em entrega nem em rastreio. */
+  pickup?: boolean;
   trackingCode?: string | null;
   items: OrderItemLike[];
 }
@@ -133,7 +135,9 @@ export function orderConfirmedTemplate(
     ${itemsTable(order.items)}
     <div style="margin-top:16px;font-size:14px;color:#333;">
       <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>${money(order.subtotal)}</span></div>
-      <div style="display:flex;justify-content:space-between;"><span>Frete</span><span>${money(order.shipping)}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>${
+        order.pickup ? 'Retirada em Higienópolis' : 'Frete'
+      }</span><span>${order.pickup ? 'Grátis' : money(order.shipping)}</span></div>
       <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:8px;"><span>Total</span><span>${money(order.total)}</span></div>
     </div>`;
   return {
@@ -177,7 +181,9 @@ export function orderAwaitingPaymentTemplate(
     ${itemsTable(order.items)}
     <div style="margin-top:16px;font-size:14px;color:#333;">
       <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>${money(order.subtotal)}</span></div>
-      <div style="display:flex;justify-content:space-between;"><span>Frete</span><span>${money(order.shipping)}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>${
+        order.pickup ? 'Retirada em Higienópolis' : 'Frete'
+      }</span><span>${order.pickup ? 'Grátis' : money(order.shipping)}</span></div>
       <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:8px;"><span>Total</span><span>${money(order.total)}</span></div>
     </div>
     <p style="color:#888;font-size:12px;line-height:1.6;margin-top:20px;">
@@ -201,12 +207,18 @@ export function paymentApprovedTemplate(
   const body = `
     <p style="color:#333;font-size:14px;line-height:1.6;">
       Boa, ${firstName(order.customerName)}! O pagamento do pedido <strong>#${order.orderNumber}</strong> foi
-      confirmado e ele já entrou em preparação. Assim que sair pra entrega, avisamos por aqui.
+      confirmado${
+        order.pickup
+          ? ' e já estamos separando as peças. Entramos em contato para combinar dia e horário da retirada, em Higienópolis.'
+          : ' e ele já entrou em preparação. Assim que sair pra entrega, avisamos por aqui.'
+      }
     </p>
     ${itemsTable(order.items)}
     <div style="margin-top:16px;font-size:14px;color:#333;">
       <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>${money(order.subtotal)}</span></div>
-      <div style="display:flex;justify-content:space-between;"><span>Frete</span><span>${money(order.shipping)}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>${
+        order.pickup ? 'Retirada em Higienópolis' : 'Frete'
+      }</span><span>${order.pickup ? 'Grátis' : money(order.shipping)}</span></div>
       <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:8px;"><span>Total pago</span><span>${money(order.total)}</span></div>
     </div>`;
   return {

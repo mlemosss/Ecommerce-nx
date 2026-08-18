@@ -241,6 +241,11 @@ model Order {
   discount          Float       @default(0)
   couponCode        String?
   total             Float
+  // Retirada em maos, em vez de envio. Guardado no pedido porque muda o que
+  // a lojista faz com ele: nao posta, combina a entrega. Sem isso ela so
+  // descobriria pelo frete zerado, que tambem acontece em compra acima do
+  // minimo de frete gratis.
+  pickup            Boolean     @default(false)
   paymentMethod     String
   status            String      @default("aguardando_pagamento")
   // Identificadores de clique da Meta, copiados dos cookies no checkout.

@@ -78,6 +78,8 @@ export default function CheckoutPage() {
 
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedShippingId, setSelectedShippingId] = useState<string | null>(null);
+  // Retirada em maos: exclui transportadora e zera o frete.
+  const [pickup, setPickup] = useState(false);
   const [quotingShipping, setQuotingShipping] = useState(false);
   const [shippingError, setShippingError] = useState('');
   const [showAllShipping, setShowAllShipping] = useState(false);
@@ -163,7 +165,9 @@ export default function CheckoutPage() {
 
   const freeShipping = subtotal >= settings.freeShippingThreshold;
   const selectedShipping = shippingOptions.find((o) => o.id === selectedShippingId) ?? null;
-  const shipping = freeShipping ? 0 : selectedShipping ? selectedShipping.price : settings.shippingFee;
+  // Retirada primeiro: quem busca em maos nao paga frete nem quando a compra
+  // esta abaixo do minimo do frete gratis.
+  const shipping = pickup || freeShipping ? 0 : selectedShipping ? selectedShipping.price : settings.shippingFee;
 
   // Desconto progressivo por quantidade de peças. Não soma com cupom: vale o
   // maior dos dois — a mesma regra que o servidor aplica ao cobrar.
@@ -347,6 +351,7 @@ export default function CheckoutPage() {
         }),
         subtotal,
         shipping,
+        pickup,
         discount,
         couponCode: appliedCode ?? undefined,
         total,
@@ -535,11 +540,41 @@ export default function CheckoutPage() {
               </p>
             ) : (
               <>
+                {/* Retirada em mãos, antes das transportadoras.
+                    Vem primeiro de propósito: é a opção mais barata e a única
+                    que não depende do CEP — quem é de São Paulo decide aqui e
+                    nem precisa esperar a cotação carregar. */}
+                <label
+                  className={`mb-3 flex cursor-pointer items-start gap-3 border-2 p-3 transition ${
+                    pickup ? 'border-ink bg-paper' : 'border-line hover:border-ink/40'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="entrega"
+                    checked={pickup}
+                    onChange={() => {
+                      setPickup(true);
+                      setSelectedShippingId(null);
+                    }}
+                    className="mt-0.5 accent-ink"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold">
+                      Retirar em Higienópolis, São Paulo
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-ink/60">
+                      A gente entra em contato depois da compra para combinar dia e horário.
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-sm font-bold">Grátis</span>
+                </label>
+
                 <div className="flex items-center gap-3">
                   <p className="text-sm text-ink/70">
                     {zipCode.replace(/\D/g, '').length === 8
-                      ? 'Escolha a forma de envio:'
-                      : 'Preencha o CEP acima para calcular o frete.'}
+                      ? 'Ou receba em casa:'
+                      : 'Prefere receber em casa? Preencha o CEP acima.'}
                   </p>
                   {zipCode.replace(/\D/g, '').length === 8 && (
                     <button
@@ -568,7 +603,10 @@ export default function CheckoutPage() {
                           type="radio"
                           name="shipping"
                           checked={selectedShippingId === option.id}
-                          onChange={() => setSelectedShippingId(option.id)}
+                          onChange={() => {
+                            setSelectedShippingId(option.id);
+                            setPickup(false);
+                          }}
                           className="accent-ink"
                         />
                         <span className="min-w-0 flex-1">
@@ -794,8 +832,13 @@ export default function CheckoutPage() {
               <dd>{formatPrice(subtotal)}</dd>
             </div>
             <div className="flex justify-between">
+              {/* Na retirada o resumo diz "Retirada", não "Frete grátis": são
+                  coisas diferentes, e confundir as duas faria a cliente
+                  esperar o carteiro. */}
               <dt className="text-ink/70">
-                Frete{!freeShipping && selectedShipping ? ` · ${selectedShipping.company}` : ''}
+                {pickup
+                  ? 'Retirada em Higienópolis'
+                  : `Frete${!freeShipping && selectedShipping ? ` · ${selectedShipping.company}` : ''}`}
               </dt>
               <dd>{shipping === 0 ? 'Grátis' : formatPrice(shipping)}</dd>
             </div>

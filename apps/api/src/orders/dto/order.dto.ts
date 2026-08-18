@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsIn,
   IsNumber,
   IsOptional,
@@ -56,6 +57,11 @@ export class CreditCardDto {
 }
 
 export class CreateOrderDto {
+  /** Retirada em maos, combinada depois da compra. Zera o frete no servidor. */
+  @IsOptional()
+  @IsBoolean()
+  pickup?: boolean;
+
   /**
    * Identificadores de clique da Meta, lidos dos cookies pelo navegador.
    *

@@ -283,11 +283,26 @@ export function OrdersPageClient() {
                     </div>
                     <div>
                       <p className="font-semibold">Entrega</p>
-                      <p className="text-black/60">
-                        {order.street}, {order.number}
-                        {order.complement ? ` - ${order.complement}` : ''} · {order.city} ·{' '}
-                        {order.zipCode}
-                      </p>
+                      {/* Retirada precisa gritar. O endereço continua aí porque
+                          é o dado fiscal da cliente — mas se a lojista bater o
+                          olho e postar, ela paga um frete que ninguém pediu. */}
+                      {order.pickup ? (
+                        <>
+                          <p className="mt-1 inline-block rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+                            RETIRADA EM HIGIENÓPOLIS — não postar
+                          </p>
+                          <p className="mt-1 text-xs text-black/45">
+                            Combine dia e horário com a cliente. Endereço no cadastro:{' '}
+                            {order.street}, {order.number} · {order.city}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-black/60">
+                          {order.street}, {order.number}
+                          {order.complement ? ` - ${order.complement}` : ''} · {order.city} ·{' '}
+                          {order.zipCode}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <p className="font-semibold">Itens</p>

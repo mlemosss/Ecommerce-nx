@@ -377,6 +377,17 @@ export class OrdersService {
   ): Promise<number> {
     const informed = Math.max(0, dto.shipping ?? 0);
 
+    /**
+     * Retirada não tem frete, e precisa sair antes da cotação.
+     *
+     * Sem esta linha o pedido de retirada seria cobrado: o valor informado é
+     * zero, zero não bate com nenhuma opção da transportadora, e a regra
+     * abaixo aplicaria "a mais barata da cotação" — exatamente a proteção
+     * contra frete forjado, disparando contra a cliente que escolheu buscar a
+     * peça em mãos.
+     */
+    if (dto.pickup) return 0;
+
     const settings = await this.settings.get().catch(() => null);
     if (settings && subtotal >= settings.freeShippingThreshold) return 0;
 
@@ -538,6 +549,7 @@ export class OrdersService {
           couponCode: appliedCoupon,
           total,
           paymentMethod: dto.paymentMethod,
+          pickup: dto.pickup ?? false,
           metaFbp: dto.metaFbp,
           metaFbc: dto.metaFbc,
           items: { create: items },
