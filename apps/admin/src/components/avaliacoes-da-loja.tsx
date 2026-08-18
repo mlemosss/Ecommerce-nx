@@ -30,6 +30,7 @@ interface AvaliacaoDaLoja {
 export function AvaliacoesDaLoja() {
   const [itens, setItens] = useState<AvaliacaoDaLoja[] | null>(null);
   const [erro, setErro] = useState('');
+  const [copiada, setCopiada] = useState('');
 
   function carregar() {
     api
@@ -57,14 +58,40 @@ export function AvaliacoesDaLoja() {
     carregar();
   }
 
-  function agradecer(a: AvaliacaoDaLoja): string {
-    const assunto =
-      a.rating >= 4 ? 'Obrigada pela sua avaliação — NO EXCUSE' : 'Sobre sua avaliação — NO EXCUSE';
-    const corpo =
-      a.rating >= 4
-        ? `Oi!\n\nAcabei de ler sua avaliação e fiquei muito feliz. Obrigada de verdade por ter separado um tempo para escrever — para uma marca do nosso tamanho, isso faz uma diferença enorme.\n\nQualquer coisa que precisar, é só responder este e-mail.\n\nNO EXCUSE`
-        : `Oi!\n\nLi sua avaliação e queria entender melhor o que aconteceu para poder resolver. Me conta o que não foi como você esperava?\n\nObrigada por ter falado com a gente em vez de deixar passar.\n\nNO EXCUSE`;
-    return `mailto:${a.email ?? ''}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+  function assuntoDe(a: AvaliacaoDaLoja): string {
+    return a.rating >= 4
+      ? 'Obrigada pela sua avaliação — NO EXCUSE'
+      : 'Sobre sua avaliação — NO EXCUSE';
+  }
+
+  function corpoDe(a: AvaliacaoDaLoja): string {
+    return a.rating >= 4
+      ? `Oi!\n\nAcabei de ler sua avaliação e fiquei muito feliz. Obrigada de verdade por ter separado um tempo para escrever — para uma marca do nosso tamanho, isso faz uma diferença enorme.\n\nQualquer coisa que precisar, é só responder este e-mail.\n\nNO EXCUSE`
+      : `Oi!\n\nLi sua avaliação e queria entender melhor o que aconteceu para poder resolver. Me conta o que não foi como você esperava?\n\nObrigada por ter falado com a gente em vez de deixar passar.\n\nNO EXCUSE`;
+  }
+
+  /**
+   * Abre a caixa de escrita do Gmail, e não `mailto:`.
+   *
+   * `mailto:` depende de um programa de e-mail instalado e registrado no
+   * Windows — sem isso o clique simplesmente não faz nada, sem erro nenhum,
+   * que foi exatamente o que aconteceu aqui. O contato da loja é Gmail, e a
+   * sessão já está aberta neste navegador: o link web sempre abre.
+   */
+  function linkGmail(a: AvaliacaoDaLoja): string {
+    const params = new URLSearchParams({
+      view: 'cm',
+      fs: '1',
+      to: a.email ?? '',
+      su: assuntoDe(a),
+      body: corpoDe(a),
+    });
+    return `https://mail.google.com/mail/?${params.toString()}`;
+  }
+
+  async function copiarMensagem(a: AvaliacaoDaLoja) {
+    await navigator.clipboard?.writeText(`${a.email ?? ''}\n\n${assuntoDe(a)}\n\n${corpoDe(a)}`);
+    setCopiada(a.id);
   }
 
   const pendentes = itens?.filter((a) => !a.active).length ?? 0;
@@ -138,12 +165,25 @@ export function AvaliacoesDaLoja() {
             </div>
 
             {a.email && (
-              <a
-                href={agradecer(a)}
-                className="mt-3 inline-block rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white"
-              >
-                {a.rating >= 4 ? 'Agradecer por e-mail' : 'Falar com a cliente'}
-              </a>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <a
+                  href={linkGmail(a)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white"
+                >
+                  {a.rating >= 4 ? 'Agradecer no Gmail' : 'Falar com a cliente'}
+                </a>
+                {/* Para quem prefere responder do celular ou de outro e-mail:
+                    copia o endereço e a mensagem inteira de uma vez. */}
+                <button
+                  type="button"
+                  onClick={() => copiarMensagem(a)}
+                  className="rounded-lg bg-black/10 px-3 py-1.5 text-xs font-semibold text-black/60"
+                >
+                  {copiada === a.id ? 'Copiado!' : 'Copiar mensagem'}
+                </button>
+              </div>
             )}
           </div>
         ))}
