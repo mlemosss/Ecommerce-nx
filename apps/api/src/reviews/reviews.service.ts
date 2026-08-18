@@ -121,33 +121,70 @@ export class ReviewsService {
    * campo porque isto é endpoint público: `customerId` e `orderId` ficam fora.
    */
   async mural(limite = 24) {
-    const fotos = await this.prisma.productReview.findMany({
-      where: { approved: true, photoUrl: { not: null } },
-      orderBy: { createdAt: 'desc' },
-      take: Math.min(limite, 60),
-      select: {
-        id: true,
-        photoUrl: true,
-        rating: true,
-        comment: true,
-        customerName: true,
-        createdAt: true,
-        product: { select: { name: true, slug: true } },
-      },
-    });
+    const teto = Math.min(limite, 60);
 
-    return fotos.map((f) => ({
-      id: f.id,
-      photoUrl: f.photoUrl as string,
-      rating: f.rating,
-      comment: f.comment,
-      // Só o primeiro nome. É como se assina uma foto entre conhecidas, e
-      // evita que o mural vire uma lista de nomes completos de clientes.
-      customerName: f.customerName.trim().split(/\s+/)[0] ?? '',
-      productName: f.product.name,
-      productSlug: f.product.slug,
-      createdAt: f.createdAt,
-    }));
+    // Duas origens, uma parede. A avaliação de peça sabe qual peça é e leva
+    // para ela; a avaliação da loja não tem produto atrás — vem de quem
+    // comprou antes do site existir — e a foto dela vale igual. Deixar as duas
+    // em muros separados era esconder metade das fotos que a loja tem.
+    const [dePecas, daLoja] = await Promise.all([
+      this.prisma.productReview.findMany({
+        where: { approved: true, photoUrl: { not: null } },
+        orderBy: { createdAt: 'desc' },
+        take: teto,
+        select: {
+          id: true,
+          photoUrl: true,
+          rating: true,
+          comment: true,
+          customerName: true,
+          createdAt: true,
+          product: { select: { name: true, slug: true } },
+        },
+      }),
+      this.prisma.testimonial.findMany({
+        where: { active: true, photoUrl: { not: null } },
+        orderBy: { createdAt: 'desc' },
+        take: teto,
+        select: {
+          id: true,
+          photoUrl: true,
+          rating: true,
+          quote: true,
+          customerName: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+
+    // Só o primeiro nome. É como se assina uma foto entre conhecidas, e evita
+    // que o mural vire uma lista de nomes completos de clientes.
+    const primeiroNome = (nome: string) => nome.trim().split(/\s+/)[0] ?? '';
+
+    return [
+      ...dePecas.map((f) => ({
+        id: f.id,
+        photoUrl: f.photoUrl as string,
+        rating: f.rating,
+        comment: f.comment,
+        customerName: primeiroNome(f.customerName),
+        productName: f.product.name as string | null,
+        productSlug: f.product.slug as string | null,
+        createdAt: f.createdAt,
+      })),
+      ...daLoja.map((t) => ({
+        id: t.id,
+        photoUrl: t.photoUrl as string,
+        rating: t.rating,
+        comment: t.quote,
+        customerName: primeiroNome(t.customerName),
+        productName: null,
+        productSlug: null,
+        createdAt: t.createdAt,
+      })),
+    ]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, teto);
   }
 
   /**

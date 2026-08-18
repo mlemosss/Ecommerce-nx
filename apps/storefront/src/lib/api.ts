@@ -438,8 +438,9 @@ export interface FotoDoMural {
   rating: number;
   comment: string;
   customerName: string;
-  productName: string;
-  productSlug: string;
+  /** Nulo quando a foto veio de uma avaliação da loja, sem peça atrás. */
+  productName: string | null;
+  productSlug: string | null;
   createdAt: string;
 }
 

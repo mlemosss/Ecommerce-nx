@@ -46,6 +46,13 @@ export default async function AvaliacoesPage() {
 
   const totalGeral = total + depoimentos.length;
 
+  // A média tem que cobrir as mesmas avaliações que o total ao lado dela.
+  // Somando só as de peça, o número grande diria uma coisa e a contagem outra
+  // — e é justamente esse par que a pessoa lê antes de decidir se confia.
+  const mediaGeral = totalGeral
+    ? (media * total + depoimentos.reduce((soma, d) => soma + d.rating, 0)) / totalGeral
+    : 0;
+
   return (
     <div className="container-page py-10 sm:py-14">
       <nav className="mb-8 text-[11px] uppercase tracking-[0.14em] text-ink/60">
@@ -62,9 +69,9 @@ export default async function AvaliacoesPage() {
         <div className="mt-8 flex flex-wrap items-end gap-x-8 gap-y-4 border-y border-line py-6">
           <div>
             <p className="text-5xl font-black leading-none tracking-[-0.03em]">
-              {media.toFixed(1).replace('.', ',')}
+              {mediaGeral.toFixed(1).replace('.', ',')}
             </p>
-            <Estrelas nota={media} className="mt-2 block text-sm tracking-[0.15em]" />
+            <Estrelas nota={mediaGeral} className="mt-2 block text-sm tracking-[0.15em]" />
           </div>
           <p className="text-sm leading-relaxed text-ink/70">
             {totalGeral} {totalGeral === 1 ? 'avaliação' : 'avaliações'} de clientes

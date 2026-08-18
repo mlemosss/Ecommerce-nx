@@ -54,16 +54,27 @@ export function MuralDeFotos({
           vira um bloco cinza do tamanho da tela. Aqui o que falta é só branco,
           e o mural funciona com duas fotos ou com quarenta. */}
       <div className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
-        {fotos.map((foto) => (
-          <Link
+        {fotos.map((foto) => {
+          // Foto de avaliação da loja não tem peça atrás, então não tem para
+          // onde levar. Vira quadro em vez de link — clicar e não acontecer
+          // nada é pior do que não parecer clicável.
+          const Quadro = foto.productSlug ? Link : 'div';
+          const props = foto.productSlug ? { href: `/produtos/${foto.productSlug}` } : {};
+
+          return (
+          <Quadro
             key={foto.id}
-            href={`/produtos/${foto.productSlug}`}
+            {...(props as { href: string })}
             className="group relative block aspect-[4/5] overflow-hidden bg-paper"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={foto.photoUrl}
-              alt={`${foto.customerName} usando ${foto.productName}`}
+              alt={
+                foto.productName
+                  ? `${foto.customerName} usando ${foto.productName}`
+                  : `Foto enviada por ${foto.customerName}`
+              }
               loading="lazy"
               className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
             />
@@ -72,9 +83,11 @@ export function MuralDeFotos({
                 Instagram. Não é enfeite: sem ela a pessoa vê um corpo bonito
                 numa roupa preta e não sabe qual das nossas é — e a foto que
                 deveria vender vira só decoração. */}
-            <span className="absolute left-3 top-3 bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-ink">
-              {foto.productName}
-            </span>
+            {foto.productName && (
+              <span className="absolute left-3 top-3 bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-ink">
+                {foto.productName}
+              </span>
+            )}
 
             {/* Véu de baixo para cima: o texto precisa de fundo escuro para ser
                 legível sobre qualquer foto, mas escurecer a imagem inteira
@@ -93,8 +106,9 @@ export function MuralDeFotos({
                 {foto.customerName}
               </p>
             </div>
-          </Link>
-        ))}
+          </Quadro>
+          );
+        })}
       </div>
 
       <p className="mt-6 text-xs leading-relaxed text-ink/50">
