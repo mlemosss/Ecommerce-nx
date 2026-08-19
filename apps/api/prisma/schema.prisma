@@ -490,3 +490,25 @@ model QuoteItem {
 
   @@map("quote_items")
 }
+
+/// Visitas do site, somadas por dia e por pagina.
+///
+/// Contador, e nao registro: uma linha por dia e rota, em vez de uma linha por
+/// visita. Com o trafego de uma loja pequena a diferenca e entre dezenas de
+/// linhas por dia e dezenas de milhares — e foi leitura demais no banco que
+/// derrubou a loja em 18/08/2026.
+///
+/// Nao guarda quem visitou. Nao ha id, cookie, IP nem nada que ligue uma visita
+/// a uma pessoa: e um numero que sobe. `sessoes` conta a primeira visita de
+/// cada aba aberta, que e a aproximacao mais honesta de "quantas pessoas" sem
+/// rastrear ninguem.
+model PageView {
+  id      String   @id @default(cuid())
+  dia     DateTime @db.Date
+  rota    String
+  views   Int      @default(0)
+  sessoes Int      @default(0)
+
+  @@unique([dia, rota])
+  @@map("page_views")
+}

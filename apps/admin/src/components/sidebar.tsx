@@ -13,6 +13,7 @@ interface NavItem {
 
 const items: NavItem[] = [
   { href: '/', label: 'Início', icon: 'M3 11.5 12 4l9 7.5M5 10v10h14V10' },
+  { href: '/metricas', label: 'Métricas', icon: 'M3 3v18h18M7 16V9m5 7V5m5 11v-4' },
   { href: '/pedidos', label: 'Pedidos', icon: 'M3 3h2l.4 2M7 13h10l3-8H5.4M7 13 5.4 5M7 13l-1.2 4.6A1 1 0 0 0 6.76 19H18M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm9 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z' },
   { href: '/produtos', label: 'Produtos', icon: 'M20 7 12 3 4 7m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10' },
   { href: '/estoque', label: 'Estoque', icon: 'M21 8V7l-3-4H6L3 7v1m18 0H3m18 0-1 12H4L3 8' },
