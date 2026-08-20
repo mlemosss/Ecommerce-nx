@@ -182,6 +182,139 @@ export function OrdersPageClient() {
   }
 
   /**
+   * Folha de separação, para imprimir e levar ao estoque.
+   *
+   * Separar peça olhando a tela do celular é como se erra a cor: a lojista abre
+   * o pedido, vai até a arara, e no caminho a tela apaga. No papel a informação
+   * fica na mão dela, e o quadradinho ao lado de cada item existe para ser
+   * riscado — é o que impede mandar dois tops e esquecer a legging.
+   *
+   * Cor, tamanho e quantidade em corpo grande, porque é o que se lê de longe
+   * com a peça na mão. Preço vem depois e pequeno: na hora de separar ele não
+   * decide nada.
+   *
+   * Janela nova em vez de página própria: a folha não tem menu, não tem estado
+   * e não precisa de rota — e imprimir a tela do painel sairia com barra
+   * lateral e botões.
+   */
+  function imprimirSeparacao(order: Order) {
+    const esc = (texto: string) =>
+      texto.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
+
+    const itens = order.items
+      .map(
+        (i) => `
+        <tr>
+          <td class="marca"></td>
+          <td>
+            <div class="peca">${esc(i.productName)}</div>
+            <div class="variacao">${esc(i.color)} &middot; tamanho ${esc(i.size)}</div>
+          </td>
+          <td class="qtd">${i.quantity}<span>un</span></td>
+        </tr>`
+      )
+      .join('');
+
+    const html = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Separação — pedido ${esc(order.orderNumber)}</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 0; }
+  header { display: flex; align-items: center; justify-content: space-between;
+           border-bottom: 3px solid #111; padding-bottom: 12px; }
+  header img { height: 34px; }
+  .titulo { text-align: right; }
+  .titulo h1 { margin: 0; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; }
+  .titulo p { margin: 2px 0 0; font-size: 13px; color: #555; }
+  .pedido { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 22px; }
+  td { border-bottom: 1px solid #ddd; padding: 14px 6px; vertical-align: middle; }
+  .marca { width: 34px; }
+  .marca::before { content: ''; display: block; width: 22px; height: 22px; border: 2px solid #111; }
+  .peca { font-size: 19px; font-weight: 700; }
+  .variacao { font-size: 16px; margin-top: 3px; }
+  .qtd { width: 74px; text-align: right; font-size: 26px; font-weight: 900; white-space: nowrap; }
+  .qtd span { font-size: 12px; font-weight: 400; margin-left: 3px; }
+  .blocos { display: flex; gap: 28px; margin-top: 26px; font-size: 13px; line-height: 1.55; }
+  .blocos > div { flex: 1; }
+  .rotulo { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+            color: #777; margin-bottom: 4px; }
+  .valores { margin-top: 22px; border-top: 2px solid #111; padding-top: 10px;
+             font-size: 13px; display: flex; justify-content: space-between; }
+  .conferencia { margin-top: 40px; font-size: 12px; color: #555; }
+  .linha { border-bottom: 1px solid #999; height: 26px; margin-top: 18px; }
+</style>
+</head>
+<body>
+  <header>
+    <img src="${lojaUrl}/logo-nx.png" alt="NO EXCUSE">
+    <div class="titulo">
+      <h1>Separação de pedido</h1>
+      <p class="pedido">#${esc(order.orderNumber)}</p>
+      <p>${esc(formatDate(order.createdAt))}</p>
+    </div>
+  </header>
+
+  <table>${itens}</table>
+
+  <div class="blocos">
+    <div>
+      <p class="rotulo">Cliente</p>
+      ${esc(order.customerName)}<br>
+      ${esc(order.customerPhone ?? '')}
+    </div>
+    <div>
+      <p class="rotulo">${order.pickup ? 'Retirada em mãos' : 'Entrega'}</p>
+      ${
+        order.pickup
+          ? 'Combinar dia e horário<br>em Higienópolis'
+          : `${esc(order.street)}, ${esc(order.number)}${
+              order.complement ? ` - ${esc(order.complement)}` : ''
+            }<br>
+             ${esc(order.neighborhood ?? '')} &middot; ${esc(order.city)}${
+              order.state ? ` - ${esc(order.state)}` : ''
+            }<br>
+             CEP ${esc(order.zipCode)}${
+              order.shippingServiceName ? `<br>${esc(order.shippingServiceName)}` : ''
+            }`
+      }
+    </div>
+  </div>
+
+  <div class="valores">
+    <span>${PAYMENT_LABEL[order.paymentMethod]}${
+      order.couponCode ? ` &middot; cupom ${esc(order.couponCode)}` : ''
+    }</span>
+    <span><strong>${formatPrice(order.total)}</strong></span>
+  </div>
+
+  <div class="conferencia">
+    Separado e conferido por:
+    <div class="linha"></div>
+  </div>
+</body>
+</html>`;
+
+    const janela = window.open('', '_blank', 'width=800,height=900');
+    if (!janela) {
+      setError('O navegador bloqueou a janela de impressão. Libere os pop-ups deste site.');
+      return;
+    }
+    janela.document.write(html);
+    janela.document.close();
+    // A folha só imprime depois que o logo carrega; sem esperar, sai um
+    // retângulo vazio no lugar dele.
+    janela.onload = () => {
+      janela.focus();
+      janela.print();
+    };
+  }
+
+  /**
    * Os dados da venda no formato de quem vai digitar a nota.
    *
    * A loja não emite NF-e: emitir exige certificado digital e credenciamento na
@@ -552,7 +685,18 @@ export function OrdersPageClient() {
                       )}
                     </div>
                     <div>
-                      <p className="font-semibold">Itens</p>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="font-semibold">Itens</p>
+                        {/* Separar peça olhando a tela do celular é como se
+                            erra a cor: no caminho até a arara a tela apaga. */}
+                        <button
+                          type="button"
+                          onClick={() => imprimirSeparacao(order)}
+                          className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white"
+                        >
+                          Imprimir separação
+                        </button>
+                      </div>
                       <ul className="mt-1 space-y-1 text-black/60">
                         {order.items.map((item) => (
                           <li key={item.id} className="flex justify-between">
