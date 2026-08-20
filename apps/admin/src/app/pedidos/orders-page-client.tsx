@@ -182,6 +182,50 @@ export function OrdersPageClient() {
   }
 
   /**
+   * Os dados da venda no formato de quem vai digitar a nota.
+   *
+   * A loja não emite NF-e: emitir exige certificado digital e credenciamento na
+   * SEFAZ, e quem faz isso é o emissor (SEBRAE, Bling, eNotas). O que a lojista
+   * faz é abrir o emissor e redigitar destinatário, itens e valores — e é aí
+   * que o CPF sai com um dígito trocado e a nota volta rejeitada.
+   *
+   * Destinatário, itens com quantidade e preço unitário, e os totais separados.
+   * Frete e desconto vão em linha própria porque na nota eles são campos
+   * próprios, e somados ao produto dariam base de cálculo errada.
+   */
+  function copiarParaNota(order: Order) {
+    const linhas = [
+      `PEDIDO ${order.orderNumber} — ${formatDate(order.createdAt)}`,
+      '',
+      'DESTINATÁRIO',
+      order.customerName,
+      `CPF: ${order.customerDocument}`,
+      `${order.street}, ${order.number}${order.complement ? ` - ${order.complement}` : ''}`,
+      `${order.neighborhood ?? ''} · ${order.city}${order.state ? ` - ${order.state}` : ''}`,
+      `CEP ${order.zipCode}`,
+      order.customerEmail,
+      order.customerPhone,
+      '',
+      'ITENS',
+      ...order.items.map(
+        (i) =>
+          `${i.quantity}x ${i.productName} (${i.color} / ${i.size}) — ` +
+          `unit. ${formatPrice(i.unitPrice)} — total ${formatPrice(i.unitPrice * i.quantity)}`
+      ),
+      '',
+      `Subtotal: ${formatPrice(order.subtotal)}`,
+      ...(order.discount > 0
+        ? [`Desconto${order.couponCode ? ` (${order.couponCode})` : ''}: -${formatPrice(order.discount)}`]
+        : []),
+      `Frete: ${order.pickup ? 'retirada em mãos' : formatPrice(order.shipping)}`,
+      `TOTAL: ${formatPrice(order.total)}`,
+    ];
+
+    navigator.clipboard?.writeText(linhas.join('\n'));
+    setCopiado(order.id);
+  }
+
+  /**
    * Compra a etiqueta no Melhor Envio. Gasta o saldo da carteira.
    *
    * Confirmação obrigatória, com o valor do frete na frente: é a única ação do
@@ -487,6 +531,18 @@ export function OrdersPageClient() {
                               className="rounded-lg bg-black/10 px-3 py-1.5 text-xs font-semibold text-black/70"
                             >
                               {copiado === order.id ? 'Copiado!' : 'Copiar dados de envio'}
+                            </button>
+                            {/* A loja não emite NF-e — isso exige certificado
+                                digital e credenciamento na SEFAZ. O que dá para
+                                tirar do caminho é a redigitação, que é onde o
+                                CPF sai com um dígito trocado e a nota volta
+                                rejeitada. */}
+                            <button
+                              type="button"
+                              onClick={() => copiarParaNota(order)}
+                              className="rounded-lg bg-black/10 px-3 py-1.5 text-xs font-semibold text-black/70"
+                            >
+                              Copiar dados para a nota
                             </button>
                           </div>
                           {erroEtiqueta[order.id] && (

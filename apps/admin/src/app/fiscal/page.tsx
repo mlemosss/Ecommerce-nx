@@ -25,12 +25,24 @@ export default function FiscalPage() {
     <div>
       <TopBar title="Área Fiscal" />
       <div className="px-4 pt-4">
+        {/* Dizer "módulo simulado" e parar ali deixava a lojista sem saber o
+            que fazer com a obrigação de verdade. O CNPJ dela é ME, e ME emite
+            NF-e — então o texto tem que apontar para onde se emite. */}
         <div className="card border border-purple-200 bg-purple-50 text-sm text-purple-900">
-          <p className="font-semibold">Módulo simulado</p>
+          <p className="font-semibold">Aqui não sai nota fiscal de verdade</p>
           <p className="mt-1">
-            Emissão fiscal real (NFC-e/NF-e) exige certificado digital e integração com a SEFAZ do seu
-            estado — fora do escopo desta demonstração. Aqui cada venda concluída aparece como uma nota
-            simulada, só para visualização.
+            Emitir NF-e exige certificado digital e-CNPJ e credenciamento na SEFAZ-SP. Estas abaixo
+            são simulações, só para conferência.
+          </p>
+          <p className="mt-2">
+            Para emitir de verdade, use o <strong>Emissor NF-e do SEBRAE</strong> — gratuito, feito
+            com a SEFAZ-SP, e suficiente para o volume de hoje. Em cada pedido há o botão{' '}
+            <strong>&ldquo;Copiar dados para a nota&rdquo;</strong>, que copia destinatário, itens e
+            valores prontos para colar lá.
+          </p>
+          <p className="mt-2">
+            Quando passar de umas 20 notas por mês, vale um emissor pago (Bling, Tiny, eNotas): eles
+            têm API e a nota pode sair junto com a etiqueta, sem digitação.
           </p>
         </div>
 
