@@ -10,6 +10,22 @@ const TAMANHO_MAXIMO_DA_ROTA = 120;
 /** Quanto tempo o painel olha para trás. */
 const JANELA_PADRAO_EM_DIAS = 30;
 
+/**
+ * Diferença de Brasília para o UTC, em minutos.
+ *
+ * O servidor roda em UTC, e usar o dia dele fazia uma venda das 22h de terça
+ * aparecer na quarta — a lojista olharia o gráfico e não reconheceria o próprio
+ * dia de trabalho. O Brasil não tem mais horário de verão, então três horas
+ * fixas é exato, e não aproximação.
+ */
+const MINUTOS_ATRAS_DE_UTC = 3 * 60;
+
+/** O dia em Brasília a que um instante pertence, como "2026-08-19". */
+function diaEmBrasilia(instante: Date): string {
+  const local = new Date(instante.getTime() - MINUTOS_ATRAS_DE_UTC * 60 * 1000);
+  return local.toISOString().slice(0, 10);
+}
+
 @Injectable()
 export class MetricsService {
   private readonly logger = new Logger(MetricsService.name);
@@ -35,10 +51,9 @@ export class MetricsService {
     return limpa.length > 1 ? limpa.replace(/\/+$/, '') : '/';
   }
 
-  /** Meia-noite de hoje, para a linha do dia. */
+  /** Meia-noite do dia de hoje em Brasília, para a linha do dia. */
   private hoje(): Date {
-    const agora = new Date();
-    return new Date(Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate()));
+    return new Date(`${diaEmBrasilia(new Date())}T00:00:00.000Z`);
   }
 
   /**
@@ -106,7 +121,7 @@ export class MetricsService {
       porDia.set(chave, atual);
     }
     for (const p of pedidos) {
-      const chave = p.createdAt.toISOString().slice(0, 10);
+      const chave = diaEmBrasilia(p.createdAt);
       const atual = porDia.get(chave) ?? { views: 0, sessoes: 0, pedidos: 0 };
       atual.pedidos += 1;
       porDia.set(chave, atual);

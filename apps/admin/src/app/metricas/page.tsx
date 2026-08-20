@@ -99,7 +99,7 @@ export default function MetricasPage() {
                 <p className="text-xs text-black/45">Pedidos pagos</p>
                 <p className="mt-1 text-2xl font-black">{resumo.pedidosPagos}</p>
                 <p className="text-xs text-black/45">
-                  {resumo.pedidos} pedidos no total
+                  {resumo.pedidos} {resumo.pedidos === 1 ? 'pedido no total' : 'pedidos no total'}
                 </p>
               </div>
               <div className="card !p-3">
