@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 
@@ -26,7 +27,8 @@ export class EtiquetaService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly settings: SettingsService
+    private readonly settings: SettingsService,
+    private readonly emailService: EmailService
   ) {}
 
   private baseUrl(): string {
@@ -327,6 +329,86 @@ export class EtiquetaService {
       // ViaCEP fora do ar não pode ser o motivo de uma etiqueta não sair.
       return atual;
     }
+  }
+
+  /**
+   * Marca como enviado o que a transportadora já recebeu.
+   *
+   * Antes, "Enviado" dependia de a lojista lembrar de voltar ao painel depois
+   * de sair da agência — e é exatamente aí que ninguém lembra. Quem esperava o
+   * rastreio era a cliente, que ficava sem notícia com o pacote já a caminho.
+   *
+   * Uma consulta só para todos os pedidos pendentes: a API aceita a lista
+   * inteira de uma vez. Roda junto com a varredura de e-mails, a cada meia
+   * hora, e não custa nada quando não há nada para verificar.
+   *
+   * `delivered` também entra: se o pacote andou tão rápido que pulou a janela,
+   * o pedido não pode ficar eternamente "pago" enquanto a peça já está no
+   * corpo de alguém.
+   */
+  async varrerPostagens(): Promise<{ verificados: number; postados: number }> {
+    if (!process.env.MELHOR_ENVIO_TOKEN) return { verificados: 0, postados: 0 };
+
+    const pendentes = await this.prisma.order.findMany({
+      where: { status: 'pago', shipmentId: { not: null }, shippedAt: null },
+      include: { items: true },
+    });
+    if (pendentes.length === 0) return { verificados: 0, postados: 0 };
+
+    const settings = await this.settings.get().catch(() => null);
+    const contato =
+      settings?.emailFromAddress || settings?.contactEmail || 'vendas@noexcusenx.com.br';
+
+    let rastreios: Record<string, { status?: string; tracking?: string }> = {};
+    try {
+      const res = await fetch(`${this.baseUrl()}/api/v2/me/shipment/tracking`, {
+        method: 'POST',
+        headers: this.cabecalhos(contato),
+        body: JSON.stringify({ orders: pendentes.map((p) => p.shipmentId) }),
+      });
+      if (!res.ok) return { verificados: pendentes.length, postados: 0 };
+      rastreios = await res.json();
+    } catch {
+      // Melhor Envio fora do ar: tenta de novo na próxima passagem. Nada aqui
+      // pode falhar de um jeito que impeça a varredura de e-mails de rodar.
+      return { verificados: pendentes.length, postados: 0 };
+    }
+
+    let postados = 0;
+    for (const pedido of pendentes) {
+      const info = rastreios[pedido.shipmentId as string];
+      const status = info?.status;
+      if (status !== 'posted' && status !== 'delivered') continue;
+
+      // `updateMany` condicional: se a lojista marcou "Enviado" na mão entre a
+      // consulta e agora, o e-mail não sai duas vezes.
+      const marcou = await this.prisma.order.updateMany({
+        where: { id: pedido.id, status: 'pago' },
+        data: {
+          status: 'enviado',
+          shippedAt: new Date(),
+          ...(info?.tracking ? { trackingCode: info.tracking } : {}),
+        },
+      });
+      if (marcou.count === 0) continue;
+
+      postados += 1;
+      try {
+        await this.emailService.sendOrderShipped({
+          ...pedido,
+          trackingCode: info?.tracking ?? pedido.trackingCode,
+        });
+      } catch (erro) {
+        this.logger.error(
+          `Pedido ${pedido.orderNumber} marcado como enviado, mas o e-mail falhou: ${erro}`
+        );
+      }
+    }
+
+    if (postados > 0) {
+      this.logger.log(`${postados} pedido(s) postados na transportadora e avisados por e-mail.`);
+    }
+    return { verificados: pendentes.length, postados };
   }
 
   /**

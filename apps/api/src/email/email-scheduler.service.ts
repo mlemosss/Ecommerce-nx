@@ -1,6 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
+import { EtiquetaService } from '../shipping/etiqueta.service';
 import { StockAlertsService } from '../stock-alerts/stock-alerts.service';
 
 const REVIEW_REQUEST_DELAY_MS = 3 * 24 * 60 * 60 * 1000; // 3 dias após o envio
@@ -15,11 +16,23 @@ export class EmailSchedulerService {
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
     @Inject(forwardRef(() => StockAlertsService))
-    private readonly stockAlerts: StockAlertsService
+    private readonly stockAlerts: StockAlertsService,
+    // Circular de propósito: a etiqueta manda e-mail, e o varredor de e-mails
+    // é quem pergunta à transportadora se o pacote já foi postado.
+    @Inject(forwardRef(() => EtiquetaService))
+    private readonly etiqueta: EtiquetaService
   ) {}
 
   async runScheduled() {
     const now = new Date();
+
+    // Pedido postado vira "Enviado" sozinho, com o rastreio da transportadora.
+    // Antes isso dependia de a lojista lembrar de voltar ao painel depois de
+    // sair da agência — e quem esperava era a cliente, sem notícia, com o
+    // pacote já a caminho.
+    await this.etiqueta.varrerPostagens().catch((erro) => {
+      this.logger.error(`Varredura de postagens falhou: ${erro}`);
+    });
 
     const ordersForReview = await this.prisma.order.findMany({
       where: {
