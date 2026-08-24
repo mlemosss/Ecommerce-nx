@@ -1,4 +1,8 @@
+'use client';
+
 import Link from 'next/link';
+import { useState } from 'react';
+import { LightboxDeFotos } from './lightbox-fotos';
 import type { FotoDoMural } from '../lib/api';
 
 /**
@@ -12,9 +16,10 @@ import type { FotoDoMural } from '../lib/api';
  *
  * Reunidas viram parede, e parede é outra coisa: mostra que a marca é usada.
  *
- * Sem JavaScript de propósito. A legenda aparece no hover por CSS no
- * computador e fica sempre visível no celular, onde hover não existe — cada
- * foto é um link para a peça, então o dedo que toca já está comprando.
+ * Clicar abre a foto grande. Era o que faltava: no quadrado da grade não dá
+ * para ver se a legging marca nem como o top sustenta, e é isso que a pessoa
+ * está tentando decidir. O caminho para a peça continua existindo, dentro da
+ * foto aberta — quem clicou queria ver, não sair da página.
  */
 export function MuralDeFotos({
   fotos,
@@ -24,6 +29,8 @@ export function MuralDeFotos({
   fotos: FotoDoMural[];
   mostrarLinkParaTodas?: boolean;
 }) {
+  const [ampliada, setAmpliada] = useState<number | null>(null);
+
   if (fotos.length === 0) return null;
 
   return (
@@ -54,18 +61,14 @@ export function MuralDeFotos({
           vira um bloco cinza do tamanho da tela. Aqui o que falta é só branco,
           e o mural funciona com duas fotos ou com quarenta. */}
       <div className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
-        {fotos.map((foto) => {
-          // Foto de avaliação da loja não tem peça atrás, então não tem para
-          // onde levar. Vira quadro em vez de link — clicar e não acontecer
-          // nada é pior do que não parecer clicável.
-          const Quadro = foto.productSlug ? Link : 'div';
-          const props = foto.productSlug ? { href: `/produtos/${foto.productSlug}` } : {};
-
+        {fotos.map((foto, indice) => {
           return (
-          <Quadro
+          <button
             key={foto.id}
-            {...(props as { href: string })}
-            className="group relative block aspect-[4/5] overflow-hidden bg-paper"
+            type="button"
+            onClick={() => setAmpliada(indice)}
+            aria-label={`Ampliar a foto de ${foto.customerName}`}
+            className="group relative block aspect-[4/5] w-full overflow-hidden bg-paper text-left"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -106,14 +109,28 @@ export function MuralDeFotos({
                 {foto.customerName}
               </p>
             </div>
-          </Quadro>
+          </button>
           );
         })}
       </div>
 
       <p className="mt-6 text-xs leading-relaxed text-ink/50">
-        Fotos enviadas por clientes, publicadas com autorização delas.
+        Fotos enviadas por clientes, publicadas com autorização delas. Toque para ampliar.
       </p>
+
+      <LightboxDeFotos
+        fotos={fotos.map((f) => ({
+          url: f.photoUrl,
+          autor: f.customerName,
+          rating: f.rating,
+          texto: f.comment,
+          productName: f.productName,
+          productSlug: f.productSlug,
+        }))}
+        indice={ampliada}
+        aoFechar={() => setAmpliada(null)}
+        aoTrocar={setAmpliada}
+      />
     </section>
   );
 }

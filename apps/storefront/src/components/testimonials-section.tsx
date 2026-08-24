@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FotoDaAvaliacao } from './foto-da-avaliacao';
 import type { Testimonial } from '../lib/api';
 
 export function TestimonialsSection({ testimonials }: { testimonials: Testimonial[] }) {
@@ -18,11 +19,14 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
                 caimento. Agora abre o cartão, no tamanho em que serve para
                 alguma coisa. `unoptimized`: vem como dataURL do banco. */}
             {testimonial.photoUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={testimonial.photoUrl}
-                alt={`Foto enviada por ${testimonial.customerName}`}
-                className="aspect-[4/5] w-full object-cover"
+              <FotoDaAvaliacao
+                foto={{
+                  url: testimonial.photoUrl,
+                  autor: testimonial.customerName,
+                  rating: testimonial.rating,
+                  texto: testimonial.quote,
+                }}
+                className="aspect-[4/5] w-full overflow-hidden"
               />
             )}
 

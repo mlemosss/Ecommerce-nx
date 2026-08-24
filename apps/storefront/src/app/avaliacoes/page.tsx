@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAvaliacoesPublicas, getMural, getTestimonials } from '../../lib/api';
 import { MuralDeFotos } from '../../components/mural-de-fotos';
+import { FotoDaAvaliacao } from '../../components/foto-da-avaliacao';
 
 export const metadata: Metadata = {
   title: 'Avaliações de quem já usa — NO EXCUSE',
@@ -128,12 +129,16 @@ export default async function AvaliacoesPage() {
             {avaliacoes.map((a) => (
               <li key={a.id} className="flex gap-5 py-6">
                 {a.photoUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={a.photoUrl}
-                    alt={`${a.customerName} usando ${a.productName}`}
-                    loading="lazy"
-                    className="h-28 w-24 shrink-0 object-cover"
+                  <FotoDaAvaliacao
+                    foto={{
+                      url: a.photoUrl,
+                      autor: a.customerName,
+                      rating: a.rating,
+                      texto: a.comment,
+                      productName: a.productName,
+                      productSlug: a.productSlug,
+                    }}
+                    className="h-28 w-24 shrink-0 overflow-hidden"
                   />
                 )}
 

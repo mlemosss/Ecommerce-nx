@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useCustomerAuth } from '../lib/customer-auth-context';
 import { comprimirImagem } from '../lib/comprimir-imagem';
+import { LightboxDeFotos } from './lightbox-fotos';
 import type { ProductReview } from '../lib/api';
 
 function Stars({ rating }: { rating: number }) {
@@ -35,6 +36,11 @@ export function ProductReviews({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
+  const [ampliada, setAmpliada] = useState<number | null>(null);
+
+  // Só as que têm foto entram na navegação por setas: pular para uma avaliação
+  // sem imagem abriria uma tela preta vazia.
+  const comFoto = reviews.filter((r) => r.photoUrl);
 
   async function escolherFoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -190,16 +196,21 @@ export function ProductReviews({
                 com o dela, não em foto de estúdio. `unoptimized` porque vem
                 como dataURL do banco, não de uma URL que o Next possa otimizar. */}
             {review.photoUrl && (
-              <div className="relative h-24 w-20 shrink-0 overflow-hidden border border-line">
+              <button
+                type="button"
+                onClick={() => setAmpliada(comFoto.findIndex((r) => r.id === review.id))}
+                aria-label={`Ampliar a foto de ${review.customerName}`}
+                className="relative h-24 w-20 shrink-0 overflow-hidden border border-line"
+              >
                 <Image
                   src={review.photoUrl}
                   alt={`Foto enviada por ${review.customerName}`}
                   fill
                   sizes="80px"
                   unoptimized
-                  className="object-cover"
+                  className="object-cover transition hover:scale-105"
                 />
-              </div>
+              </button>
             )}
             <div className="min-w-0">
               <Stars rating={review.rating} />
@@ -211,6 +222,18 @@ export function ProductReviews({
           </div>
         ))}
       </div>
+
+      <LightboxDeFotos
+        fotos={comFoto.map((r) => ({
+          url: r.photoUrl as string,
+          autor: r.customerName,
+          rating: r.rating,
+          texto: r.comment,
+        }))}
+        indice={ampliada}
+        aoFechar={() => setAmpliada(null)}
+        aoTrocar={setAmpliada}
+      />
     </section>
   );
 }
