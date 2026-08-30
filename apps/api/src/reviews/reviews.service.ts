@@ -213,6 +213,7 @@ export class ReviewsService {
     // Só o primeiro nome. É como se assina uma foto entre conhecidas, e evita
     // que o mural vire uma lista de nomes completos de clientes.
     const primeiroNome = (nome: string) => nome.trim().split(/\s+/)[0] ?? '';
+    const base = apiBaseUrl();
 
     return [
       ...dePecas.map((f) => ({
