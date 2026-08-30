@@ -14,12 +14,23 @@ type SortOption = 'relevancia' | 'menor-preco' | 'maior-preco';
  * Antes esta tela buscava o catálogo sozinha e o robô do Google recebia
  * "Carregando…". Aqui sobrou o que precisa mesmo ser interativo: a ordenação.
  */
+/** Categorias que têm endereço próprio; o resto continua vivendo no filtro. */
+const CATEGORIAS_COM_PAGINA = new Set(['leggings', 'tops', 'shorts']);
+
+function enderecoDaCategoria(value: Category | null): string {
+  if (!value) return '/produtos';
+  return CATEGORIAS_COM_PAGINA.has(value) ? `/${value}` : `/produtos?categoria=${value}`;
+}
+
 export function ProductsPageClient({
   products,
   categoria: categoriaParam,
+  chamada,
 }: {
   products: Product[];
   categoria: Category | null;
+  /** Uma linha sobre a prateleira, quando ela tem endereço próprio. */
+  chamada?: string;
 }) {
   const router = useRouter();
   const [sort, setSort] = useState<SortOption>('relevancia');
@@ -34,11 +45,7 @@ export function ProductsPageClient({
   const everythingIsNew = filtered.length > 0 && filtered.every((p) => p.isNew);
 
   function selectCategory(value: Category | null) {
-    if (!value) {
-      router.push('/produtos');
-    } else {
-      router.push(`/produtos?categoria=${value}`);
-    }
+    router.push(enderecoDaCategoria(value));
   }
 
   const activeLabel = categoriaParam
@@ -49,7 +56,10 @@ export function ProductsPageClient({
     <div className="container-page py-14 sm:py-16">
       <p className="eyebrow text-ink/50">Vitrine</p>
       <h1 className="section-title mt-3">{activeLabel}</h1>
-      <p className="mt-2 text-sm text-ink/60">{filtered.length} produtos encontrados</p>
+      {chamada && <p className="mt-4 max-w-xl text-sm leading-relaxed text-ink/70">{chamada}</p>}
+      <p className="mt-2 text-sm text-ink/60">
+        {filtered.length} {filtered.length === 1 ? 'produto encontrado' : 'produtos encontrados'}
+      </p>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-y border-line py-3">
         <div className="flex flex-wrap gap-1.5">

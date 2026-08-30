@@ -19,12 +19,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const withProducts = new Set(products.map((p) => p.category));
+  // O endereço limpo é o canônico; a versão com query redireciona para ele, e
+  // sitemap com URL que redireciona é erro no Search Console.
   const categoryPages = categories
     .filter((c) => withProducts.has(c.value))
     .map((c) => ({
-      url: `${STOREFRONT_URL}/produtos?categoria=${c.value}`,
+      url: `${STOREFRONT_URL}/${c.value}`,
       lastModified: now,
-      priority: 0.6,
+      priority: 0.7,
     }));
 
   const productPages = products.map((product) => ({

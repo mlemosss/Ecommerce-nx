@@ -21,6 +21,9 @@ import type { StoreSettings } from '../lib/api';
  * individual recebe o nome no formato número-do-CNPJ + nome civil. É o que
  * consta na Receita e é o que precisa aparecer.
  */
+/** Categorias com endereco proprio; as demais vivem no filtro da vitrine. */
+const CATEGORIAS_COM_PAGINA = new Set(['leggings', 'tops', 'shorts']);
+
 const IDENTIFICACAO = {
   legalName: '51.141.534 LAYANE CARDOSO MARIANO',
   cnpj: '51.141.534/0001-79',
@@ -70,8 +73,16 @@ export function Footer({ settings }: { settings: StoreSettings }) {
           <ul className="mt-4 space-y-2.5 text-sm text-white/70">
             {categories.map((c) => (
               <li key={c.value}>
+                {/* Só quem tem prateleira própria ganha endereço limpo.
+                    Acessórios ainda não tem peça, e página de categoria vazia
+                    é conteúdo raso: pesa contra no buscador e frustra quem
+                    clica. Para essas, o filtro da vitrine continua servindo. */}
                 <Link
-                  href={`/produtos?categoria=${c.value}`}
+                  href={
+                    CATEGORIAS_COM_PAGINA.has(c.value)
+                      ? `/${c.value}`
+                      : `/produtos?categoria=${c.value}`
+                  }
                   className="underline-offset-4 transition hover:text-white hover:underline"
                 >
                   {c.label}

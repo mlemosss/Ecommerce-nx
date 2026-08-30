@@ -1,3 +1,5 @@
+import configuracoesReserva from './configuracoes-reserva.json';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 
 export interface ValueProp {
@@ -44,57 +46,19 @@ export interface StoreSettings {
   aboutBody: string | null;
 }
 
-export const DEFAULT_SETTINGS: StoreSettings = {
-  storeName: 'NO EXCUSE',
-  // Contato preenchido, e nao nulo, de proposito. Estes valores so entram em
-  // cena quando a API nao responde - e foi exatamente ai, na queda de
-  // 18/08/2026, que o botao do WhatsApp sumiu do rodape. O unico canal que
-  // continuava funcionando desapareceu justamente quando era o unico que
-  // restava. Se mudar em Configuracoes, mudar aqui tambem.
-  contactEmail: 'noexcusenx@gmail.com',
-  contactWhatsapp: '5511999520369',
-  legalName: null,
-  cnpj: null,
-  shippingFee: 19.9,
-  // Só vale se a API não responder; deve espelhar o que está em Configurações,
-  // senão a loja promete um frete grátis diferente do que vai praticar.
-  freeShippingThreshold: 499.9,
-  pixEnabled: true,
-  cardEnabled: true,
-  boletoEnabled: true,
-  maxInstallments: 3,
-  instagramUrl: null,
-  facebookUrl: null,
-  heroTag: 'Nova coleção',
-  heroTitleLine1: 'Treine sem',
-  heroTitleHighlight: 'limites.',
-  heroSubtitle:
-    'Roupas de academia pensadas para quem treina de verdade: compressão certa, respirabilidade e caimento que acompanham cada repetição.',
-  heroPrimaryButtonLabel: 'Ver produtos',
-  heroSecondaryButtonLabel: 'Explorar leggings',
-  newsletterTitle: 'Ganhe 10% na primeira compra',
-  newsletterSubtitle: 'Cadastre seu e-mail e receba um cupom exclusivo, além de novidades de lançamentos.',
-  valueProps: [
-    { title: 'Troca grátis em 7 dias', description: 'Não serviu ou não gostou? Trocamos sem burocracia.' },
-    { title: 'Entrega para todo o Brasil', description: 'Envio rastreado com prazos exibidos no checkout.' },
-    {
-      title: 'Tecido testado em treino real',
-      description: 'Compressão, respirabilidade e durabilidade validadas por atletas.',
-    },
-    { title: 'Pagamento seguro', description: 'Pix, cartão em até 3x sem juros ou boleto.' },
-  ],
-  clarityProjectId: null,
-  gtmId: null,
-  metaPixelId: null,
-  googleAdsId: null,
-  googleAdsConversionLabel: null,
-  progressiveDiscount: '[]',
-  sizeGuide: '[]',
-  promoBannerText: null,
-  promoBannerEndsAt: null,
-  aboutHeadline: null,
-  aboutBody: null,
-};
+/**
+ * As configurações que a loja usa quando a API não responde.
+ *
+ * Antes era uma cópia escrita à mão, e cópia à mão envelhece: o frete grátis
+ * ficou em R$499,90 aqui enquanto a loja praticava R$299,99, e bastava a API
+ * demorar num build para uma página anunciar um número que o checkout não ia
+ * cumprir. Prometer frete grátis errado é promessa quebrada com a cliente.
+ *
+ * Agora o arquivo é gravado a cada build a partir da própria API, junto com a
+ * cópia do catálogo. Ele não pode divergir do que está em Configurações porque
+ * não é escrito por ninguém — é o último valor conhecido, e nada mais.
+ */
+export const DEFAULT_SETTINGS: StoreSettings = configuracoesReserva as StoreSettings;
 
 export async function getSettings(): Promise<StoreSettings> {
   try {

@@ -16,9 +16,12 @@ const NAV_CATEGORIES = ['leggings', 'tops', 'shorts'];
 // Sale e Quem somos.
 const navLinks = [
   { href: '/produtos', label: 'Produtos' },
+  // Endereço próprio por categoria: é o destino dos anúncios e o link que a
+  // pessoa compartilha. `/produtos?categoria=x` continua funcionando, mas
+  // redireciona — e menu não é lugar de pagar um salto de redirecionamento.
   ...categories
     .filter((c) => NAV_CATEGORIES.includes(c.value))
-    .map((c) => ({ href: `/produtos?categoria=${c.value}`, label: c.label })),
+    .map((c) => ({ href: `/${c.value}`, label: c.label })),
   { href: '/sale', label: 'Sale' },
   { href: '/em-breve', label: 'Em breve' },
   // Marca desconhecida perde venda por desconfiança, não por preço. O caminho

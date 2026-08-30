@@ -1,0 +1,68 @@
+{
+  "storeName": "NO EXCUSE",
+  "contactEmail": "noexcusenx@gmail.com",
+  "contactWhatsapp": "5511999520369",
+  "shippingFee": 19.99,
+  "freeShippingThreshold": 299.99,
+  "pixEnabled": true,
+  "cardEnabled": true,
+  "boletoEnabled": true,
+  "maxInstallments": 3,
+  "instagramUrl": "https://www.instagram.com/noexcusenx",
+  "facebookUrl": "https://www.facebook.com/share/1MH6EDzbEB/",
+  "heroTag": "Nova coleção",
+  "heroTitleLine1": "Treine sem",
+  "heroTitleHighlight": "limites.",
+  "heroSubtitle": "Roupas de academia pensadas para quem treina: compressão certa, respirabilidade e caimento que acompanha cada repetição.",
+  "heroPrimaryButtonLabel": "Ver produtos",
+  "heroSecondaryButtonLabel": "Explorar leggings",
+  "newsletterTitle": "Ganhe 10% na primeira compra",
+  "newsletterSubtitle": "Cadastre seu e-mail e receba um cupom de primeira compra exclusivo, além de novidades de lançamentos.",
+  "valueProps": [
+    {
+      "title": "Troca grátis em 7 dias.",
+      "description": "Não serviu ou não gostou? Trocamos sem burocracia."
+    },
+    {
+      "title": "Entrega para todo o Brasil",
+      "description": "Envio rastreado com prazos exibidos no checkout."
+    },
+    {
+      "title": "Tecido testado em treino real",
+      "description": "Compressão, respirabilidade e durabilidade validadas por atletas."
+    },
+    {
+      "title": "Pagamento seguro",
+      "description": "Pix, cartão em até 3x sem juros ou boleto."
+    }
+  ],
+  "sizeGuide": "[{\"category\":\"leggings\",\"size\":\"PP\",\"waist\":64,\"hip\":90},{\"category\":\"leggings\",\"size\":\"P\",\"waist\":68,\"hip\":94},{\"category\":\"leggings\",\"size\":\"M\",\"waist\":72,\"hip\":98},{\"category\":\"leggings\",\"size\":\"G\",\"waist\":76,\"hip\":102},{\"category\":\"leggings\",\"size\":\"GG\",\"waist\":80,\"hip\":106},{\"category\":\"tops\",\"size\":\"P\",\"bust\":88,\"waist\":68},{\"category\":\"tops\",\"size\":\"M\",\"bust\":92,\"waist\":72},{\"category\":\"tops\",\"size\":\"G\",\"bust\":96,\"waist\":76},{\"category\":\"tops\",\"size\":\"GG\",\"waist\":80,\"bust\":100},{\"category\":\"shorts\",\"size\":\"PP\",\"waist\":64,\"hip\":90},{\"category\":\"shorts\",\"size\":\"P\",\"waist\":68,\"hip\":94},{\"category\":\"shorts\",\"size\":\"M\",\"waist\":72,\"hip\":98},{\"category\":\"shorts\",\"size\":\"G\",\"waist\":76,\"hip\":102},{\"category\":\"shorts\",\"size\":\"GG\",\"waist\":80,\"hip\":106}]",
+  "googleAdsId": "AW-18297454887",
+  "googleAdsConversionLabel": "FDCKCNzzlOAcEKeC9JRE",
+  "progressiveDiscount": "[]",
+  "winbackCouponCode": "VOLTEI5",
+  "winbackCouponPercent": 5,
+  "stockAlertCouponCode": "COMPRE10",
+  "stockAlertCouponPercent": 10,
+  "promoBannerText": null,
+  "promoBannerEndsAt": null,
+  "aboutHeadline": "Somos Isa e Lay ♥",
+  "aboutBody": "A NO EXCUSE  nasceu da união de duas mulheres, duas histórias e um propósito em comum: criar uma marca fitness que acompanhe mulheres reais em movimento.\n\nDe um lado, Isa, professora, empreendedora e apaixonada por criar, idealizar e transformar ideias em projetos. Seu olhar cuidadoso para os detalhes, para a estética e para aquilo que faz uma mulher se sentir bonita e confiante trouxe para a NO EXCUSE o desejo de criar peças que vão além da academia — peças que tenham estilo, personalidade e que façam a gente se sentir bem ao vestir.\n\nDo outro, Lay, personal trainer e professora de Educação Física, que vive o universo do treino todos os dias. Determinada, disciplinada e apaixonada pelo universo fitness, fez do movimento não apenas sua profissão, mas parte da sua vida. Sua experiência trouxe para a marca um olhar técnico e essencial: entender o corpo em movimento, o conforto, a sustentação, a compressão, a respirabilidade e o caimento que uma boa roupa fitness precisa ter.\n\nFoi dessa combinação que nasceu a NO EXCUSE.\n\nUma marca pensada por mulheres e para mulheres que trabalham, treinam, cuidam de tantas coisas e, ainda assim, escolhem reservar um tempo para cuidar de si.\n\nPor isso, cada peça é escolhida pensando no equilíbrio entre performance, conforto, qualidade e estilo.\n\nNão queremos apenas vestir o seu treino. Queremos fazer parte daquela escolha diária de se movimentar, se cuidar, se superar e continuar.\n\nNO EXCUSE\nVista sua força. Viva seu movimento.",
+  "shippingOriginZip": "01233001",
+  "shippingOriginStreet": "Rua Tupi",
+  "shippingOriginNumber": "103",
+  "shippingOriginComplement": null,
+  "shippingOriginDistrict": "Santa Cecília",
+  "shippingOriginCity": "São Paulo",
+  "shippingOriginState": "SP",
+  "packageHeightCm": 3,
+  "packageWidthCm": 24,
+  "packageLengthCm": 34,
+  "legalName": "51.141.534 LAYANE CARDOSO MARIANO",
+  "cnpj": "51.141.534/0001-79",
+  "clarityProjectId": "xgufqk5ltt",
+  "gtmId": "GTM-M37X43G9",
+  "metaPixelId": "1718017376001349",
+  "emailFromName": "NoExcuse",
+  "emailFromAddress": "vendas@noexcusenx.com.br"
+}

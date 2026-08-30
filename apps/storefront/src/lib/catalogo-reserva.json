@@ -63,13 +63,6 @@
         "price": 169
       },
       {
-        "id": "cmsdfprij001nsh8zbo1l00jc",
-        "color": "Azul marinho",
-        "size": "M",
-        "stock": 1,
-        "price": 169
-      },
-      {
         "id": "cmsdfprij001hsh8zij6p45ta",
         "color": "Pink",
         "size": "M",
@@ -96,6 +89,13 @@
         "size": "M",
         "stock": 0,
         "price": 169
+      },
+      {
+        "id": "cmsdfprij001nsh8zbo1l00jc",
+        "color": "Azul marinho",
+        "size": "M",
+        "stock": 0,
+        "price": 169
       }
     ],
     "isNew": false
@@ -110,24 +110,19 @@
     "priceRange": null,
     "compareAtPrice": 0,
     "images": [
-      "https://noexcuse-api.vercel.app/api/images/cmsdfprj2001psh8zgodlk152/0d3b94ee7e3e5f22.jpg"
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprj2001psh8zgodlk152/d1b5e1b94b85e0c0.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprj2001psh8zgodlk152/d6da9e364ed4f345.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprj2001psh8zgodlk152/3e3610a110ed7360.jpg"
     ],
     "colors": [
       "Azul marinho brilho"
     ],
     "sizes": [
-      "G",
       "P",
-      "M"
+      "M",
+      "G"
     ],
     "variants": [
-      {
-        "id": "cmsfc3i6y0008kl3ykwdx3af9",
-        "color": "Azul marinho brilho",
-        "size": "G",
-        "stock": 2,
-        "price": 209
-      },
       {
         "id": "cmsfc3i6y0009kl3yjjbnhspv",
         "color": "Azul marinho brilho",
@@ -140,6 +135,13 @@
         "color": "Azul marinho brilho",
         "size": "M",
         "stock": 2,
+        "price": 209
+      },
+      {
+        "id": "cmsfc3i6y0008kl3ykwdx3af9",
+        "color": "Azul marinho brilho",
+        "size": "G",
+        "stock": 0,
         "price": 209
       }
     ],
@@ -208,34 +210,59 @@
     "priceRange": null,
     "compareAtPrice": 159,
     "images": [
-      "https://noexcuse-api.vercel.app/api/images/cmsdfprjc001tsh8z6d5i3sok/7b198c8618253dde.jpg"
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprjc001tsh8z6d5i3sok/7b198c8618253dde.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprjc001tsh8z6d5i3sok/f33fea7783bd859e.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprjc001tsh8z6d5i3sok/2fb03bb3c4d20e3a.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprjc001tsh8z6d5i3sok/f49ede7dd96912e2.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprjc001tsh8z6d5i3sok/01f63ce0b56d7a38.jpg"
     ],
     "colors": [
-      "Pink",
+      "Rosa suave",
+      "Azul marinho",
       "Capuccino",
       "Verde Militar",
-      "Azul marinho",
       "Preto"
     ],
     "sizes": [
-      "PP",
       "P",
+      "PP",
       "M",
       "G"
     ],
     "variants": [
       {
-        "id": "cmsfc421o000dkl3yydmhkwyj",
-        "color": "Pink",
+        "id": "cmt246wh30003b7iks3fcd9dr",
+        "color": "Rosa suave",
+        "size": "P",
+        "stock": 2,
+        "price": 129
+      },
+      {
+        "id": "cmt246wh20001b7ik47f8h2ny",
+        "color": "Rosa suave",
         "size": "PP",
         "stock": 2,
         "price": 129
       },
       {
-        "id": "cmsfc421o000ekl3y6o205ot5",
-        "color": "Pink",
-        "size": "P",
+        "id": "cmt246wh30005b7iku0lx8rzj",
+        "color": "Rosa suave",
+        "size": "M",
         "stock": 3,
+        "price": 129
+      },
+      {
+        "id": "cmt24dgmo000db7ikbyn0unun",
+        "color": "Rosa suave",
+        "size": "G",
+        "stock": 1,
+        "price": 129
+      },
+      {
+        "id": "cmsfc421o000bkl3y2r5f6aow",
+        "color": "Azul marinho",
+        "size": "M",
+        "stock": 2,
         "price": 129
       },
       {
@@ -281,31 +308,10 @@
         "price": 129
       },
       {
-        "id": "cmsfc421o000hkl3ye7gbezoi",
-        "color": "Pink",
-        "size": "M",
-        "stock": 3,
-        "price": 129
-      },
-      {
-        "id": "cmsfc421o000ikl3y3iukvvvi",
-        "color": "Pink",
-        "size": "G",
-        "stock": 1,
-        "price": 129
-      },
-      {
         "id": "cmsfc421o000mkl3ywdt465su",
         "color": "Azul marinho",
         "size": "PP",
         "stock": 0,
-        "price": 129
-      },
-      {
-        "id": "cmsfc421o000bkl3y2r5f6aow",
-        "color": "Azul marinho",
-        "size": "M",
-        "stock": 2,
         "price": 129
       }
     ],
@@ -328,12 +334,19 @@
       "Azul marinho brilho"
     ],
     "sizes": [
+      "P",
       "M",
       "PP",
-      "P",
       "G"
     ],
     "variants": [
+      {
+        "id": "cmsfc5kc0000tkl3yyydp5kqt",
+        "color": "Azul marinho brilho",
+        "size": "P",
+        "stock": 1,
+        "price": 179
+      },
       {
         "id": "cmsfc5kc0000ukl3ymir6ib83",
         "color": "Azul marinho brilho",
@@ -346,13 +359,6 @@
         "color": "Azul marinho brilho",
         "size": "PP",
         "stock": 1,
-        "price": 179
-      },
-      {
-        "id": "cmsfc5kc0000tkl3yyydp5kqt",
-        "color": "Azul marinho brilho",
-        "size": "P",
-        "stock": 2,
         "price": 179
       },
       {
@@ -378,19 +384,33 @@
       "https://noexcuse-api.vercel.app/api/images/cmsdfprkh002ksh8z4vcndsnc/943c68924a41bf13.jpg"
     ],
     "colors": [
+      "Rosa suave",
       "Verde Militar",
-      "Capuccino",
       "Azul marinho",
-      "Pink",
       "Preto/gold",
+      "Capuccino",
       "Preto"
     ],
     "sizes": [
+      "G",
       "M",
-      "P",
-      "G"
+      "P"
     ],
     "variants": [
+      {
+        "id": "cmt24ds0r000fb7ikfpbal6d2",
+        "color": "Rosa suave",
+        "size": "G",
+        "stock": 2,
+        "price": 109
+      },
+      {
+        "id": "cmt24ds0r000hb7ik3yub4wmb",
+        "color": "Rosa suave",
+        "size": "M",
+        "stock": 0,
+        "price": 109
+      },
       {
         "id": "cmsdfprki002qsh8zxz2wc7k9",
         "color": "Verde Militar",
@@ -399,8 +419,8 @@
         "price": 109
       },
       {
-        "id": "cmsdfprki002ssh8z0amqfvq5",
-        "color": "Capuccino",
+        "id": "cmsdfprki002psh8zgla82prl",
+        "color": "Verde Militar",
         "size": "P",
         "stock": 2,
         "price": 109
@@ -410,20 +430,6 @@
         "color": "Azul marinho",
         "size": "P",
         "stock": 2,
-        "price": 109
-      },
-      {
-        "id": "cmsdfprki002msh8zh8ge0k1v",
-        "color": "Pink",
-        "size": "G",
-        "stock": 2,
-        "price": 109
-      },
-      {
-        "id": "cmsdfprki002osh8z85cm09qo",
-        "color": "Pink",
-        "size": "M",
-        "stock": 0,
         "price": 109
       },
       {
@@ -441,10 +447,10 @@
         "price": 109
       },
       {
-        "id": "cmsdfprki002psh8zgla82prl",
-        "color": "Verde Militar",
+        "id": "cmsdfprki002ssh8z0amqfvq5",
+        "color": "Capuccino",
         "size": "P",
-        "stock": 2,
+        "stock": 1,
         "price": 109
       },
       {
@@ -488,32 +494,48 @@
     "priceRange": null,
     "compareAtPrice": 149,
     "images": [
-      "https://noexcuse-api.vercel.app/api/images/cmsdfprkw002xsh8zmbmc2icn/2bd9c197b4ed02a8.jpg"
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprkw002xsh8zmbmc2icn/2bd9c197b4ed02a8.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprkw002xsh8zmbmc2icn/1e29e9bef32a7eff.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprkw002xsh8zmbmc2icn/ca88353464675466.jpg"
     ],
     "colors": [
-      "Pink",
+      "Rosa suave",
+      "Capuccino",
       "Azul marinho",
       "Verde Militar",
-      "Preto",
-      "Capuccino"
+      "Preto"
     ],
     "sizes": [
-      "G",
       "P",
-      "M"
+      "M",
+      "G"
     ],
     "variants": [
       {
-        "id": "cmsdfprkw002ysh8zyiiin9if",
-        "color": "Pink",
-        "size": "G",
+        "id": "cmt24d7k70007b7ikitgbibo2",
+        "color": "Rosa suave",
+        "size": "P",
+        "stock": 0,
+        "price": 119
+      },
+      {
+        "id": "cmt24d7k70009b7ik5t2wttgl",
+        "color": "Rosa suave",
+        "size": "M",
         "stock": 1,
         "price": 119
       },
       {
-        "id": "cmsdfprkw0030sh8z55s1b7ku",
-        "color": "Pink",
-        "size": "P",
+        "id": "cmt24d7k7000bb7ikoum1ztd2",
+        "color": "Rosa suave",
+        "size": "G",
+        "stock": 0,
+        "price": 119
+      },
+      {
+        "id": "cmsdfprkw0035sh8z37n717kd",
+        "color": "Capuccino",
+        "size": "M",
         "stock": 0,
         "price": 119
       },
@@ -546,20 +568,6 @@
         "price": 119
       },
       {
-        "id": "cmsdfprkw0035sh8z37n717kd",
-        "color": "Capuccino",
-        "size": "M",
-        "stock": 1,
-        "price": 119
-      },
-      {
-        "id": "cmsdfprkw002zsh8z894qo39j",
-        "color": "Pink",
-        "size": "M",
-        "stock": 1,
-        "price": 119
-      },
-      {
         "id": "cmsdfprkw0036sh8z9qpwbtq3",
         "color": "Verde Militar",
         "size": "P",
@@ -579,37 +587,37 @@
     "priceRange": null,
     "compareAtPrice": null,
     "images": [
-      "https://noexcuse-api.vercel.app/api/images/cmsdfprl70037sh8zj5fo1363/1b33f9274f53e953.jpg",
-      "https://noexcuse-api.vercel.app/api/images/cmsdfprl70037sh8zj5fo1363/8d207a0f9736cc2d.jpg"
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprl70037sh8zj5fo1363/8d207a0f9736cc2d.jpg",
+      "https://noexcuse-api.vercel.app/api/images/cmsdfprl70037sh8zj5fo1363/5b44aafd449adc88.jpg"
     ],
     "colors": [
       "Azul marinho brilho"
     ],
     "sizes": [
-      "G",
+      "M",
       "P",
-      "M"
+      "G"
     ],
     "variants": [
       {
-        "id": "cmsfcb84a0010kl3y6tjohdra",
+        "id": "cmsfcb84a000zkl3y3kf148mh",
         "color": "Azul marinho brilho",
-        "size": "G",
-        "stock": 2,
+        "size": "M",
+        "stock": 0,
         "price": 149
       },
       {
         "id": "cmsfcb84a000ykl3y63jyi8pp",
         "color": "Azul marinho brilho",
         "size": "P",
-        "stock": 1,
+        "stock": 0,
         "price": 149
       },
       {
-        "id": "cmsfcb84a000zkl3y3kf148mh",
+        "id": "cmsfcb84a0010kl3y6tjohdra",
         "color": "Azul marinho brilho",
-        "size": "M",
-        "stock": 0,
+        "size": "G",
+        "stock": 1,
         "price": 149
       }
     ],
@@ -633,11 +641,18 @@
       "Azul marinho brilho"
     ],
     "sizes": [
+      "G",
       "P",
-      "M",
-      "G"
+      "M"
     ],
     "variants": [
+      {
+        "id": "cmsfccs0m0013kl3yan0s3bff",
+        "color": "Azul marinho brilho",
+        "size": "G",
+        "stock": 2,
+        "price": 149
+      },
       {
         "id": "cmsfccs0m0011kl3ylrc8nqqu",
         "color": "Azul marinho brilho",
@@ -649,13 +664,6 @@
         "id": "cmsfccs0m0012kl3yrxd9n4pl",
         "color": "Azul marinho brilho",
         "size": "M",
-        "stock": 3,
-        "price": 149
-      },
-      {
-        "id": "cmsfccs0m0013kl3yan0s3bff",
-        "color": "Azul marinho brilho",
-        "size": "G",
         "stock": 3,
         "price": 149
       }

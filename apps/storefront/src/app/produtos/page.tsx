@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { categories, getProducts } from '../../lib/products';
 import type { Category } from '../../lib/types';
 import { ProductsPageClient } from './products-page-client';
@@ -44,6 +45,8 @@ export async function generateMetadata({
 
   // O canonical inclui a categoria: as três URLs estão no sitemap, e apontar
   // todas para /produtos faria o sitemap pedir uma coisa e o canonical outra.
+  // Categoria com pagina propria nem chega aqui: e redirecionada antes. O que
+  // sobra e categoria sem pagina, e para ela o canonico continua sendo a query.
   const canonical = categoria ? `/produtos?categoria=${categoria}` : '/produtos';
 
   const title = categoria
@@ -61,12 +64,22 @@ export async function generateMetadata({
   };
 }
 
+/** Categorias que ganharam endereço próprio. */
+const COM_PAGINA_PROPRIA = new Set(['leggings', 'tops', 'shorts']);
+
 export default async function ProductsPage({
   searchParams,
 }: {
   searchParams: { categoria?: string };
 }) {
   const categoria = categoriaDe(searchParams);
+
+  // Duas URLs com a mesma lista dividem o ranqueamento entre si em vez de
+  // somar, e o link antigo continua circulando em anúncio e conversa de
+  // WhatsApp. O redirecionamento junta as duas numa só sem quebrar nada.
+  if (categoria && COM_PAGINA_PROPRIA.has(categoria)) {
+    redirect(`/${categoria}`);
+  }
   const todos = await getProducts();
   const produtos = categoria ? todos.filter((p) => p.category === categoria) : todos;
 

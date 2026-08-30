@@ -140,7 +140,7 @@ export default async function HomePage() {
             return (
               <Link
                 key={category.value}
-                href={hasProducts ? `/produtos?categoria=${category.value}` : '/em-breve'}
+                href={hasProducts ? `/${category.value}` : '/em-breve'}
                 className="group relative overflow-hidden bg-ink"
               >
                 <ProductImage

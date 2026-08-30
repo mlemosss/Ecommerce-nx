@@ -89,7 +89,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           { nome: 'Início', url: STOREFRONT_URL },
           {
             nome: product.category,
-            url: `${STOREFRONT_URL}/produtos?categoria=${product.category}`,
+            url: `${STOREFRONT_URL}/${product.category}`,
           },
           { nome: product.name, url: `${STOREFRONT_URL}/produtos/${product.slug}` },
         ])}
@@ -101,7 +101,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
         </Link>{' '}
         /{' '}
         <Link
-          href={`/produtos?categoria=${product.category}`}
+          href={`/${product.category}`}
           className="underline-offset-4 hover:underline"
         >
           {product.category}
