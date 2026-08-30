@@ -119,6 +119,25 @@ export function Footer({ settings }: { settings: StoreSettings }) {
               </Link>
             </li>
             <li>
+              {/* A tabela de medidas era a informacao mais citavel da loja e
+                  so existia dentro de um modal em JavaScript - para busca e
+                  para IA, nao existia. */}
+              <Link
+                href="/tabela-de-medidas"
+                className="underline-offset-4 transition hover:text-white hover:underline"
+              >
+                Tabela de medidas
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/roupa-fitness-sao-paulo"
+                className="underline-offset-4 transition hover:text-white hover:underline"
+              >
+                Retirada em São Paulo
+              </Link>
+            </li>
+            <li>
               <Link
                 href="/perguntas-frequentes"
                 className="underline-offset-4 transition hover:text-white hover:underline"

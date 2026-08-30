@@ -277,6 +277,27 @@ export function organizationSchema(input: {
     ...(input.legalName ? { legalName: input.legalName } : {}),
     ...(input.cnpj ? { taxID: input.cnpj } : {}),
     ...(input.redes.length ? { sameAs: input.redes } : {}),
+
+    /**
+     * O endereço declarado, sem fingir loja aberta.
+     *
+     * `OnlineStore` com `address` diz "esta empresa fica aqui" — que é verdade,
+     * e é o que sustenta a busca local junto com a página de São Paulo.
+     *
+     * O que **não** entra é `Store` com `openingHours`: seria declarar um
+     * estabelecimento com atendimento presencial que não existe. Além de falso,
+     * é motivo de suspensão no Perfil da Empresa. A retirada é combinada, e é
+     * assim que ela aparece.
+     */
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'R. Tupi, 103',
+      addressLocality: 'São Paulo',
+      addressRegion: 'SP',
+      postalCode: '01233-001',
+      addressCountry: 'BR',
+    },
+    areaServed: { '@type': 'Country', name: 'Brasil' },
     ...(digits || input.email
       ? {
           contactPoint: {

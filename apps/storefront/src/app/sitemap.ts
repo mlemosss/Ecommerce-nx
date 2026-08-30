@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await getProducts();
   const now = new Date();
 
-  const fixed = ['', '/produtos', '/sale', '/quem-somos', '/em-breve', '/avaliacoes', '/perguntas-frequentes', '/trocas-e-devolucoes', '/privacidade'].map(
+  const fixed = ['', '/produtos', '/sale', '/quem-somos', '/em-breve', '/avaliacoes', '/tabela-de-medidas', '/roupa-fitness-sao-paulo', '/perguntas-frequentes', '/trocas-e-devolucoes', '/privacidade'].map(
     (path) => ({
       url: `${STOREFRONT_URL}${path}`,
       lastModified: now,
