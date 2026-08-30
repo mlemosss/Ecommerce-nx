@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { LightboxDeFotos } from './lightbox-fotos';
@@ -70,16 +71,19 @@ export function MuralDeFotos({
             aria-label={`Ampliar a foto de ${foto.customerName}`}
             className="group relative block aspect-[4/5] w-full overflow-hidden bg-paper text-left"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* A foto vem por URL da API, então o otimizador da Vercel entrega
+                webp no tamanho da tela. Enquanto ela era um dataURL embutido no
+                HTML, isso era impossível — e a home saía com 4,7 MB. */}
+            <Image
               src={foto.photoUrl}
               alt={
                 foto.productName
                   ? `${foto.customerName} usando ${foto.productName}`
                   : `Foto enviada por ${foto.customerName}`
               }
-              loading="lazy"
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover transition duration-500 group-hover:scale-[1.04]"
             />
 
             {/* Etiqueta da peça, como a marcação de produto numa foto do

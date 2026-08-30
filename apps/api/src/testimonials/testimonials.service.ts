@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { apiBaseUrl } from '../common/request-context';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import {
@@ -22,20 +23,41 @@ export class TestimonialsService {
    * não para ficar aberto num endpoint público. É o tipo de vazamento que
    * ninguém percebe, porque a tela nunca desenha o campo.
    */
-  findPublic() {
-    return this.prisma.testimonial.findMany({
-      where: { active: true },
-      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-      select: {
-        id: true,
-        customerName: true,
-        photoUrl: true,
-        quote: true,
-        rating: true,
-        position: true,
-        createdAt: true,
-      },
-    });
+  async findPublic() {
+    /**
+     * A foto sai por URL, e não dentro da resposta.
+     *
+     * Guardada como dataURL em base64, ela ia inteira no JSON e daí para dentro
+     * do HTML da home — que chegou a 4,7 MB. Duas consultas leves: a lista sem
+     * a foto, e os ids que têm foto. Trazer o base64 só para testar se é nulo
+     * custa megabytes do Postgres por visita.
+     */
+    const [depoimentos, comFoto] = await Promise.all([
+      this.prisma.testimonial.findMany({
+        where: { active: true },
+        orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+        select: {
+          id: true,
+          customerName: true,
+          quote: true,
+          rating: true,
+          position: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.testimonial.findMany({
+        where: { active: true, photoUrl: { not: null } },
+        select: { id: true },
+      }),
+    ]);
+
+    const temFoto = new Set(comFoto.map((t) => t.id));
+    const base = apiBaseUrl();
+
+    return depoimentos.map((t) => ({
+      ...t,
+      photoUrl: temFoto.has(t.id) ? `${base}/review-images/depoimento/${t.id}.jpg` : null,
+    }));
   }
 
   findAll() {

@@ -1,7 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBaseUrl } from '../common/request-context';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { CreateReviewDto } from './dto/review.dto';
+
+
+/**
+ * A foto da cliente vira endereço, e não conteúdo.
+ *
+ * Guardada como dataURL em base64, ela ia inteira dentro do JSON e, dali, para
+ * dentro do HTML da página — 4,7 MB na home. Servida por URL, o JSON fica
+ * pequeno, o navegador baixa cada foto uma vez, e o Postgres para de mandar
+ * megabytes a cada visita.
+ */
+function urlDaFoto(base: string, tipo: 'avaliacao' | 'depoimento', id: string): string {
+  return `${base}/review-images/${tipo}/${id}.jpg`;
+}
 
 @Injectable()
 export class ReviewsService {
@@ -21,10 +35,49 @@ export class ReviewsService {
   }
 
   async findForProduct(productId: string) {
-    const reviews = await this.prisma.productReview.findMany({
-      where: { productId, approved: true },
-      orderBy: { createdAt: 'desc' },
-    });
+    /**
+     * Duas consultas leves em vez de uma pesada.
+     *
+     * Esta roda em toda visita a uma página de produto, e o `photoUrl` guarda a
+     * foto inteira em base64 — selecioná-lo só para testar se é nulo arrastaria
+     * megabytes do Postgres a cada visita, que é a conta que já derrubou a loja.
+     * A segunda consulta traz só os ids que têm foto.
+     */
+    const [encontradas, comFoto] = await Promise.all([
+      this.prisma.productReview.findMany({
+        where: { productId, approved: true },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          customerName: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+          orderId: true,
+        },
+      }),
+      this.prisma.productReview.findMany({
+        where: { productId, approved: true, photoUrl: { not: null } },
+        select: { id: true },
+      }),
+    ]);
+
+    const temFoto = new Set(comFoto.map((r) => r.id));
+    const base = apiBaseUrl();
+
+    const reviews = encontradas.map((r) => ({
+      id: r.id,
+      // Só o primeiro nome, como no mural: a página do produto não é lugar de
+      // publicar o nome completo de quem comprou.
+      customerName: r.customerName.trim().split(/\s+/)[0] ?? r.customerName,
+      rating: r.rating,
+      comment: r.comment,
+      photoUrl: temFoto.has(r.id) ? urlDaFoto(base, 'avaliacao', r.id) : null,
+      createdAt: r.createdAt,
+      // Veio pelo link do pedido: há compra confirmada por trás.
+      compraVerificada: r.orderId !== null,
+    }));
+
     const count = reviews.length;
     const average = count === 0 ? 0 : reviews.reduce((sum, r) => sum + r.rating, 0) / count;
     return { reviews, average, count };
@@ -132,9 +185,10 @@ export class ReviewsService {
         where: { approved: true, photoUrl: { not: null } },
         orderBy: { createdAt: 'desc' },
         take: teto,
+        // Sem `photoUrl`: o WHERE acima já garante que existe, e trazer a foto
+        // em base64 só para descartá-la era o custo inteiro desta consulta.
         select: {
           id: true,
-          photoUrl: true,
           rating: true,
           comment: true,
           customerName: true,
@@ -148,7 +202,6 @@ export class ReviewsService {
         take: teto,
         select: {
           id: true,
-          photoUrl: true,
           rating: true,
           quote: true,
           customerName: true,
@@ -164,7 +217,7 @@ export class ReviewsService {
     return [
       ...dePecas.map((f) => ({
         id: f.id,
-        photoUrl: f.photoUrl as string,
+        photoUrl: urlDaFoto(base, 'avaliacao', f.id),
         rating: f.rating,
         comment: f.comment,
         customerName: primeiroNome(f.customerName),
@@ -174,7 +227,7 @@ export class ReviewsService {
       })),
       ...daLoja.map((t) => ({
         id: t.id,
-        photoUrl: t.photoUrl as string,
+        photoUrl: urlDaFoto(base, 'depoimento', t.id),
         rating: t.rating,
         comment: t.quote,
         customerName: primeiroNome(t.customerName),
@@ -198,22 +251,31 @@ export class ReviewsService {
    * só o primeiro nome.
    */
   async publicas() {
-    const aprovadas = await this.prisma.productReview.findMany({
-      where: { approved: true },
-      orderBy: { createdAt: 'desc' },
-      take: 200,
-      select: {
-        id: true,
-        photoUrl: true,
-        rating: true,
-        comment: true,
-        customerName: true,
-        createdAt: true,
-        orderId: true,
-        product: { select: { name: true, slug: true } },
-      },
-    });
+    // Duas consultas leves, pelo mesmo motivo de `findForProduct`: trazer a
+    // foto em base64 só para saber se ela existe custa megabytes por visita.
+    const [aprovadas, comFoto] = await Promise.all([
+      this.prisma.productReview.findMany({
+        where: { approved: true },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          customerName: true,
+          createdAt: true,
+          orderId: true,
+          product: { select: { name: true, slug: true } },
+        },
+      }),
+      this.prisma.productReview.findMany({
+        where: { approved: true, photoUrl: { not: null } },
+        select: { id: true },
+      }),
+    ]);
 
+    const temFoto = new Set(comFoto.map((r) => r.id));
+    const base = apiBaseUrl();
     const soma = aprovadas.reduce((total, r) => total + r.rating, 0);
 
     return {
@@ -221,7 +283,7 @@ export class ReviewsService {
       media: aprovadas.length ? soma / aprovadas.length : 0,
       avaliacoes: aprovadas.map((r) => ({
         id: r.id,
-        photoUrl: r.photoUrl,
+        photoUrl: temFoto.has(r.id) ? urlDaFoto(base, 'avaliacao', r.id) : null,
         rating: r.rating,
         comment: r.comment,
         customerName: r.customerName.trim().split(/\s+/)[0] ?? '',

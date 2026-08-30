@@ -207,7 +207,6 @@ export function ProductReviews({
                   alt={`Foto enviada por ${review.customerName}`}
                   fill
                   sizes="80px"
-                  unoptimized
                   className="object-cover transition hover:scale-105"
                 />
               </button>

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { LightboxDeFotos, type FotoAmpliada } from './lightbox-fotos';
 
@@ -19,14 +20,14 @@ export function FotoDaAvaliacao({ foto, className }: { foto: FotoAmpliada; class
         type="button"
         onClick={() => setAberta(0)}
         aria-label={`Ampliar a foto de ${foto.autor}`}
-        className={className}
+        className={`relative ${className ?? ''}`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={foto.url}
           alt={`${foto.autor} usando ${foto.productName ?? 'uma peça NO EXCUSE'}`}
-          loading="lazy"
-          className="h-full w-full object-cover transition hover:scale-105"
+          fill
+          sizes="(max-width: 640px) 50vw, 320px"
+          className="object-cover transition hover:scale-105"
         />
       </button>
 
