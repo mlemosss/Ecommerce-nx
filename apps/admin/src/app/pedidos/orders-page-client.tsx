@@ -100,6 +100,34 @@ export function OrdersPageClient() {
     return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
   }
 
+  /**
+   * WhatsApp para combinar a retirada, com a mensagem pronta.
+   *
+   * O pedido de retirada chega e fica parado esperando alguém lembrar de
+   * escrever — e quem espera é a cliente, que pagou e não sabe onde nem quando
+   * buscar. Automatizar de verdade exigiria a API oficial do WhatsApp, com
+   * verificação de empresa e modelo de mensagem aprovado pela Meta; com o
+   * volume de hoje, isso é máquina demais para três mensagens.
+   *
+   * O botão resolve o mesmo problema: a mensagem já escrita, o número já certo,
+   * e a lojista só aperta enviar. O que sai é gente falando com gente.
+   */
+  function linkRetirada(order: Order): string {
+    const telefone = (order.customerPhone ?? '').replace(/\D/g, '');
+    const primeiroNome = order.customerName.trim().split(/\s+/)[0] ?? '';
+    const pecas = order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ');
+
+    const texto =
+      `Oi, ${primeiroNome}! Aqui é da NO EXCUSE 💪\n\n` +
+      `Seu pedido #${order.orderNumber} (${pecas}) está separado e pronto para retirada em ` +
+      `Higienópolis, São Paulo.\n\n` +
+      `Qual dia e horário fica melhor para você? A gente combina o ponto exato por aqui.`;
+
+    const numero =
+      telefone.length >= 10 ? (telefone.startsWith('55') ? telefone : `55${telefone}`) : '';
+    return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
+  }
+
   /** Só para o pedido raro que ficou sem token. Depois disso os botões são links. */
   async function gerarToken(order: Order) {
     setError('');
@@ -594,9 +622,21 @@ export function OrdersPageClient() {
                             RETIRADA EM HIGIENÓPOLIS — não postar
                           </p>
                           <p className="mt-1 text-xs text-black/45">
-                            Combine dia e horário com a cliente. Endereço no cadastro:{' '}
-                            {order.street}, {order.number} · {order.city}
+                            Endereço no cadastro: {order.street}, {order.number} · {order.city}
                           </p>
+                          {/* O pedido de retirada fica parado esperando alguém
+                              lembrar de escrever — e quem espera é a cliente,
+                              que pagou e não sabe onde nem quando buscar. */}
+                          {order.customerPhone && (
+                            <a
+                              href={linkRetirada(order)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-2 inline-block rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white"
+                            >
+                              Combinar retirada no WhatsApp
+                            </a>
+                          )}
                         </>
                       ) : (
                         <>
