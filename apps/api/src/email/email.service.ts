@@ -114,11 +114,16 @@ export class EmailService {
     }
   }
 
-  private async sendIfEnabled(stepKey: string, to: string, template: EmailTemplate): Promise<void> {
+  private async sendIfEnabled(
+    stepKey: string,
+    to: string,
+    template: EmailTemplate,
+    options: { copiaOculta?: string[] } = {}
+  ): Promise<void> {
     try {
       const enabled = await this.emailFlow.isEnabled(stepKey);
       if (!enabled) return;
-      await this.dispatch(to, template);
+      await this.dispatch(to, template, options);
     } catch (err) {
       this.logger.error(
         `Erro ao processar envio de e-mail (${stepKey}): ${err instanceof Error ? err.message : err}`
@@ -132,7 +137,9 @@ export class EmailService {
   ): Promise<void> {
     const { storeName } = await this.getSender();
     const template = orderConfirmedTemplate(storeName, this.getStorefrontUrl(), order, options);
-    await this.sendIfEnabled('pedido_confirmado', order.customerEmail, template);
+    await this.sendIfEnabled('pedido_confirmado', order.customerEmail, template, {
+      copiaOculta: this.copiaDoPedido(),
+    });
   }
 
   /**
@@ -146,13 +153,19 @@ export class EmailService {
   ): Promise<void> {
     const { storeName } = await this.getSender();
     const template = orderAwaitingPaymentTemplate(storeName, this.getStorefrontUrl(), order);
-    await this.sendIfEnabled('pedido_confirmado', order.customerEmail, template);
+    await this.sendIfEnabled('pedido_confirmado', order.customerEmail, template, {
+      copiaOculta: this.copiaDoPedido(),
+    });
   }
 
   async sendPaymentApproved(order: OrderForEmail & { customerEmail: string }): Promise<void> {
     const { storeName } = await this.getSender();
     const template = paymentApprovedTemplate(storeName, this.getStorefrontUrl(), order);
-    await this.sendIfEnabled('pagamento_aprovado', order.customerEmail, template);
+    // Pagamento aprovado é o aviso que a lojista mais precisa ver: é a hora de
+    // separar a peça.
+    await this.sendIfEnabled('pagamento_aprovado', order.customerEmail, template, {
+      copiaOculta: this.copiaDoPedido(),
+    });
   }
 
   /**
