@@ -81,11 +81,13 @@ export function classificarCanal(dados: {
   }
 
   if (dados.referrer) {
+    // O navegador manda só o domínio. Pedido gravado antes desta mudança pode
+    // ter o endereço inteiro, então a URL continua sendo aceita.
     const host = (() => {
       try {
         return new URL(dados.referrer).hostname.toLowerCase();
       } catch {
-        return '';
+        return dados.referrer.toLowerCase();
       }
     })();
     if (/instagram\./.test(host)) return 'Instagram';

@@ -3,6 +3,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
+  IsEmail,
   IsIn,
   IsNumber,
   IsOptional,
@@ -80,7 +81,12 @@ export class CreateOrderDto {
   @IsString()
   customerName!: string;
 
-  @IsString()
+  /**
+   * O e-mail é a chave que liga o pedido ao cadastro — e era validado só como
+   * "alguma string". Endereço malformado vira cliente que nunca recebe nada:
+   * nem confirmação, nem rastreio, nem segunda via do Pix.
+   */
+  @IsEmail({}, { message: 'Confira o e-mail.' })
   customerEmail!: string;
 
   @IsString()

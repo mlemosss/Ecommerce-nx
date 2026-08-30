@@ -487,34 +487,80 @@ export class OrdersService {
 
   /** `remoteIp` é o IP de quem está comprando — o Asaas exige no cartão. */
   async create(dto: CreateOrderDto, remoteIp?: string) {
-    const customer = await this.prisma.customer.upsert({
+    /**
+     * Cadastro existente não é reescrito por quem não provou ser dono dele.
+     *
+     * `POST /orders` é público — a loja aceita compra sem cadastro. O `upsert`
+     * usava o e-mail como se fosse credencial: bastava mandar o e-mail de uma
+     * cliente conhecida para trocar o nome, o CPF e o endereço dela. Os pedidos
+     * futuros iriam para o endereço do atacante, e o cupom de primeira compra
+     * passaria a olhar um CPF que não é o dela.
+     *
+     * E-mail não prova nada: qualquer um sabe o meu.
+     *
+     * Os dados desta compra continuam sendo gravados — no próprio pedido, que é
+     * onde eles têm que estar de qualquer forma. O endereço de entrega é o do
+     * dia da compra, e não o do cadastro. O que não acontece mais é a compra de
+     * um desconhecido reescrever a ficha de outra pessoa.
+     *
+     * Quem quiser atualizar o próprio cadastro faz em Meus Dados, autenticada.
+     */
+    const jaExiste = await this.prisma.customer.findUnique({
       where: { email: dto.customerEmail },
-      update: {
-        name: dto.customerName,
-        phone: onlyDigits(dto.customerPhone) || undefined,
-        documentNumber: onlyDigits(dto.customerDocument) || undefined,
-        city: dto.city || undefined,
-        neighborhood: dto.neighborhood || undefined,
-        state: dto.state || undefined,
-        zipCode: dto.zipCode || undefined,
-        street: dto.street || undefined,
-        number: dto.number || undefined,
-        complement: dto.complement || undefined,
-      },
-      create: {
-        name: dto.customerName,
-        email: dto.customerEmail,
-        phone: onlyDigits(dto.customerPhone),
-        documentNumber: onlyDigits(dto.customerDocument),
-        city: dto.city,
-        neighborhood: dto.neighborhood,
-        state: dto.state,
-        zipCode: dto.zipCode,
-        street: dto.street,
-        number: dto.number,
-        complement: dto.complement,
+      select: {
+        id: true,
+        phone: true,
+        documentNumber: true,
+        zipCode: true,
+        street: true,
+        number: true,
+        complement: true,
+        neighborhood: true,
+        city: true,
+        state: true,
       },
     });
+
+    /**
+     * Preenche só o que está vazio.
+     *
+     * Cliente que comprou antes de o campo existir ganha o dado desta compra —
+     * isso é ganho e não risco, porque não havia nada ali para sobrescrever. O
+     * que estiver preenchido fica como está.
+     */
+    const soSeVazio = <T,>(atual: T | null | undefined, novo: T | undefined) =>
+      atual ? undefined : novo || undefined;
+
+    const customer = jaExiste
+      ? await this.prisma.customer.update({
+          where: { id: jaExiste.id },
+          data: {
+            phone: soSeVazio(jaExiste.phone, onlyDigits(dto.customerPhone)),
+            documentNumber: soSeVazio(jaExiste.documentNumber, onlyDigits(dto.customerDocument)),
+            zipCode: soSeVazio(jaExiste.zipCode, dto.zipCode),
+            street: soSeVazio(jaExiste.street, dto.street),
+            number: soSeVazio(jaExiste.number, dto.number),
+            complement: soSeVazio(jaExiste.complement, dto.complement),
+            neighborhood: soSeVazio(jaExiste.neighborhood, dto.neighborhood),
+            city: soSeVazio(jaExiste.city, dto.city),
+            state: soSeVazio(jaExiste.state, dto.state),
+          },
+        })
+      : await this.prisma.customer.create({
+          data: {
+            name: dto.customerName,
+            email: dto.customerEmail,
+            phone: onlyDigits(dto.customerPhone),
+            documentNumber: onlyDigits(dto.customerDocument),
+            city: dto.city,
+            neighborhood: dto.neighborhood,
+            state: dto.state,
+            zipCode: dto.zipCode,
+            street: dto.street,
+            number: dto.number,
+            complement: dto.complement,
+          },
+        });
 
     const order = await this.prisma.$transaction(async (tx) => {
       // Preço vem do catálogo, nunca do corpo da requisição: `POST /orders` é

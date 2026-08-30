@@ -67,10 +67,26 @@ export function registrarOrigem(): void {
       if (lerOrigem()) return;
     }
 
-    // Referência de dentro da própria loja não é origem: é navegação.
+    /**
+     * Só o domínio de onde ela veio, nunca o endereço inteiro.
+     *
+     * O referrer completo carrega a query string do outro site, e ali cabe
+     * qualquer coisa — um e-mail num link de newsletter, um token, o termo que
+     * alguém digitou. Nada disso é da conta da loja, e guardar por descuido é
+     * como um vazamento começa.
+     *
+     * Para o que a atribuição precisa saber — se veio do Instagram, do Google
+     * ou de fora — o domínio basta.
+     */
     const referrer = document.referrer;
-    const externo =
-      referrer && !referrer.startsWith(window.location.origin) ? limpar(referrer) : undefined;
+    let externo: string | undefined;
+    if (referrer && !referrer.startsWith(window.location.origin)) {
+      try {
+        externo = new URL(referrer).hostname.replace(/^www\./, '') || undefined;
+      } catch {
+        externo = undefined;
+      }
+    }
 
     window.localStorage.setItem(
       CHAVE,
@@ -143,12 +159,9 @@ export function canalDaVisita(): string {
   }
 
   if (origem.referrer) {
-    let host = '';
-    try {
-      host = new URL(origem.referrer).hostname.toLowerCase();
-    } catch {
-      host = '';
-    }
+    // Já é só o domínio: guardar o endereço inteiro carregaria a query string
+    // de outro site, e ali cabe e-mail, token e o que mais tiverem colado.
+    const host = origem.referrer.toLowerCase();
     if (/instagram\./.test(host)) return 'Instagram';
     if (/facebook\.|fb\./.test(host)) return 'Facebook';
     if (/google\./.test(host)) return 'Google';
