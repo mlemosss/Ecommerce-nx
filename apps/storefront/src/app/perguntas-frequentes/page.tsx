@@ -85,9 +85,9 @@ function perguntas(freteGratis: number, parcelas: number) {
         'Somos a NO EXCUSE, CNPJ 51.141.534/0001-79, de São Paulo. A marca foi criada por duas mulheres: uma personal trainer e professora de educação física, e uma professora e empreendedora. O pagamento é processado pelo Asaas, e o site tem certificado de segurança.',
     },
     {
-      pergunta: 'Vocês têm loja física?',
+      pergunta: 'Vocês têm loja física? Dá para retirar em mãos?',
       resposta:
-        'Não temos loja aberta ao público. Somos de São Paulo e nosso estoque fica em Higienópolis. Toda a venda é pelo site, com envio para todo o Brasil.',
+        'Não temos loja aberta ao público, mas você pode retirar em mãos em Higienópolis, São Paulo, sem pagar frete: é só escolher "Retirar em Higienópolis" na finalização da compra, que a gente combina dia e horário pelo WhatsApp. Para o resto do Brasil, enviamos por Correios, Jadlog, Loggi e outras transportadoras, com rastreio.',
     },
   ];
 }

@@ -11,6 +11,29 @@ import { getMural, getSettings, getTestimonials } from '../lib/api';
 import { formatPrice } from '../lib/format';
 import type { Category, Product } from '../lib/types';
 
+/**
+ * A home era a única página sem canonical, e com título de marca.
+ *
+ * "NO EXCUSE — Roupas de Academia" põe na frente um nome que ninguém busca. A
+ * marca é desconhecida: o que traz visita é o que ela vende, e a marca fecha a
+ * frase. O canonical faltava porque o layout tirou o dele de propósito e a home
+ * nunca ganhou o seu — sem ele, qualquer variação de endereço vira página
+ * própria aos olhos do buscador.
+ */
+export const metadata = {
+  title: 'Roupa Fitness Feminina: Leggings, Tops e Shorts — NO EXCUSE',
+  description:
+    'Leggings de compressão, tops com bojo e shorts com bolso, do PP ao G. Cós alto, tecido opaco e proteção UV. Envio para todo o Brasil e retirada em Higienópolis, São Paulo.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Roupa Fitness Feminina: Leggings, Tops e Shorts — NO EXCUSE',
+    description:
+      'Leggings de compressão, tops com bojo e shorts com bolso, do PP ao G. Envio para todo o Brasil.',
+    url: '/',
+    type: 'website',
+  },
+};
+
 const TRUST = [
   {
     title: 'Frete grátis',

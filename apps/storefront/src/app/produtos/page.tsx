@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 import { categories, getProducts } from '../../lib/products';
 import type { Category } from '../../lib/types';
 import { ProductsPageClient } from './products-page-client';
@@ -78,7 +78,10 @@ export default async function ProductsPage({
   // somar, e o link antigo continua circulando em anúncio e conversa de
   // WhatsApp. O redirecionamento junta as duas numa só sem quebrar nada.
   if (categoria && COM_PAGINA_PROPRIA.has(categoria)) {
-    redirect(`/${categoria}`);
+    // Permanente, e nao temporario: o Google so transfere a forca de link de
+    // um 308. Com 307 as duas URLs seguem competindo, que e o oposto do motivo
+    // de existir o redirecionamento.
+    permanentRedirect(`/${categoria}`);
   }
   const todos = await getProducts();
   const produtos = categoria ? todos.filter((p) => p.category === categoria) : todos;

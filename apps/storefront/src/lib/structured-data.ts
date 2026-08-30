@@ -1,3 +1,4 @@
+import { atributosDe } from './atributos';
 import type { Product } from './types';
 
 /**
@@ -92,6 +93,30 @@ export interface ProductSchemaInput {
   freeShippingThreshold: number;
 }
 
+/**
+ * A lista de pecas de uma prateleira, para o buscador.
+ *
+ * So url e nome por item. A forma completa, com Product aninhado, obriga a
+ * repetir preco e estoque em dois lugares - e e exatamente ali que a marcacao
+ * passa a divergir da pagina, que e pior do que nao ter marcacao.
+ */
+export function itemListSchema(
+  produtos: { slug: string; name: string }[],
+  storefrontUrl: string
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    numberOfItems: produtos.length,
+    itemListElement: produtos.map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: `${storefrontUrl}/produtos/${p.slug}`,
+      name: p.name,
+    })),
+  };
+}
+
 export function productSchema({
   product,
   url,
@@ -120,6 +145,26 @@ export function productSchema({
     brand: { '@type': 'Brand', name: storeName },
     ...(product.colors?.length ? { color: product.colors.join(', ') } : {}),
     ...(product.sizes?.length ? { size: product.sizes.join(', ') } : {}),
+
+    /**
+     * A ficha técnica em campos, e não no meio do texto.
+     *
+     * Compressão, cós, FPS, bolso e opacidade decidem a compra de roupa
+     * fitness — e estavam só como frase solta na descrição. Aqui viram dado
+     * que o buscador lê e que um assistente consegue citar. A mesma tabela é
+     * renderizada na página: dado estruturado que não aparece na tela é
+     * motivo de penalização, não de ganho.
+     */
+    ...(atributosDe(product.slug).length
+      ? {
+          additionalProperty: atributosDe(product.slug).map((a) => ({
+            '@type': 'PropertyValue',
+            name: a.nome,
+            value: a.valor,
+          })),
+        }
+      : {}),
+    audience: { '@type': 'PeopleAudience', suggestedGender: 'female' },
 
     // Uma faixa de preço quando as variações custam diferente, e um preço só
     // quando é tudo igual. `AggregateOffer` com menor === maior faz o Google

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getProductBySlug, getRelatedProducts } from '../../../lib/products';
+import { categories, getProductBySlug, getRelatedProducts } from '../../../lib/products';
 import { ProductGallery } from '../../../components/product-gallery';
 import { ProductCard } from '../../../components/product-card';
 import { AddToCart } from '../../../components/add-to-cart';
@@ -14,6 +14,21 @@ import { formatPrice } from '../../../lib/format';
 import { summarizeDescription } from '../../../lib/description';
 import { JsonLd } from '../../../components/json-ld';
 import { breadcrumbSchema, productSchema } from '../../../lib/structured-data';
+import { atributosDe, chamadaDoTitulo } from '../../../lib/atributos';
+
+/**
+ * Como a categoria se chama num titulo de busca.
+ *
+ * "leggings" e o rotulo interno; "Legging Fitness Feminina" e o que a pessoa
+ * digita. A diferenca entre os dois e a diferenca entre aparecer e nao
+ * aparecer.
+ */
+const SUBSTANTIVO: Record<string, string> = {
+  leggings: 'Legging Fitness Feminina',
+  tops: 'Top Fitness Feminino',
+  shorts: 'Shorts Fitness Feminino',
+  acessorios: 'Acessorio Fitness',
+};
 
 const STOREFRONT_URL = (
   process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://www.noexcusenx.com.br'
@@ -27,12 +42,36 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const product = await getProductBySlug(params.slug);
   if (!product) return { title: 'Produto — NO EXCUSE' };
 
-  const title = `${product.name} — NO EXCUSE`;
-  const description =
-    (product.description?.trim() && summarizeDescription(product.description)) ||
-    `${product.name} por ${formatPrice(product.price)}. ${product.colors.length > 1 ? `${product.colors.length} cores` : product.colors[0] ?? ''}${
-      product.sizes.length ? ` · tamanhos ${product.sizes.join(', ')}` : ''
-    }. Frete para todo o Brasil.`;
+  /**
+   * O título dizia só o nome da peça: "Top Urban — NO EXCUSE".
+   *
+   * Ninguém no Brasil busca "Top Urban" — é um nome que só a loja conhece. O
+   * título precisa dizer o que a peça é e o que ela faz, que é o que a pessoa
+   * digita: "top fitness feminino com bojo e FPS 50+".
+   */
+  const substantivo = SUBSTANTIVO[product.category] ?? product.name;
+  const chamada = chamadaDoTitulo(product.slug);
+  const title = chamada
+    ? `${product.name} — ${substantivo} ${chamada} | NO EXCUSE`
+    : `${product.name} — ${substantivo} | NO EXCUSE`;
+
+  /**
+   * A descrição vinha do primeiro parágrafo cru — e Shorts BC e Shorts Energy
+   * começam com a mesma frase, então saíam com a **mesma** meta description.
+   * Duas páginas com a mesma descrição competem entre si no buscador.
+   *
+   * Os atributos diferem entre elas (cós duplo, composição), então é por eles
+   * que a descrição passa a começar.
+   */
+  const fichaCurta = atributosDe(product.slug)
+    .slice(0, 3)
+    .map((a) => `${a.nome.toLowerCase()}: ${a.valor.toLowerCase()}`)
+    .join(' · ');
+
+  const description = fichaCurta
+    ? `${product.name}, ${substantivo.toLowerCase()}. ${fichaCurta}. Do ${product.sizes[0] ?? 'PP'} ao ${product.sizes[product.sizes.length - 1] ?? 'G'} · ${formatPrice(product.price)} · envio para todo o Brasil.`
+    : (product.description?.trim() && summarizeDescription(product.description)) ||
+      `${product.name} por ${formatPrice(product.price)}. Frete para todo o Brasil.`;
   const url = `${STOREFRONT_URL}/produtos/${product.slug}`;
   const image = product.images?.[0];
 
@@ -88,7 +127,9 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
         data={breadcrumbSchema([
           { nome: 'Início', url: STOREFRONT_URL },
           {
-            nome: product.category,
+            // "leggings" minusculo aparecia assim no Google. O rotulo e o
+            // que a pessoa reconhece.
+            nome: categories.find((c) => c.value === product.category)?.label ?? product.category,
             url: `${STOREFRONT_URL}/${product.category}`,
           },
           { nome: product.name, url: `${STOREFRONT_URL}/produtos/${product.slug}` },
@@ -104,7 +145,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           href={`/${product.category}`}
           className="underline-offset-4 hover:underline"
         >
-          {product.category}
+          {categories.find((c) => c.value === product.category)?.label ?? product.category}
         </Link>{' '}
         / <span className="text-ink">{product.name}</span>
       </nav>
@@ -121,7 +162,9 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
 
         <div>
           <div className="flex items-start justify-between gap-3">
-            <p className="eyebrow text-ink/50">{product.category}</p>
+            <p className="eyebrow text-ink/50">
+              {categories.find((c) => c.value === product.category)?.label ?? product.category}
+            </p>
             <FavoriteButton productId={product.id} />
           </div>
           <h1 className="mt-3 text-3xl font-black uppercase leading-[0.95] tracking-[-0.02em] sm:text-4xl">
@@ -162,6 +205,25 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           </div>
         </div>
       </div>
+
+      {/* A mesma ficha do dado estruturado, na tela.
+          Dado estruturado que nao aparece para a pessoa e motivo de
+          penalizacao, nao de ganho - e, mais importante, e aqui que ela
+          responde "fica transparente?" sem ler tres paragrafos. */}
+      {atributosDe(product.slug).length > 0 && (
+        <section className="mt-16 border-t border-line pt-12">
+          <p className="eyebrow text-ink/50">Ficha da peca</p>
+          <h2 className="section-title mt-3">O que ela tem</h2>
+          <dl className="mt-8 grid gap-px bg-line sm:grid-cols-2">
+            {atributosDe(product.slug).map((a) => (
+              <div key={a.nome} className="bg-white px-5 py-4">
+                <dt className="text-[11px] uppercase tracking-[0.14em] text-ink/50">{a.nome}</dt>
+                <dd className="mt-1 text-sm text-ink">{a.valor}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
 
       <ProductReviews
         productId={product.id}

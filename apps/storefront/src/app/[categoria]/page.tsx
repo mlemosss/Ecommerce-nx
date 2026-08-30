@@ -3,7 +3,7 @@ import { categories, getProducts } from '../../lib/products';
 import type { Category } from '../../lib/types';
 import { ProductsPageClient } from '../produtos/products-page-client';
 import { JsonLd } from '../../components/json-ld';
-import { breadcrumbSchema } from '../../lib/structured-data';
+import { breadcrumbSchema, itemListSchema } from '../../lib/structured-data';
 
 const STOREFRONT_URL = (
   process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://www.noexcusenx.com.br'
@@ -90,6 +90,7 @@ export default async function CategoriaPage({ params }: { params: { categoria: s
           { nome: rotulo, url: `${STOREFRONT_URL}/${categoria}` },
         ])}
       />
+      <JsonLd data={itemListSchema(produtos, STOREFRONT_URL)} />
       <ProductsPageClient
         products={produtos}
         categoria={categoria as Category}
