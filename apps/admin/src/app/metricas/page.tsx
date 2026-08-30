@@ -13,7 +13,8 @@ interface DiaDoResumo {
 }
 
 interface Resumo {
-  dias: number;
+  de: string;
+  ate: string;
   views: number;
   sessoes: number;
   pedidos: number;
@@ -25,10 +26,20 @@ interface Resumo {
   paginas: { rota: string; views: number }[];
 }
 
-const JANELAS = [
-  { dias: 7, label: '7 dias' },
-  { dias: 30, label: '30 dias' },
-  { dias: 90, label: '90 dias' },
+/** Hoje e ontem em Brasília, no formato do campo de data. */
+function diaEmBrasilia(deslocamento = 0): string {
+  const agora = new Date();
+  const local = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
+  local.setUTCDate(local.getUTCDate() + deslocamento);
+  return local.toISOString().slice(0, 10);
+}
+
+const ATALHOS = [
+  { label: 'Hoje', de: () => diaEmBrasilia(), ate: () => diaEmBrasilia() },
+  { label: 'Ontem', de: () => diaEmBrasilia(-1), ate: () => diaEmBrasilia(-1) },
+  { label: '7 dias', de: () => diaEmBrasilia(-6), ate: () => diaEmBrasilia() },
+  { label: '30 dias', de: () => diaEmBrasilia(-29), ate: () => diaEmBrasilia() },
+  { label: '90 dias', de: () => diaEmBrasilia(-89), ate: () => diaEmBrasilia() },
 ];
 
 /** "2026-08-19" → "19/08". Sem `new Date`, que desloca o dia pelo fuso. */
@@ -50,17 +61,27 @@ function diaCurto(iso: string): string {
  * anúncio — por isso as duas moram no mesmo lugar.
  */
 export default function MetricasPage() {
-  const [dias, setDias] = useState(30);
+  const [de, setDe] = useState(() => diaEmBrasilia(-29));
+  const [ate, setAte] = useState(() => diaEmBrasilia());
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [erro, setErro] = useState('');
 
   useEffect(() => {
     setResumo(null);
+    setErro('');
     api
-      .get<Resumo>(`/metrics/resumo?dias=${dias}`)
+      .get<Resumo>(`/metrics/resumo?de=${de}&ate=${ate}`)
       .then(setResumo)
       .catch(() => setErro('Não foi possível carregar as métricas.'));
-  }, [dias]);
+  }, [de, ate]);
+
+  function aplicarAtalho(atalho: (typeof ATALHOS)[number]) {
+    setDe(atalho.de());
+    setAte(atalho.ate());
+  }
+
+  const atalhoAtivo = ATALHOS.find((a) => a.de() === de && a.ate() === ate)?.label;
+  const umDiaSo = de === ate;
 
   const maiorDia = Math.max(1, ...(resumo?.porDia.map((d) => d.views) ?? [1]));
 
@@ -69,19 +90,48 @@ export default function MetricasPage() {
       <TopBar title="Métricas" />
 
       <div className="px-4 pt-4">
-        <div className="flex gap-1.5">
-          {JANELAS.map((j) => (
+        <div className="flex flex-wrap gap-1.5">
+          {ATALHOS.map((a) => (
             <button
-              key={j.dias}
+              key={a.label}
               type="button"
-              onClick={() => setDias(j.dias)}
+              onClick={() => aplicarAtalho(a)}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                dias === j.dias ? 'bg-ink text-white' : 'bg-black/5 text-black/60'
+                atalhoAtivo === a.label ? 'bg-ink text-white' : 'bg-black/5 text-black/60'
               }`}
             >
-              {j.label}
+              {a.label}
             </button>
           ))}
+        </div>
+
+        {/* Intervalo livre, para quando o atalho não serve: o dia em que a
+            campanha entrou no ar, a semana da promoção, o fim de semana que
+            rendeu. Data de fim antes da de início devolveria vazio sem
+            explicar, então os campos se ajustam um ao outro. */}
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-black/60">
+          <label className="flex items-center gap-1.5">
+            De
+            <input
+              type="date"
+              value={de}
+              max={ate}
+              onChange={(e) => e.target.value && setDe(e.target.value)}
+              className="rounded-lg border border-black/10 px-2 py-1"
+            />
+          </label>
+          <label className="flex items-center gap-1.5">
+            até
+            <input
+              type="date"
+              value={ate}
+              min={de}
+              max={diaEmBrasilia()}
+              onChange={(e) => e.target.value && setAte(e.target.value)}
+              className="rounded-lg border border-black/10 px-2 py-1"
+            />
+          </label>
+          {umDiaSo && <span className="text-black/45">— um dia só</span>}
         </div>
 
         {erro && <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{erro}</p>}
@@ -122,6 +172,10 @@ export default function MetricasPage() {
 
             {/* Barra por dia. Um gráfico de verdade traria uma biblioteca
                 inteira para desenhar trinta retângulos. */}
+            {/* Com um dia só, uma barra sozinha não compara com nada e ocupa
+                espaço dizendo o que os cartões acima já disseram. */}
+            {!umDiaSo && (
+              <>
             <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
               Dia a dia
             </h2>
@@ -149,6 +203,8 @@ export default function MetricasPage() {
                 ))}
               </div>
             </div>
+              </>
+            )}
 
             <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
               Páginas mais vistas

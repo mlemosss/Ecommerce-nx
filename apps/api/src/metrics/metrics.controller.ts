@@ -20,10 +20,24 @@ export class MetricsController {
     return this.metrics.registrar(dto.rota, dto.novaSessao === true);
   }
 
-  /** Resumo para o painel. Protegido pelo guard global. */
+  /**
+   * Resumo para o painel. Protegido pelo guard global.
+   *
+   * Aceita `dias` (janela contando de hoje para trás) ou o par `de`/`ate` em
+   * formato ISO. `de` sozinho é um dia só — que é o recorte de quem quer saber
+   * como foi ontem, ou o dia em que a campanha entrou no ar.
+   */
   @Get('resumo')
-  resumo(@Query('dias') dias?: string) {
+  resumo(@Query('dias') dias?: string, @Query('de') de?: string, @Query('ate') ate?: string) {
+    // Formato conferido aqui: data inválida viraria `Invalid Date` e a consulta
+    // devolveria tudo, ou nada, sem ninguém entender por quê.
+    const dataValida = (v?: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
     const janela = Number(dias);
-    return this.metrics.resumo(Number.isFinite(janela) && janela > 0 ? Math.min(janela, 180) : 30);
+
+    return this.metrics.resumo({
+      de: dataValida(de),
+      ate: dataValida(ate),
+      dias: Number.isFinite(janela) && janela > 0 ? Math.min(janela, 365) : undefined,
+    });
   }
 }

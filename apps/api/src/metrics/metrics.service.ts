@@ -93,20 +93,62 @@ export class MetricsService {
    * nada: mil visitas é ótimo ou péssimo dependendo de quantas viraram pedido,
    * e é essa razão que decide se vale gastar em anúncio.
    */
-  async resumo(dias = JANELA_PADRAO_EM_DIAS) {
-    const desde = new Date(this.hoje());
-    desde.setUTCDate(desde.getUTCDate() - (dias - 1));
+  async resumo(periodo: { de?: string; ate?: string; dias?: number } = {}) {
+    /**
+     * Um dia é um período de um dia só, e não um caso especial.
+     *
+     * O painel tinha 7, 30 e 90 dias, e nada respondia "e ontem?". Olhar um
+     * dia é o que se faz depois de postar no Instagram ou de ligar a campanha
+     * — e era justamente o recorte que não existia.
+     *
+     * As datas vêm como "2026-08-29", já no dia de Brasília, e viram os dois
+     * extremos inclusive. `de` sem `ate` é um dia só.
+     */
+    const hoje = this.hoje();
+    const desde = periodo.de
+      ? new Date(`${periodo.de}T00:00:00.000Z`)
+      : (() => {
+          const d = new Date(hoje);
+          d.setUTCDate(d.getUTCDate() - ((periodo.dias ?? JANELA_PADRAO_EM_DIAS) - 1));
+          return d;
+        })();
 
-    const [linhas, pedidos] = await Promise.all([
+    const ate = periodo.ate
+      ? new Date(`${periodo.ate}T00:00:00.000Z`)
+      : periodo.de
+        ? new Date(`${periodo.de}T00:00:00.000Z`)
+        : hoje;
+
+    // O último dia entra inteiro: o pedido das 23h de ontem é de ontem, e um
+    // `lte` na meia-noite o deixaria de fora.
+    const fimDoPeriodo = new Date(ate);
+    fimDoPeriodo.setUTCDate(fimDoPeriodo.getUTCDate() + 1);
+
+    // Pedido é gravado em UTC; o dia dele é o de Brasília. Buscar três horas a
+    // mais nas duas pontas e filtrar depois evita perder a venda das 22h.
+    const inicioBusca = new Date(desde.getTime() - MINUTOS_ATRAS_DE_UTC * 60 * 1000);
+    const fimBusca = new Date(fimDoPeriodo.getTime() + MINUTOS_ATRAS_DE_UTC * 60 * 1000);
+
+    const [linhas, pedidosBrutos] = await Promise.all([
       this.prisma.pageView.findMany({
-        where: { dia: { gte: desde } },
+        where: { dia: { gte: desde, lte: ate } },
         orderBy: [{ dia: 'asc' }],
       }),
       this.prisma.order.findMany({
-        where: { createdAt: { gte: desde }, status: { not: 'cancelado' } },
+        where: {
+          createdAt: { gte: inicioBusca, lt: fimBusca },
+          status: { not: 'cancelado' },
+        },
         select: { createdAt: true, total: true, status: true },
       }),
     ]);
+
+    const primeiroDia = desde.toISOString().slice(0, 10);
+    const ultimoDia = ate.toISOString().slice(0, 10);
+    const pedidos = pedidosBrutos.filter((p) => {
+      const dia = diaEmBrasilia(p.createdAt);
+      return dia >= primeiroDia && dia <= ultimoDia;
+    });
 
     const views = linhas.reduce((soma, l) => soma + l.views, 0);
     const sessoes = linhas.reduce((soma, l) => soma + l.sessoes, 0);
@@ -142,7 +184,8 @@ export class MetricsService {
     const receita = pagos.reduce((soma, p) => soma + p.total, 0);
 
     return {
-      dias,
+      de: primeiroDia,
+      ate: ultimoDia,
       views,
       sessoes,
       pedidos: pedidos.length,
