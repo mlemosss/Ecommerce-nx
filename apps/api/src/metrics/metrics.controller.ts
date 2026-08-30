@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { Public } from '../auth/public.decorator';
 import { MetricsService } from './metrics.service';
-import { RegistrarVisitaDto } from './dto/metrics.dto';
+import { RegistrarGastoDto, RegistrarVisitaDto } from './dto/metrics.dto';
 
 @Controller('metrics')
 export class MetricsController {
@@ -18,6 +18,22 @@ export class MetricsController {
   @Post('view')
   registrar(@Body() dto: RegistrarVisitaDto) {
     return this.metrics.registrar(dto.rota, dto.novaSessao === true, dto.canal);
+  }
+
+  /** Lança o gasto de um dia num canal. Só o painel autenticado chega aqui. */
+  @Post('gasto')
+  registrarGasto(@Body() dto: RegistrarGastoDto) {
+    return this.metrics.registrarGasto(dto.dia, dto.canal, dto.valor);
+  }
+
+  /** O que já foi lançado, para a tela conferir e corrigir. */
+  @Get('gastos')
+  gastos(@Query('de') de?: string, @Query('ate') ate?: string) {
+    const valida = (v?: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+    const inicio = valida(de);
+    const fim = valida(ate);
+    if (!inicio || !fim) return [];
+    return this.metrics.gastos(inicio, fim);
   }
 
   /**

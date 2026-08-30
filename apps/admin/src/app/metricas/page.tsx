@@ -19,7 +19,14 @@ interface CanalDoResumo {
   pedidos: number;
   receita: number;
   conversao: number | null;
+  gasto: number;
+  retorno: number | null;
+  custoPorVenda: number | null;
+  custoPorVisitante: number | null;
 }
+
+/** Onde a lojista gasta hoje. Rótulo livre viraria relatório em pedaços. */
+const CANAIS_COM_GASTO = ['Meta Ads', 'Google Ads'];
 
 interface CampanhaDoResumo {
   canal: string;
@@ -40,6 +47,7 @@ interface Resumo {
   receita: number;
   conversao: number | null;
   ticketMedio: number | null;
+  gastoEmAnuncio: number;
   porDia: DiaDoResumo[];
   paginas: { rota: string; views: number }[];
 }
@@ -83,6 +91,11 @@ export default function MetricasPage() {
   const [ate, setAte] = useState(() => diaEmBrasilia());
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [erro, setErro] = useState('');
+  const [gastoDia, setGastoDia] = useState(() => diaEmBrasilia(-1));
+  const [gastoCanal, setGastoCanal] = useState(CANAIS_COM_GASTO[0]);
+  const [gastoValor, setGastoValor] = useState('');
+  const [salvandoGasto, setSalvandoGasto] = useState(false);
+  const [recarregar, setRecarregar] = useState(0);
 
   useEffect(() => {
     setResumo(null);
@@ -91,7 +104,31 @@ export default function MetricasPage() {
       .get<Resumo>(`/metrics/resumo?de=${de}&ate=${ate}`)
       .then(setResumo)
       .catch(() => setErro('Não foi possível carregar as métricas.'));
-  }, [de, ate]);
+  }, [de, ate, recarregar]);
+
+  /**
+   * Lança o gasto do dia.
+   *
+   * Relançar o mesmo dia substitui, não soma — conferir duas vezes o mesmo dia
+   * é o que qualquer pessoa faz ao copiar do painel do Meta, e somar dobraria o
+   * custo e faria a campanha parecer o dobro de cara.
+   */
+  async function lancarGasto(e: React.FormEvent) {
+    e.preventDefault();
+    const valor = Number(gastoValor.replace(',', '.'));
+    if (!Number.isFinite(valor) || valor < 0) return;
+
+    setSalvandoGasto(true);
+    try {
+      await api.post('/metrics/gasto', { dia: gastoDia, canal: gastoCanal, valor });
+      setGastoValor('');
+      setRecarregar((n) => n + 1);
+    } catch {
+      setErro('Não consegui salvar o gasto.');
+    } finally {
+      setSalvandoGasto(false);
+    }
+  }
 
   function aplicarAtalho(atalho: (typeof ATALHOS)[number]) {
     setDe(atalho.de());
@@ -242,7 +279,9 @@ export default function MetricasPage() {
                       <th className="p-3 text-right font-normal">Visitantes</th>
                       <th className="p-3 text-right font-normal">Pedidos</th>
                       <th className="p-3 text-right font-normal">Conversão</th>
+                      <th className="p-3 text-right font-normal">Gasto</th>
                       <th className="p-3 text-right font-normal">Receita</th>
+                      <th className="p-3 text-right font-normal">Retorno</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -264,13 +303,93 @@ export default function MetricasPage() {
                         <td className="p-3 text-right">
                           {c.conversao === null ? '—' : `${c.conversao.toFixed(1)}%`}
                         </td>
+                        <td className="p-3 text-right">
+                          {c.gasto > 0 ? formatPrice(c.gasto) : '—'}
+                        </td>
                         <td className="p-3 text-right font-semibold">{formatPrice(c.receita)}</td>
+                        <td className="p-3 text-right">
+                          {c.retorno === null ? (
+                            '—'
+                          ) : (
+                            <span
+                              className={`font-semibold ${
+                                c.retorno >= 1 ? 'text-green-700' : 'text-red-600'
+                              }`}
+                            >
+                              {c.retorno.toFixed(1)}x
+                            </span>
+                          )}
+                          {c.custoPorVenda !== null && (
+                            <span className="block text-xs font-normal text-black/45">
+                              {formatPrice(c.custoPorVenda)} por venda
+                            </span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
             </div>
+            {/* O custo não chega sozinho: puxar da API do Meta e do Google
+                exigiria dois fluxos de autorização, tokens que expiram e uma
+                conta com verificação em duas etapas. A lojista já abre esses
+                painéis todo dia — um campo resolve hoje, e a integração pode vir
+                quando o volume justificar. */}
+            <form onSubmit={lancarGasto} className="card mt-3 !p-3">
+              <p className="text-sm font-semibold">Lançar gasto de anúncio</p>
+              <p className="mt-1 text-xs text-black/55">
+                Copie do painel do Meta ou do Google, um dia por vez. Sem isso, três pedidos vindos
+                do Meta Ads não dizem se deu lucro.
+              </p>
+              <div className="mt-3 flex flex-wrap items-end gap-2">
+                <label className="flex flex-col gap-1 text-xs text-black/60">
+                  Dia
+                  <input
+                    type="date"
+                    value={gastoDia}
+                    max={diaEmBrasilia()}
+                    onChange={(e) => setGastoDia(e.target.value)}
+                    className="rounded-lg border border-black/10 px-2 py-1.5 text-sm"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-xs text-black/60">
+                  Canal
+                  <select
+                    value={gastoCanal}
+                    onChange={(e) => setGastoCanal(e.target.value)}
+                    className="rounded-lg border border-black/10 px-2 py-1.5 text-sm"
+                  >
+                    {CANAIS_COM_GASTO.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-xs text-black/60">
+                  Valor (R$)
+                  <input
+                    inputMode="decimal"
+                    placeholder="30,00"
+                    value={gastoValor}
+                    onChange={(e) => setGastoValor(e.target.value)}
+                    className="w-28 rounded-lg border border-black/10 px-2 py-1.5 text-sm"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={salvandoGasto || !gastoValor.trim()}
+                  className="rounded-lg bg-ink px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
+                >
+                  {salvandoGasto ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-black/45">
+                Lançar o mesmo dia de novo substitui o valor, não soma.
+              </p>
+            </form>
+
             <p className="mt-2 text-xs leading-relaxed text-black/45">
               Contagem da própria loja, pelo último clique antes da compra. Não vai bater com o
               painel do Meta nem com o do Google: cada um deles credita a si qualquer venda que

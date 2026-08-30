@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsIn, IsNumber, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
 
 /**
  * O que a loja manda a cada página aberta.
@@ -6,6 +6,22 @@ import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
  * Só o caminho. Não há campo para id, sessão, referência nem qualquer coisa que
  * ligue a visita a uma pessoa — o que não existe no contrato não vaza depois.
  */
+/** Onde a lojista gasta. Fechado: rótulo livre viraria relatório em pedaços. */
+export const CANAIS_COM_GASTO = ['Meta Ads', 'Google Ads'] as const;
+
+/** O gasto de um dia num canal. Regravar o mesmo dia substitui o valor. */
+export class RegistrarGastoDto {
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Data no formato AAAA-MM-DD.' })
+  dia!: string;
+
+  @IsIn(CANAIS_COM_GASTO)
+  canal!: string;
+
+  @IsNumber()
+  @Min(0)
+  valor!: number;
+}
+
 export class RegistrarVisitaDto {
   @IsString()
   @MaxLength(200)

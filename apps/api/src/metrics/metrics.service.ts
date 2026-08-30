@@ -162,6 +162,39 @@ export class MetricsService {
   }
 
   /**
+   * Lança o que foi gasto num dia, num canal.
+   *
+   * `upsert`: relançar o mesmo dia substitui em vez de somar. A lojista vai
+   * digitar olhando o painel do Meta, e conferir duas vezes o mesmo dia é o
+   * comportamento normal de quem confere — somar dobraria o custo e faria a
+   * campanha parecer o dobro de cara.
+   */
+  async registrarGasto(dia: string, canal: string, valor: number) {
+    const data = new Date(`${dia}T00:00:00.000Z`);
+    await this.prisma.adSpend.upsert({
+      where: { dia_canal: { dia: data, canal } },
+      create: { dia: data, canal, valor },
+      update: { valor },
+    });
+    return { ok: true };
+  }
+
+  /** O que já foi lançado no período, para a tela mostrar e permitir corrigir. */
+  async gastos(de: string, ate: string) {
+    const lancamentos = await this.prisma.adSpend.findMany({
+      where: { dia: { gte: new Date(`${de}T00:00:00.000Z`), lte: new Date(`${ate}T00:00:00.000Z`) } },
+      orderBy: [{ dia: 'desc' }, { canal: 'asc' }],
+    });
+
+    return lancamentos.map((g) => ({
+      id: g.id,
+      dia: g.dia.toISOString().slice(0, 10),
+      canal: g.canal,
+      valor: g.valor,
+    }));
+  }
+
+  /**
    * O resumo que o painel mostra.
    *
    * Junta visita e venda na mesma consulta porque separados eles não dizem
@@ -204,7 +237,7 @@ export class MetricsService {
     const inicioBusca = new Date(desde.getTime() - MINUTOS_ATRAS_DE_UTC * 60 * 1000);
     const fimBusca = new Date(fimDoPeriodo.getTime() + MINUTOS_ATRAS_DE_UTC * 60 * 1000);
 
-    const [linhas, pedidosBrutos] = await Promise.all([
+    const [linhas, pedidosBrutos, gastos] = await Promise.all([
       this.prisma.pageView.findMany({
         where: { dia: { gte: desde, lte: ate } },
         orderBy: [{ dia: 'asc' }],
@@ -225,7 +258,14 @@ export class MetricsService {
           referrer: true,
         },
       }),
+      this.prisma.adSpend.findMany({ where: { dia: { gte: desde, lte: ate } } }),
     ]);
+
+    const gastoPorCanal = new Map<string, number>();
+    for (const g of gastos) {
+      gastoPorCanal.set(g.canal, (gastoPorCanal.get(g.canal) ?? 0) + g.valor);
+    }
+    const gastoTotal = gastos.reduce((soma, g) => soma + g.valor, 0);
 
     const primeiroDia = desde.toISOString().slice(0, 10);
     const ultimoDia = ate.toISOString().slice(0, 10);
@@ -324,6 +364,7 @@ export class MetricsService {
       pedidos: pedidos.length,
       pedidosPagos: pagos.length,
       receita,
+      gastoEmAnuncio: gastoTotal,
       // A conta que interessa: de cada cem pessoas que entraram, quantas
       // compraram. Sem sessão registrada a divisão não existe — e mostrar 0%
       // seria pior do que mostrar nada.
@@ -337,15 +378,26 @@ export class MetricsService {
           const vendas = porCanal.get(canal);
           const sessoes = visitas?.sessoes ?? 0;
           const pedidosDoCanal = vendas?.pedidos ?? 0;
+          const receitaDoCanal = vendas?.receita ?? 0;
+          const gasto = gastoPorCanal.get(canal) ?? 0;
+
           return {
             canal,
             sessoes,
             views: visitas?.views ?? 0,
             pedidos: pedidosDoCanal,
-            receita: vendas?.receita ?? 0,
+            receita: receitaDoCanal,
             // A conta que compara canais entre si. Sem visita registrada não há
             // divisão — e 0% seria mentira, não ausência.
             conversao: sessoes > 0 ? (pedidosDoCanal / sessoes) * 100 : null,
+            gasto,
+            // Quanto voltou para cada real gasto. É o número que decide se a
+            // campanha continua — e ele só existe se a lojista tiver lançado o
+            // gasto; sem isso, mostrar zero seria dizer que o anúncio foi de
+            // graça.
+            retorno: gasto > 0 ? receitaDoCanal / gasto : null,
+            custoPorVenda: gasto > 0 && pedidosDoCanal > 0 ? gasto / pedidosDoCanal : null,
+            custoPorVisitante: gasto > 0 && sessoes > 0 ? gasto / sessoes : null,
           };
         })
         .sort((a, b) => b.receita - a.receita || b.sessoes - a.sessoes),

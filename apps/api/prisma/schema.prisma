@@ -552,3 +552,27 @@ model PageView {
   @@unique([dia, rota, canal])
   @@map("page_views")
 }
+
+/// Quanto foi gasto em anuncio, por dia e por canal.
+///
+/// A loja sabe o que vendeu e de onde veio; o que ela nao tem e quanto custou.
+/// Sem o custo, "Meta Ads trouxe 3 pedidos" nao decide nada - tres pedidos por
+/// R$50 e otimo, por R$500 e prejuizo, e a mesma linha aparece igual nos dois
+/// casos.
+///
+/// Digitado a mao de proposito. Puxar da API do Meta e do Google exigiria dois
+/// fluxos de autorizacao, tokens que expiram e uma conta com 2FA - e a lojista
+/// ja olha esses paineis todo dia. Um campo por dia resolve hoje; a integracao
+/// pode vir quando o volume justificar.
+model AdSpend {
+  id        String   @id @default(cuid())
+  dia       DateTime @db.Date
+  /// Mesmo rotulo do canal nas metricas: "Meta Ads", "Google Ads".
+  canal     String
+  valor     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([dia, canal])
+  @@map("ad_spend")
+}
