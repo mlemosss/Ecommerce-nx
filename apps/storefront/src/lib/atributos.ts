@@ -54,7 +54,7 @@ export const ATRIBUTOS: Record<string, Atributo[]> = {
     { nome: 'Secagem', valor: 'Rápida, dispensa amaciante e ferro' },
   ],
   'shorts-runner': [
-    { nome: 'Compressão', valor: 'Tecido de compressão, ajuste firme' },
+    { nome: 'Compressão', valor: 'Firme — tecido de compressão' },
     { nome: 'Cós', valor: 'Duplo e cintura alta' },
     { nome: 'Bolso', valor: 'Dois bolsos profundos nas laterais' },
     { nome: 'Comprimento', valor: 'Médio — não sobe na coxa no treino' },
@@ -110,20 +110,55 @@ export function atributosDe(slug: string): Atributo[] {
  */
 export function chamadaDoTitulo(slug: string): string | null {
   const atributos = atributosDe(slug);
-  const escolhidos = ['Compressão', 'Bolso', 'Bojo', 'Sustentação', 'Proteção solar']
+
+  /**
+   * A ordem é a de quem decide a compra, e não a da tabela.
+   *
+   * Compressão e bolso são o que separa uma legging da outra. Nos tops, quatro
+   * peças têm bojo — dizer "com bojo" nas quatro faz os quatro títulos ficarem
+   * iguais, então costas abertas e sustentação alta vêm antes: são o que
+   * distingue. Sustentação só entra quando é alta; "alças finas" não é
+   * argumento de busca.
+   */
+  const escolhidos = ['Compressão', 'Bolso', 'Costas', 'Sustentação', 'Bojo', 'Proteção solar']
     .map((nome) => atributos.find((a) => a.nome === nome))
     .filter((a): a is Atributo => Boolean(a))
-    .slice(0, 2);
+    .filter((a) => a.nome !== 'Sustentação' || a.valor.toLowerCase().startsWith('alta'))
+    // Um atributo, e não dois. O Google corta o título por volta de 60
+    // caracteres, e o que fica de fora é justamente o fim — onde estaria o
+    // segundo atributo e a marca. Melhor um atributo lido inteiro do que dois
+    // pela metade.
+    .slice(0, 1);
 
   if (escolhidos.length === 0) return null;
 
+  /**
+   * Cada atributo vira uma expressão que se lê inteira.
+   *
+   * Recortar o valor cru produzia título torto — "Top Fitness Feminino com
+   * bojo e alta", porque a sustentação está gravada como "Alta — quatro alças
+   * com elástico". Título é frase, não campo de banco concatenado.
+   */
   return escolhidos
     .map((a) => {
-      if (a.nome === 'Proteção solar') return 'FPS 50+';
-      if (a.nome === 'Compressão') return `compressão ${a.valor.toLowerCase().split(',')[0]}`;
-      if (a.nome === 'Bolso') return 'com bolso';
-      if (a.nome === 'Bojo') return 'com bojo';
-      return a.valor.toLowerCase().split(' —')[0];
+      switch (a.nome) {
+        case 'Proteção solar':
+          return 'FPS 50+';
+        case 'Compressão':
+          return `compressão ${a.valor.toLowerCase().split(/[,—]/)[0].trim()}`;
+        case 'Sustentação':
+          return a.valor.toLowerCase().startsWith('alta')
+            ? 'alta sustentação'
+            : 'com sustentação';
+        case 'Bolso':
+          return 'com bolso';
+        case 'Costas':
+          return a.valor.toLowerCase().startsWith('abert') ? 'costas abertas' : 'costas vazadas';
+        case 'Bojo':
+          return 'com bojo';
+        default:
+          return a.valor.toLowerCase().split(/[,—]/)[0].trim();
+      }
     })
     .join(' e ');
 }

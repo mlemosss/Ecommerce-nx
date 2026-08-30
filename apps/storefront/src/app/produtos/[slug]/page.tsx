@@ -51,9 +51,22 @@ export async function generateMetadata({ params }: { params: { slug: string } })
    */
   const substantivo = SUBSTANTIVO[product.category] ?? product.name;
   const chamada = chamadaDoTitulo(product.slug);
-  const title = chamada
-    ? `${product.name} — ${substantivo} ${chamada} | NO EXCUSE`
-    : `${product.name} — ${substantivo} | NO EXCUSE`;
+
+  /**
+   * A palavra-chave na frente, o nome do modelo depois.
+   *
+   * O Google corta por volta de 60 caracteres, e o que sobrevive é o começo.
+   * "Top Urban" primeiro gastava o espaço visível com um nome que ninguém
+   * busca; "Top Fitness Feminino com bojo" primeiro diz o que a peça é, e o
+   * modelo diferencia as páginas entre si logo em seguida.
+   *
+   * A marca só entra se couber — em busca por marca, o Google mostra o nome do
+   * site ao lado do resultado de qualquer forma.
+   */
+  const base = chamada
+    ? `${substantivo} ${chamada} | ${product.name}`
+    : `${substantivo} | ${product.name}`;
+  const title = base.length <= 46 ? `${base} — NO EXCUSE` : base;
 
   /**
    * A descrição vinha do primeiro parágrafo cru — e Shorts BC e Shorts Energy
