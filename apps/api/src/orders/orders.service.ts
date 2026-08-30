@@ -933,21 +933,48 @@ export class OrdersService {
     const virouPago = dto.status === 'pago' && !DEBITED_STATUSES.has(current.status);
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      // Marcar como pago tira do estoque e conta o cupom; cancelar devolve os
-      // dois. Passa pelos mesmos helpers do webhook para não divergirem.
-      await this.syncStock(tx, current, dto.status);
-      await this.syncCouponUsage(tx, current, dto.status);
-
-      return tx.order.update({
-        where: { id },
+      /**
+       * Quem move o pedido é quem viu o status anterior.
+       *
+       * `current` é lido fora da transação, e entre a leitura e a gravação cabe
+       * o webhook do Asaas. O cenário real: a lojista vê o dinheiro cair no app
+       * e clica "Marcar como pago" no mesmo instante em que o
+       * `PAYMENT_RECEIVED` chega. Os dois leem "aguardando pagamento". O
+       * webhook vence e debita o estoque; esta transação, com o status velho na
+       * mão, conclui que ainda precisa debitar — e **tira a peça do estoque
+       * duas vezes**, conta o cupom duas vezes e manda dois "pagamento
+       * aprovado".
+       *
+       * O `updateMany` condicional resolve porque a condição é avaliada no
+       * banco, no momento da escrita: se o status já mudou, `count` é zero e
+       * nada mais acontece. É o mesmo padrão que o webhook já usava — este
+       * caminho é que tinha ficado de fora.
+       */
+      const { count } = await tx.order.updateMany({
+        where: { id, status: current.status },
         data: {
           status: dto.status,
           ...(dto.status === 'enviado'
             ? { shippedAt: new Date(), trackingCode: dto.trackingCode }
             : {}),
         },
-        include: { items: true },
       });
+
+      if (count === 0) {
+        // Outro caminho chegou primeiro e já fez o que tinha que fazer.
+        this.logger.warn(
+          `Pedido ${current.orderNumber}: status mudou entre a leitura e a gravação. ` +
+            'Alteração ignorada para não debitar estoque duas vezes.'
+        );
+        return tx.order.findUniqueOrThrow({ where: { id }, include: { items: true } });
+      }
+
+      // Só depois de ter vencido a corrida: tirar do estoque e contar o cupom,
+      // pelos mesmos helpers do webhook para não divergirem.
+      await this.syncStock(tx, current, dto.status);
+      await this.syncCouponUsage(tx, current, dto.status);
+
+      return tx.order.findUniqueOrThrow({ where: { id }, include: { items: true } });
     });
 
     if (dto.status === 'enviado') {
@@ -1304,7 +1331,10 @@ export class OrdersService {
 
     await this.prisma.$transaction(async (tx) => {
       // Apagar um pedido equivale a cancelá-lo: se ele segurava peça, devolve.
+      // O uso do cupom volta junto — devolvia a peça e não o cupom, então um
+      // cupom de 50 usos morria antes da hora sem ninguém entender por quê.
       await this.syncStock(tx, order, 'cancelado');
+      await this.syncCouponUsage(tx, order, 'cancelado');
       await tx.orderItem.deleteMany({ where: { orderId: id } });
       await tx.order.delete({ where: { id } });
     });

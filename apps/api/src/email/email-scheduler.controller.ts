@@ -26,21 +26,47 @@ export class EmailSchedulerController {
    */
   @Public()
   @Get('run-scheduled')
-  runScheduled(@Headers('authorization') authorization?: string) {
+  runScheduled(
+    @Headers('authorization') authorization?: string,
+    @Headers('x-vercel-cron') vercelCron?: string
+  ) {
     const segredo = process.env.CRON_SECRET;
 
-    if (!segredo) {
-      this.logger.error(
-        'CRON_SECRET não configurada: varredura de e-mails recusada. ' +
-          'Defina a variável na API — a Vercel manda o mesmo valor no cron automaticamente.'
+    // Com o segredo definido, é ele que manda. Este é o estado desejado.
+    if (segredo) {
+      if (authorization !== `Bearer ${segredo}`) {
+        throw new UnauthorizedException('Não autorizado');
+      }
+      return this.scheduler.runScheduled();
+    }
+
+    /**
+     * Sem o segredo, aceita só o que a Vercel marca como cron.
+     *
+     * Falhar fechado seria o certo em segurança pura, e foi o que eu tinha
+     * feito. Mas o efeito colateral era desligar os e-mails automáticos da loja
+     * — pedido de avaliação, carrinho abandonado e a varredura que marca pedido
+     * como enviado — até alguém configurar uma variável. Derrubar uma loja em
+     * produção para fechar uma porta é trocar um problema por outro maior.
+     *
+     * Este cabeçalho é posto pela plataforma na chamada agendada. É **melhor
+     * que aberto e pior que o segredo**: barra o visitante curioso que
+     * descobriu a URL, e não é uma barreira que eu chamaria de garantida.
+     *
+     * Enquanto isso o log grita a cada execução, porque aviso que não incomoda
+     * ninguém não vira ação.
+     */
+    if (vercelCron) {
+      this.logger.warn(
+        'CRON_SECRET não configurada — varredura liberada só pelo cabeçalho de cron da Vercel. ' +
+          'Defina CRON_SECRET no projeto da API para fechar de vez.'
       );
-      throw new UnauthorizedException('Rotina não configurada');
+      return this.scheduler.runScheduled();
     }
 
-    if (authorization !== `Bearer ${segredo}`) {
-      throw new UnauthorizedException('Não autorizado');
-    }
-
-    return this.scheduler.runScheduled();
+    this.logger.error(
+      'Chamada a run-scheduled recusada: sem CRON_SECRET e sem cabeçalho de cron.'
+    );
+    throw new UnauthorizedException('Não autorizado');
   }
 }

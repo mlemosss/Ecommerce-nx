@@ -12,14 +12,16 @@ import { DEFAULT_SETTINGS, getSettings } from '../../lib/api';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal, isLoaded } = useCart();
-  const { products } = useProducts();
+  // O catálogo também precisa ter chegado: o subtotal sai do cruzamento entre
+  // o carrinho e ele, e mostrar total antes disso é mostrar R$ 0,00.
+  const { products, isLoaded: catalogoPronto } = useProducts();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   useEffect(() => {
     getSettings().then(setSettings);
   }, []);
 
-  if (!isLoaded) {
+  if (!isLoaded || !catalogoPronto) {
     return (
       <div className="container-page py-24 text-center text-sm text-ink/60" role="status">
         Carregando carrinho...

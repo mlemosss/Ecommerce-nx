@@ -44,7 +44,7 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; enabledKey: 'pixEn
 
 export default function CheckoutPage() {
   const { items, subtotal, isLoaded, clearCart } = useCart();
-  const { products } = useProducts();
+  const { products, isLoaded: catalogoPronto } = useProducts();
   const { customer } = useCustomerAuth();
   const router = useRouter();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -515,7 +515,10 @@ export default function CheckoutPage() {
     }
   }
 
-  if (!isLoaded) {
+  // O catálogo entra na condição: sem ele, os preços do resumo saem zerados e
+  // a cliente confirmaria uma compra vendo um total que o servidor não vai
+  // cobrar.
+  if (!isLoaded || !catalogoPronto) {
     return (
       <div className="container-page py-24 text-center text-sm text-ink/60" role="status">
         Carregando...
