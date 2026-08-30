@@ -292,6 +292,16 @@ model Order {
   // vezes minutos depois, quando o webhook do Pix confirma - e ai nao ha mais
   // requisicao do navegador por perto para ler cookie nenhum. Sem eles, a
   // venda chega a Meta sem ligacao com o anuncio que a trouxe.
+  // A pessoa aceitou os cookies de medicao no momento da compra?
+  //
+  // A politica promete, em negrito, que nada vai para a Meta se ela recusar.
+  // O navegador cumpria: sem aceite, o Pixel nem carrega. O servidor nao -
+  // ele mandava e-mail e telefone com hash na confirmacao do pagamento, sem
+  // ter como saber da escolha, porque a escolha morria no navegador.
+  //
+  // Falso por padrao: pedido sem resposta explicita nao gera evento. Perder
+  // medicao e barato; contrariar por escrito o que a politica promete, nao.
+  trackingConsent   Boolean     @default(false)
   metaFbp           String?
   metaFbc           String?
   asaasCustomerId   String?

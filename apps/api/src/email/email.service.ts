@@ -57,7 +57,26 @@ export class EmailService {
     };
   }
 
-  private async dispatch(to: string, template: EmailTemplate): Promise<void> {
+  /**
+   * Manda uma cópia oculta do aviso de pedido para quem toca a loja.
+   *
+   * Serve para saber da venda pelo mesmo canal que a cliente — sem depender de
+   * abrir o painel. Vai como `bcc`, e não como segundo destinatário: a cliente
+   * não pode ver um endereço interno no cabeçalho do e-mail dela.
+   *
+   * `EMAIL_COPIA_PEDIDO` na Vercel troca o endereço sem mexer no código; vazio
+   * desliga a cópia.
+   */
+  private copiaDoPedido(): string[] {
+    const destino = (process.env.EMAIL_COPIA_PEDIDO ?? 'ib.borlenghi@gmail.com').trim();
+    return destino ? [destino] : [];
+  }
+
+  private async dispatch(
+    to: string,
+    template: EmailTemplate,
+    options: { copiaOculta?: string[] } = {}
+  ): Promise<void> {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       if (!this.warnedMissingKey) {
@@ -78,6 +97,7 @@ export class EmailService {
         body: JSON.stringify({
           from: `${fromName} <${fromAddress}>`,
           to: [to],
+          ...(options.copiaOculta?.length ? { bcc: options.copiaOculta } : {}),
           subject: template.subject,
           html: template.html,
         }),

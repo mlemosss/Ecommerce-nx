@@ -54,6 +54,8 @@ interface PedidoParaCapi {
   zipCode: string | null;
   metaFbp: string | null;
   metaFbc: string | null;
+  /** Aceitou os cookies de medição na hora da compra. Sem isso, não sai nada. */
+  trackingConsent: boolean;
   items: { productId: string; color: string; size: string; quantity: number; unitPrice: number }[];
 }
 
@@ -80,6 +82,29 @@ export class MetaCapiService {
   async sendPurchase(pedido: PedidoParaCapi): Promise<void> {
     const config = this.getConfig();
     if (!config) return;
+
+    /**
+     * Sem aceite, não sai nada. Nem hash.
+     *
+     * A política promete em negrito: "nada disso acontece se você recusar". O
+     * navegador cumpria — sem aceite o Pixel nem carrega. Este caminho não:
+     * rodava na confirmação do pagamento e mandava e-mail e telefone com hash
+     * para a Meta sem consultar ninguém, porque a escolha morria no navegador
+     * e o servidor não tinha como saber dela.
+     *
+     * Hash não desfaz o problema: e-mail com SHA-256 continua identificando a
+     * mesma pessoa do outro lado — é justamente para isso que ele é mandado.
+     *
+     * Pedido gravado antes desta mudança tem `false` e não gera evento.
+     * Perder medição de alguns pedidos é barato; contrariar por escrito o que
+     * a política promete, não.
+     */
+    if (!pedido.trackingConsent) {
+      this.logger.log(
+        `Purchase do pedido ${pedido.orderNumber} não enviado: a cliente não aceitou os cookies de medição.`
+      );
+      return;
+    }
 
     try {
       // `content_ids` tem que ser o id da variação, o mesmo do feed do

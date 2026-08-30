@@ -109,7 +109,7 @@ export class CouponsService {
    * a comprar com o desconto.
    */
   private async usosDoDocumento(code: string, documentNumber: string | undefined): Promise<number> {
-    const documento = (documentNumber ?? '').replace(/D/g, '');
+    const documento = (documentNumber ?? '').replace(/\D/g, '');
     if (!documento) return Number.POSITIVE_INFINITY;
 
     return this.prisma.order.count({

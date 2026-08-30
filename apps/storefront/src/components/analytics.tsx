@@ -3,6 +3,7 @@
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
 import { CONSENT_EVENT, getConsent } from '../lib/cookie-consent';
+import { ehALojaDeVerdade } from '../lib/ambiente';
 
 /**
  * GTM e Meta Pixel só entram na página depois do aceite.
@@ -26,7 +27,11 @@ export function Analytics({
   const [accepted, setAccepted] = useState(false);
 
   useEffect(() => {
-    const sync = () => setAccepted(getConsent() === 'accepted');
+    // Duas condições, e as duas precisam ser verdade: a pessoa aceitou, e este
+    // navegador está na loja de verdade. O preview da Vercel e o localhost
+    // respondiam ao aceite como se fossem a loja, e cada teste nosso virava um
+    // visitante falso no público da Meta.
+    const sync = () => setAccepted(getConsent() === 'accepted' && ehALojaDeVerdade());
     sync();
     window.addEventListener(CONSENT_EVENT, sync);
     return () => window.removeEventListener(CONSENT_EVENT, sync);

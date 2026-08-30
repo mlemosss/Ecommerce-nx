@@ -291,7 +291,7 @@ export class EtiquetaService {
     const completo = atual.street && atual.district && atual.city && atual.state;
     if (completo) return atual;
 
-    const cep = (settings.shippingOriginZip ?? '').replace(/D/g, '');
+    const cep = (settings.shippingOriginZip ?? '').replace(/\D/g, '');
     if (cep.length !== 8) return atual;
 
     try {

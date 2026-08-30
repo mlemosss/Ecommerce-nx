@@ -109,6 +109,14 @@ export class CreateOrderDto {
   @IsString()
   shippingServiceName?: string;
 
+  /**
+   * A pessoa aceitou os cookies de medicao? Decide se o Purchase vai para a
+   * Meta. Ausente conta como recusa: sem resposta explicita, nao ha evento.
+   */
+  @IsOptional()
+  @IsBoolean()
+  trackingConsent?: boolean;
+
   @IsOptional()
   @IsString()
   state?: string;

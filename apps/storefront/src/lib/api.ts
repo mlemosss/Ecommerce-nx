@@ -1,5 +1,7 @@
 import configuracoesReserva from './configuracoes-reserva.json';
 
+import { getConsent } from './cookie-consent';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 
 export interface ValueProp {
@@ -257,6 +259,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       ...input,
       metaFbp: lerCookie('_fbp'),
       metaFbc: lerCookie('_fbc'),
+      // A escolha do banner viaja com o pedido. Sem ela, o servidor não teria
+      // como saber: o consentimento mora no navegador, e o Purchase da CAPI
+      // sai da confirmação do pagamento, horas depois, sem navegador nenhum
+      // por perto. A política promete que recusar impede o envio — e promessa
+      // só vale se o lado que envia souber da recusa.
+      trackingConsent: getConsent() === 'accepted',
     }),
   });
   if (!res.ok) {

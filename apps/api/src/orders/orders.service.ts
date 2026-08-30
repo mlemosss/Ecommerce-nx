@@ -549,6 +549,7 @@ export class OrdersService {
           state: dto.state,
           shippingServiceId: dto.shippingServiceId,
           shippingServiceName: dto.shippingServiceName,
+          trackingConsent: dto.trackingConsent === true,
           street: dto.street,
           number: dto.number,
           complement: dto.complement,

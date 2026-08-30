@@ -85,6 +85,23 @@ export async function POST(req: NextRequest) {
   // não pode virar erro na tela de ninguém.
   if (!token || !pixelId) return ok();
 
+  /**
+   * Só a loja de verdade relaia evento.
+   *
+   * O navegador já é barrado antes de chegar aqui — sem aceite de cookies o
+   * Pixel não carrega, e sem Pixel esta rota não é chamada. Mas o preview da
+   * Vercel serve esta mesma rota, e um POST direto dali entraria no público da
+   * Meta como cliente. Oitenta e quatro eventos de teste já entraram assim
+   * pelo lado do navegador; fechar só um dos dois lados é fechar nenhum.
+   */
+  const host = req.headers.get('host')?.toLowerCase() ?? '';
+  const dominioDaLoja = (process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://www.noexcusenx.com.br')
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '')
+    .toLowerCase();
+  const semWww = dominioDaLoja.replace(/^www\./, '');
+  if (host !== dominioDaLoja && host !== semWww) return ok();
+
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
   if (ip && passouDoLimite(ip)) return ok();
 
