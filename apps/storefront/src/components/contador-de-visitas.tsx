@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
+import { canalDaVisita, registrarOrigem } from '../lib/atribuicao';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 
@@ -39,6 +40,11 @@ export function ContadorDeVisitas() {
     // estragaria justamente o número que ela usa para decidir.
     if (pathname.startsWith('/admin')) return;
 
+    // De onde ela veio. Registrado aqui porque este componente já roda na
+    // primeira página de toda visita — e a origem só existe na primeira, antes
+    // de a navegação apagar a query da URL.
+    registrarOrigem();
+
     let novaSessao = false;
     try {
       if (!window.sessionStorage.getItem(CHAVE_DE_SESSAO)) {
@@ -50,7 +56,7 @@ export function ContadorDeVisitas() {
       // sessão. Melhor um número certo e outro faltando do que nenhum.
     }
 
-    const corpo = JSON.stringify({ rota: pathname, novaSessao });
+    const corpo = JSON.stringify({ rota: pathname, novaSessao, canal: canalDaVisita() });
 
     // `keepalive` para a contagem sobreviver a quem clica e sai na mesma hora —
     // que é exatamente a visita que mais interessa medir.

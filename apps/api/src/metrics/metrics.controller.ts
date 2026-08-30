@@ -17,7 +17,7 @@ export class MetricsController {
   @Public()
   @Post('view')
   registrar(@Body() dto: RegistrarVisitaDto) {
-    return this.metrics.registrar(dto.rota, dto.novaSessao === true);
+    return this.metrics.registrar(dto.rota, dto.novaSessao === true, dto.canal);
   }
 
   /**

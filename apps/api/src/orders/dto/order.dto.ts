@@ -7,6 +7,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -116,6 +117,50 @@ export class CreateOrderDto {
   @IsOptional()
   @IsBoolean()
   trackingConsent?: boolean;
+
+  /**
+   * De onde a venda veio. Tudo opcional: compra sem campanha atras e o caso
+   * normal, e nao um erro.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmSource?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmMedium?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmCampaign?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmContent?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmTerm?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  gclid?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  referrer?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  landingPage?: string;
 
   @IsOptional()
   @IsString()

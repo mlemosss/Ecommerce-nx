@@ -1,5 +1,6 @@
 import configuracoesReserva from './configuracoes-reserva.json';
 
+import { origemDoPedido } from './atribuicao';
 import { getConsent } from './cookie-consent';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
@@ -265,6 +266,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       // por perto. A política promete que recusar impede o envio — e promessa
       // só vale se o lado que envia souber da recusa.
       trackingConsent: getConsent() === 'accepted',
+      // De onde veio a venda. Sem isto, a lojista soma o que o Meta diz com o
+      // que o Google diz — os dois contam a mesma venda, e os dois contam a
+      // mais.
+      ...origemDoPedido(),
     }),
   });
   if (!res.ok) {

@@ -26,6 +26,77 @@ function diaEmBrasilia(instante: Date): string {
   return local.toISOString().slice(0, 10);
 }
 
+/**
+ * Em qual canal a visita ou a venda entra.
+ *
+ * A pergunta que decide orçamento não é "de qual site veio", é "o que eu paguei
+ * trouxe mais que o que eu não paguei". Por isso o agrupamento é por canal, e
+ * não por domínio: `instagram.com`, `l.instagram.com` e `lm.facebook.com` são a
+ * mesma coisa para quem decide onde colocar dinheiro.
+ *
+ * Pago antes de orgânico, sempre. Quem chega por anúncio do Instagram tem o
+ * referrer do Instagram junto — classificar pelo referrer creditaria ao
+ * orgânico uma visita que foi paga, que é o erro que faz o anúncio parecer
+ * inútil.
+ */
+export const CANAIS_ACEITOS = new Set([
+  'Meta Ads',
+  'Google Ads',
+  'Instagram',
+  'Facebook',
+  'Google',
+  'Direto',
+  'Outros',
+]);
+
+export type Canal =
+  | 'Meta Ads'
+  | 'Google Ads'
+  | 'Instagram'
+  | 'Facebook'
+  | 'Google'
+  | 'Direto'
+  | 'Outros';
+
+export function classificarCanal(dados: {
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  gclid?: string | null;
+  referrer?: string | null;
+}): Canal {
+  const fonte = (dados.utmSource ?? '').toLowerCase();
+  const meio = (dados.utmMedium ?? '').toLowerCase();
+  const pago = /cpc|ppc|paid|ads|anuncio|an[uú]ncio/.test(meio);
+
+  if (dados.gclid) return 'Google Ads';
+  if (/facebook|instagram|meta|fb|ig/.test(fonte) && (pago || !meio)) return 'Meta Ads';
+  if (fonte === 'google' && pago) return 'Google Ads';
+
+  if (fonte) {
+    // Campanha marcada à mão que não é anúncio: link da bio, e-mail, WhatsApp.
+    if (/instagram|ig/.test(fonte)) return 'Instagram';
+    if (/facebook|fb/.test(fonte)) return 'Facebook';
+    if (fonte === 'google') return 'Google';
+    return 'Outros';
+  }
+
+  if (dados.referrer) {
+    const host = (() => {
+      try {
+        return new URL(dados.referrer).hostname.toLowerCase();
+      } catch {
+        return '';
+      }
+    })();
+    if (/instagram\./.test(host)) return 'Instagram';
+    if (/facebook\.|fb\./.test(host)) return 'Facebook';
+    if (/google\./.test(host)) return 'Google';
+    if (host) return 'Outros';
+  }
+
+  return 'Direto';
+}
+
 @Injectable()
 export class MetricsService {
   private readonly logger = new Logger(MetricsService.name);
@@ -65,15 +136,19 @@ export class MetricsService {
    * Falha em silêncio. Contador de visita não pode derrubar a página que está
    * contando — e uma visita perdida não muda decisão nenhuma.
    */
-  async registrar(rota: string, novaSessao: boolean): Promise<{ ok: boolean }> {
+  async registrar(rota: string, novaSessao: boolean, canal?: string): Promise<{ ok: boolean }> {
     const caminho = this.normalizar(rota);
     if (!caminho) return { ok: true };
+
+    // Rótulo desconhecido vira "Outros": a coluna existe para agrupar, e um
+    // valor livre vindo da internet transformaria o relatório numa lista.
+    const canalValido = CANAIS_ACEITOS.has(canal ?? '') ? (canal as string) : 'Direto';
 
     try {
       const dia = this.hoje();
       await this.prisma.pageView.upsert({
-        where: { dia_rota: { dia, rota: caminho } },
-        create: { dia, rota: caminho, views: 1, sessoes: novaSessao ? 1 : 0 },
+        where: { dia_rota_canal: { dia, rota: caminho, canal: canalValido } },
+        create: { dia, rota: caminho, canal: canalValido, views: 1, sessoes: novaSessao ? 1 : 0 },
         update: {
           views: { increment: 1 },
           ...(novaSessao ? { sessoes: { increment: 1 } } : {}),
@@ -139,7 +214,16 @@ export class MetricsService {
           createdAt: { gte: inicioBusca, lt: fimBusca },
           status: { not: 'cancelado' },
         },
-        select: { createdAt: true, total: true, status: true },
+        select: {
+          createdAt: true,
+          total: true,
+          status: true,
+          utmSource: true,
+          utmMedium: true,
+          utmCampaign: true,
+          gclid: true,
+          referrer: true,
+        },
       }),
     ]);
 
@@ -169,6 +253,18 @@ export class MetricsService {
       porDia.set(chave, atual);
     }
 
+    // Visitas por canal: a metade que faltava. Saber que a campanha trouxe
+    // gente é o primeiro sinal de que ela está entregando, e vem dias antes da
+    // primeira venda.
+    const visitasPorCanal = new Map<string, { canal: string; views: number; sessoes: number }>();
+    for (const l of linhas) {
+      const atual =
+        visitasPorCanal.get(l.canal) ?? { canal: l.canal, views: 0, sessoes: 0 };
+      atual.views += l.views;
+      atual.sessoes += l.sessoes;
+      visitasPorCanal.set(l.canal, atual);
+    }
+
     // Páginas mais vistas, somando os dias.
     const porRota = new Map<string, number>();
     for (const l of linhas) {
@@ -183,6 +279,43 @@ export class MetricsService {
     const pagos = pedidos.filter((p) => p.status !== 'aguardando_pagamento');
     const receita = pagos.reduce((soma, p) => soma + p.total, 0);
 
+    /**
+     * De onde vieram as vendas — pelo registro da loja, não pelo do anunciante.
+     *
+     * O painel do Meta diz quantas vendas ele acha que trouxe; o do Google diz
+     * o mesmo. Os dois contam a mesma venda e os dois contam a mais, porque
+     * cada um credita a si qualquer compra que aconteça depois de um clique
+     * dele. Somar os dois é decidir orçamento em cima de ficção.
+     *
+     * Aqui uma venda tem uma origem só: a do último clique de campanha antes
+     * da compra. É menos generoso e é o que dá para conferir.
+     */
+    const porCanal = new Map<string, { canal: string; pedidos: number; receita: number }>();
+    const porCampanha = new Map<
+      string,
+      { canal: string; campanha: string; pedidos: number; receita: number }
+    >();
+
+    for (const p of pagos) {
+      const canal = classificarCanal(p);
+
+      const noCanal = porCanal.get(canal) ?? { canal, pedidos: 0, receita: 0 };
+      noCanal.pedidos += 1;
+      noCanal.receita += p.total;
+      porCanal.set(canal, noCanal);
+
+      // A campanha só aparece quando existe: agrupar "sem campanha" junto com
+      // as marcadas encheria a lista de linhas que não dizem nada.
+      if (p.utmCampaign) {
+        const chave = `${canal}|${p.utmCampaign}`;
+        const naCampanha =
+          porCampanha.get(chave) ?? { canal, campanha: p.utmCampaign, pedidos: 0, receita: 0 };
+        naCampanha.pedidos += 1;
+        naCampanha.receita += p.total;
+        porCampanha.set(chave, naCampanha);
+      }
+    }
+
     return {
       de: primeiroDia,
       ate: ultimoDia,
@@ -196,6 +329,27 @@ export class MetricsService {
       // seria pior do que mostrar nada.
       conversao: sessoes > 0 ? (pagos.length / sessoes) * 100 : null,
       ticketMedio: pagos.length > 0 ? receita / pagos.length : null,
+      // Ordenado por receita: a primeira linha é o canal que mais rende, que é
+      // a única ordem que ajuda a decidir onde colocar dinheiro.
+      canais: [...new Set([...visitasPorCanal.keys(), ...porCanal.keys()])]
+        .map((canal) => {
+          const visitas = visitasPorCanal.get(canal);
+          const vendas = porCanal.get(canal);
+          const sessoes = visitas?.sessoes ?? 0;
+          const pedidosDoCanal = vendas?.pedidos ?? 0;
+          return {
+            canal,
+            sessoes,
+            views: visitas?.views ?? 0,
+            pedidos: pedidosDoCanal,
+            receita: vendas?.receita ?? 0,
+            // A conta que compara canais entre si. Sem visita registrada não há
+            // divisão — e 0% seria mentira, não ausência.
+            conversao: sessoes > 0 ? (pedidosDoCanal / sessoes) * 100 : null,
+          };
+        })
+        .sort((a, b) => b.receita - a.receita || b.sessoes - a.sessoes),
+      campanhas: [...porCampanha.values()].sort((a, b) => b.receita - a.receita).slice(0, 15),
       porDia: [...porDia.entries()]
         .map(([dia, valores]) => ({ dia, ...valores }))
         .sort((a, b) => a.dia.localeCompare(b.dia)),

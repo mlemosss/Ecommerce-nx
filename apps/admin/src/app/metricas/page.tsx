@@ -12,9 +12,27 @@ interface DiaDoResumo {
   pedidos: number;
 }
 
+interface CanalDoResumo {
+  canal: string;
+  sessoes: number;
+  views: number;
+  pedidos: number;
+  receita: number;
+  conversao: number | null;
+}
+
+interface CampanhaDoResumo {
+  canal: string;
+  campanha: string;
+  pedidos: number;
+  receita: number;
+}
+
 interface Resumo {
   de: string;
   ate: string;
+  canais: CanalDoResumo[];
+  campanhas: CampanhaDoResumo[];
   views: number;
   sessoes: number;
   pedidos: number;
@@ -203,6 +221,86 @@ export default function MetricasPage() {
                 ))}
               </div>
             </div>
+              </>
+            )}
+
+            {/* De onde veio, separando o que foi pago do que não foi. É a
+                pergunta que decide orçamento — e a única resposta que a lojista
+                pode conferir, porque o Meta e o Google contam a mesma venda
+                cada um para si. */}
+            <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
+              De onde veio
+            </h2>
+            <div className="card mt-3 !p-0 overflow-x-auto">
+              {resumo.canais.length === 0 ? (
+                <p className="p-3 text-sm text-black/50">Nada registrado neste período.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-black/10 text-left text-xs text-black/45">
+                      <th className="p-3 font-normal">Canal</th>
+                      <th className="p-3 text-right font-normal">Visitantes</th>
+                      <th className="p-3 text-right font-normal">Pedidos</th>
+                      <th className="p-3 text-right font-normal">Conversão</th>
+                      <th className="p-3 text-right font-normal">Receita</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resumo.canais.map((c) => (
+                      <tr key={c.canal} className="border-b border-black/5 last:border-0">
+                        <td className="p-3">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              c.canal.endsWith('Ads')
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-black/5 text-black/60'
+                            }`}
+                          >
+                            {c.canal}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right font-semibold">{c.sessoes}</td>
+                        <td className="p-3 text-right font-semibold">{c.pedidos}</td>
+                        <td className="p-3 text-right">
+                          {c.conversao === null ? '—' : `${c.conversao.toFixed(1)}%`}
+                        </td>
+                        <td className="p-3 text-right font-semibold">{formatPrice(c.receita)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-black/45">
+              Contagem da própria loja, pelo último clique antes da compra. Não vai bater com o
+              painel do Meta nem com o do Google: cada um deles credita a si qualquer venda que
+              aconteça depois de um clique seu, então os dois contam a mesma venda e os dois contam
+              a mais. Aqui cada venda tem uma origem só.
+            </p>
+
+            {resumo.campanhas.length > 0 && (
+              <>
+                <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-black/50">
+                  Por campanha
+                </h2>
+                <div className="card mt-3 !p-3">
+                  <ul className="space-y-1.5 text-sm">
+                    {resumo.campanhas.map((c) => (
+                      <li
+                        key={`${c.canal}-${c.campanha}`}
+                        className="flex items-baseline justify-between gap-3"
+                      >
+                        <span className="truncate text-black/70">
+                          {c.campanha}
+                          <span className="ml-2 text-xs text-black/40">{c.canal}</span>
+                        </span>
+                        <span className="shrink-0 font-semibold">
+                          {c.pedidos}× · {formatPrice(c.receita)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </>
             )}
 

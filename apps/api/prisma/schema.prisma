@@ -302,6 +302,29 @@ model Order {
   // Falso por padrao: pedido sem resposta explicita nao gera evento. Perder
   // medicao e barato; contrariar por escrito o que a politica promete, nao.
   trackingConsent   Boolean     @default(false)
+  // De onde veio a venda.
+  //
+  // O painel do Meta diz quantas vendas ele acha que trouxe, e o do Google diz
+  // o mesmo — os dois contam a mesma venda, e os dois contam a mais. Sem
+  // registro proprio, a lojista soma dois numeros inflados e decide orcamento
+  // em cima de ficcao.
+  //
+  // Gravado no pedido, e nao so na sessao: o pedido e o unico lugar onde a
+  // origem sobrevive ao fim da visita e pode ser conferida meses depois.
+  utmSource         String?
+  utmMedium         String?
+  utmCampaign       String?
+  utmContent        String?
+  utmTerm           String?
+  // Identificador de clique do Google, irmao do metaFbc. So e gravado com
+  // consentimento, pela mesma razao: identifica a pessoa, nao a campanha.
+  gclid             String?
+  // De qual site ela veio, quando nao ha campanha marcada. E o que separa
+  // "Instagram organico" de "acesso direto".
+  referrer          String?
+  // A primeira pagina da visita que virou compra: diz qual anuncio ou link
+  // entregou a pessoa.
+  landingPage       String?
   metaFbp           String?
   metaFbc           String?
   asaasCustomerId   String?
@@ -516,9 +539,16 @@ model PageView {
   id      String   @id @default(cuid())
   dia     DateTime @db.Date
   rota    String
+  /// De onde a visita veio: "Meta Ads", "Google Ads", "Instagram", "Direto"...
+  ///
+  /// Sem isto, o painel dizia quantas pessoas entraram e nao de onde. A
+  /// pergunta que decide orcamento nao e "quantas visitas", e "o que eu paguei
+  /// trouxe mais do que o que eu nao paguei" - e essa so se responde separando
+  /// o trafego pago do organico na entrada, e nao so na venda.
+  canal   String   @default("Direto")
   views   Int      @default(0)
   sessoes Int      @default(0)
 
-  @@unique([dia, rota])
+  @@unique([dia, rota, canal])
   @@map("page_views")
 }

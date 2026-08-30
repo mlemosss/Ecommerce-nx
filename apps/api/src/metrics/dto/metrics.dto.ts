@@ -15,4 +15,15 @@ export class RegistrarVisitaDto {
   @IsOptional()
   @IsBoolean()
   novaSessao?: boolean;
+
+  /**
+   * De onde a pessoa veio, já classificado pelo navegador.
+   *
+   * Só o rótulo do canal — "Meta Ads", "Instagram", "Direto". Nada que ligue a
+   * visita a uma pessoa continua valendo aqui.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  canal?: string;
 }
