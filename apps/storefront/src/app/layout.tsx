@@ -50,6 +50,16 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-BR">
+      {/* Verificação do Search Console.
+          Não é rastreamento — é uma etiqueta que prova ao Google que o site é
+          da loja, e por isso sai antes de qualquer consentimento: ela não
+          observa ninguém. Vem de Configurações para a lojista poder colar o
+          código sem depender de um deploy. */}
+      {settings.googleSiteVerification && (
+        <head>
+          <meta name="google-site-verification" content={settings.googleSiteVerification} />
+        </head>
+      )}
       <body className="flex min-h-screen flex-col font-sans">
         {/* Quem é a loja, para o Google. Alimenta o painel lateral da busca e
             liga a marca ao Instagram e ao Facebook — sem isto, o buscador não

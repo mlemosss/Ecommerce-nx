@@ -100,6 +100,11 @@ export class UpdateSettingsDto {
   @IsString()
   googleAdsId?: string;
 
+  /** Codigo de verificacao do Search Console, colado pela lojista. */
+  @IsOptional()
+  @IsString()
+  googleSiteVerification?: string;
+
   /** Rótulo da ação de conversão de compra, do painel do Google Ads. */
   @IsOptional()
   @IsString()

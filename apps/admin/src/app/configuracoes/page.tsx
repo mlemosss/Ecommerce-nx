@@ -137,6 +137,7 @@ export default function SettingsPage() {
         gtmId: settings.gtmId || undefined,
         metaPixelId: settings.metaPixelId || undefined,
         googleAdsId: settings.googleAdsId || undefined,
+        googleSiteVerification: settings.googleSiteVerification || undefined,
         googleAdsConversionLabel: settings.googleAdsConversionLabel || undefined,
         emailFromName: settings.emailFromName,
         emailFromAddress: settings.emailFromAddress,
@@ -589,6 +590,32 @@ export default function SettingsPage() {
               className="input-field"
             />
           </div>
+          {/* Verificação não é rastreamento: é uma etiqueta que prova ao Google
+              que o site é seu. Sai no HTML de todas as páginas, antes de
+              qualquer consentimento, porque não observa ninguém. */}
+          <div>
+            <label className="mb-1 block text-sm font-semibold">
+              Google Search Console (código de verificação)
+            </label>
+            <input
+              placeholder="cole aqui o valor de content=..."
+              value={settings.googleSiteVerification ?? ''}
+              onChange={(e) => update('googleSiteVerification', e.target.value.trim())}
+              className="input-field"
+            />
+            <p className="mt-1 text-xs text-black/60">
+              Em search.google.com/search-console, escolha <strong>Prefixo do URL</strong> com{' '}
+              <span className="font-mono">https://www.noexcusenx.com.br</span>, depois{' '}
+              <strong>Tag HTML</strong>. Ele mostra uma linha como{' '}
+              <span className="font-mono">
+                &lt;meta name=&quot;google-site-verification&quot; content=&quot;abc123...&quot;
+                /&gt;
+              </span>{' '}
+              — cole aqui só o que está entre as aspas do <span className="font-mono">content</span>
+              , salve, e clique em Verificar.
+            </p>
+          </div>
+
           <p className="text-xs text-black/40">
             Assim que preenchidos, os scripts do GTM, do Meta Pixel e do Google Ads são carregados
             automaticamente em todas as páginas da loja — sempre depois do aceite de cookies.

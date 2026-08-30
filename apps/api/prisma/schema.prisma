@@ -390,6 +390,12 @@ model StoreSettings {
   // Alimenta a tabela e o provador na página de produto.
   sizeGuide              String   @default("[]")
   // Google Ads: ID da tag (AW-...) e rótulo da ação de conversão de compra.
+  // Codigo de verificacao do Google Search Console.
+  //
+  // Fica em Configuracoes, e nao no codigo, porque a alternativa e um deploy
+  // so para colar uma string - e porque quem tem o codigo e a lojista, na tela
+  // do Google, e nao quem escreve o codigo.
+  googleSiteVerification String?
   googleAdsId            String?
   googleAdsConversionLabel String?
   // Desconto progressivo, em JSON: [{ minItems, percent }]. Vazio = desligado.

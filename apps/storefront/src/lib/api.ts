@@ -37,6 +37,8 @@ export interface StoreSettings {
   gtmId: string | null;
   metaPixelId: string | null;
   googleAdsId: string | null;
+  /** Verificacao do Search Console. Vira uma meta tag no <head>. */
+  googleSiteVerification: string | null;
   googleAdsConversionLabel: string | null;
   /** JSON: [{ minItems, percent }] do desconto progressivo. */
   progressiveDiscount: string;

@@ -212,6 +212,7 @@ export interface StoreSettings {
   promoBannerEndsAt: string | null;
   sizeGuide: string;
   googleAdsId: string | null;
+  googleSiteVerification: string | null;
   googleAdsConversionLabel: string | null;
   /** CEP de onde a loja despacha; base da cotação do Melhor Envio. */
   shippingOriginZip: string | null;
