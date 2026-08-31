@@ -299,11 +299,64 @@ export class ProductsService {
   }
 
   async lowStock(threshold = 5) {
+    // `include: { product: true }` trazia a linha inteira do produto, e nela
+    // moram as fotos em base64 - megabytes por abertura do painel, pela mesma
+    // consulta que derrubou a loja em 18/08. O widget usa nome e slug.
     return this.prisma.productVariant.findMany({
       where: { stock: { lte: threshold } },
-      include: { product: true },
+      include: { product: { select: { id: true, name: true, slug: true, active: true } } },
       orderBy: { stock: 'asc' },
     });
+  }
+
+  /**
+   * Pecas com a prateleira quase vazia.
+   *
+   * Uma peca com metade dos tamanhos esgotados continua entrando no anuncio -
+   * tem tamanho em estoque, entao aparece. A cliente clica, chega na pagina e
+   * descobre que o dela acabou: a loja pagou o clique para entregar uma
+   * decepcao.
+   *
+   * O painel nao tinha como avisar. Estoque baixo por variacao ja existia, mas
+   * ninguem soma dez linhas de cabeca para perceber que a peca inteira esta
+   * acabando.
+   *
+   * Campo a campo e sem as fotos: e consulta de tela de painel, e o base64 do
+   * produto nao tem nada a ver com contar estoque.
+   */
+  async prateleiraVazia() {
+    const produtos = await this.prisma.product.findMany({
+      where: { active: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        variants: { select: { stock: true, size: true, color: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    return produtos
+      .map((p) => {
+        const esgotadas = p.variants.filter((v) => v.stock <= 0);
+        const estoque = p.variants.reduce((soma, v) => soma + Math.max(0, v.stock), 0);
+        return {
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          variacoes: p.variants.length,
+          esgotadas: esgotadas.length,
+          estoque,
+          faltando: esgotadas.map((v) => `${v.color} ${v.size}`),
+        };
+      })
+      // Metade dos tamanhos fora, ou tres pecas contadas no total. Os dois
+      // casos dao o mesmo resultado para quem clica no anuncio: nao acha o
+      // tamanho dela.
+      .filter(
+        (p) => p.variacoes > 0 && (p.esgotadas / p.variacoes >= 0.5 || p.estoque <= 3)
+      )
+      .sort((a, b) => a.estoque - b.estoque);
   }
 
   /**

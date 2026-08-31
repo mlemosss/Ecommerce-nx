@@ -26,6 +26,12 @@ export class ProductsController {
     return this.productsService.findAll({ category, search });
   }
 
+  /** Pecas quase esgotadas, para o painel avisar antes de o anuncio queimar. */
+  @Get('prateleira-vazia')
+  prateleiraVazia() {
+    return this.productsService.prateleiraVazia();
+  }
+
   @Get('low-stock')
   lowStock(@Query('threshold') threshold?: string) {
     return this.productsService.lowStock(threshold ? Number(threshold) : undefined);

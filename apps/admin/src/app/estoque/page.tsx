@@ -7,13 +7,35 @@ import type { Product } from '../../lib/types';
 
 const LOW_STOCK_THRESHOLD = 5;
 
+/**
+ * Peça com a prateleira quase vazia.
+ *
+ * Metade dos tamanhos esgotados, ou três peças no total contando tudo. Nos dois
+ * casos o resultado é o mesmo para quem clica no anúncio: não acha o tamanho
+ * dela.
+ */
+interface PrateleiraVazia {
+  id: string;
+  name: string;
+  slug: string;
+  variacoes: number;
+  esgotadas: number;
+  estoque: number;
+  faltando: string[];
+}
+
 export default function StockPage() {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [onlyLow, setOnlyLow] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [quaseVazias, setQuaseVazias] = useState<PrateleiraVazia[]>([]);
 
   function load() {
     api.get<Product[]>('/products').then(setProducts);
+    api
+      .get<PrateleiraVazia[]>('/products/prateleira-vazia')
+      .then(setQuaseVazias)
+      .catch(() => setQuaseVazias([]));
   }
 
   useEffect(load, []);
@@ -40,6 +62,52 @@ export default function StockPage() {
     <div>
       <TopBar title="Estoque" />
       <div className="px-4 pt-4">
+        {/* O aviso vem antes da lista. Estoque baixo por variação já existia,
+            mas ninguém soma dez linhas de cabeça para perceber que a peça
+            inteira está acabando — e é a peça, não a variação, que continua
+            aparecendo no anúncio. */}
+        {quaseVazias.length > 0 && (
+          <div className="card mb-4 border border-amber-200 bg-amber-50">
+            <p className="text-sm font-semibold text-amber-900">
+              {quaseVazias.length === 1
+                ? '1 peça com a prateleira quase vazia'
+                : `${quaseVazias.length} peças com a prateleira quase vazia`}
+            </p>
+            <p className="mt-1 text-sm text-amber-800">
+              Elas continuam entrando no anúncio, porque ainda têm tamanho em estoque. A cliente
+              clica, chega na página e descobre que o dela acabou — e o clique já foi pago.
+            </p>
+
+            <ul className="mt-3 space-y-2">
+              {quaseVazias.map((p) => (
+                <li key={p.id} className="rounded-xl bg-white/70 px-3 py-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="text-sm font-semibold">{p.name}</span>
+                    <span className="text-xs text-amber-900">
+                      {p.esgotadas} de {p.variacoes} tamanhos fora ·{' '}
+                      {p.estoque === 0
+                        ? 'esgotada'
+                        : `${p.estoque} ${p.estoque === 1 ? 'peça' : 'peças'} no total`}
+                    </span>
+                  </div>
+                  {p.faltando.length > 0 && (
+                    <p className="mt-1 text-xs text-amber-800">
+                      Faltando: {p.faltando.slice(0, 6).join(' · ')}
+                      {p.faltando.length > 6 ? ` e mais ${p.faltando.length - 6}` : ''}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-3 text-xs leading-relaxed text-amber-800">
+              O que fazer: repor, ou tirar a peça do anúncio no Meta. Não precisa apagar do site —
+              quem chega pelo orgânico ainda compra o tamanho que sobrou, e o &quot;Avise-me&quot;
+              guarda o e-mail de quem quer o que faltou.
+            </p>
+          </div>
+        )}
+
         <label className="flex items-center gap-2 text-sm font-medium">
           <input
             type="checkbox"
