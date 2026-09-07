@@ -133,6 +133,24 @@ export function productSchema({
   const condicoes = {
     hasMerchantReturnPolicy: politicaDeDevolucao(),
     shippingDetails: freteGratisAcimaDe(freeShippingThreshold),
+
+    /**
+     * As duas formas de receber a peça, ditas em campo.
+     *
+     * A retirada em mãos em São Paulo existe desde sempre e só aparecia
+     * como frase na finalização da compra e na página da cidade —
+     * invisível para quem lê a marcação, que é o buscador e o assistente
+     * de IA. Declarada aqui, "retirar hoje, sem frete" vira atributo da
+     * oferta, e é exatamente esse o diferencial contra a loja que só posta.
+     *
+     * A retirada NÃO entra como frete grátis para o estado inteiro: seria
+     * mentira, porque para o resto de São Paulo a loja cobra envio normal.
+     * É um método de entrega disponível, e nada além disso.
+     */
+    availableDeliveryMethod: [
+      'https://schema.org/ParcelService',
+      'https://schema.org/OnSitePickup',
+    ],
   };
 
   return {
