@@ -64,11 +64,17 @@ export class EmailService {
    * abrir o painel. Vai como `bcc`, e não como segundo destinatário: a cliente
    * não pode ver um endereço interno no cabeçalho do e-mail dela.
    *
-   * `EMAIL_COPIA_PEDIDO` na Vercel troca o endereço sem mexer no código; vazio
-   * desliga a cópia.
+   * O endereço vem só de `EMAIL_COPIA_PEDIDO` na Vercel; sem a variável (ou
+   * vazia) não há cópia.
+   *
+   * Havia um Gmail pessoal como valor padrão aqui. O repositório é público, então
+   * o endereço de quem toca a loja estava à vista de qualquer um — e, pior,
+   * qualquer ambiente sem a variável (preview, máquina de dev) mandava nome,
+   * itens e total de pedido para essa caixa. Sem padrão, esquecer de configurar
+   * resulta em não receber a cópia, e não em entregá-la a quem não deve.
    */
   private copiaDoPedido(): string[] {
-    const destino = (process.env.EMAIL_COPIA_PEDIDO ?? 'ib.borlenghi@gmail.com').trim();
+    const destino = (process.env.EMAIL_COPIA_PEDIDO ?? '').trim();
     return destino ? [destino] : [];
   }
 
