@@ -129,12 +129,30 @@ export class ImportService {
       const size = row.size?.trim();
       const price = Number(row.price);
       const costPrice = Number(row.costPrice);
-      const stock = Number(row.stock ?? 0);
+      // Estoque ausente ou celula vazia nao e zero: e "este arquivo nao fala
+      // de estoque". A planilha de precos do fornecedor nao traz a coluna, e
+      // `Number("")` e 0 - entao importar precos zerava o saldo de toda
+      // variacao citada no arquivo, sem aviso e sem volta: nao existe registro
+      // de movimentacao de estoque em lugar nenhum do sistema.
+      //
+      // Mesmo tratamento que `compareAtPrice` recebe abaixo: informado, vale;
+      // ausente, nao se mexe no que ja esta la.
+      const stockInformado = row.stock?.trim();
+      const stock = stockInformado ? Number(stockInformado) : undefined;
 
       if (!name || !category || !color || !size || Number.isNaN(price) || Number.isNaN(costPrice)) {
         result.errors.push({
           row: rowNumber,
           message: 'Campos obrigatórios ausentes ou inválidos (name, category, price, costPrice, color, size)',
+        });
+        continue;
+      }
+
+      // Estoque informado e ilegivel e erro de linha, nunca motivo para zerar.
+      if (stock !== undefined && (Number.isNaN(stock) || !Number.isInteger(stock) || stock < 0)) {
+        result.errors.push({
+          row: rowNumber,
+          message: `Estoque invalido ("${stockInformado}"): use um numero inteiro maior ou igual a zero, ou deixe a coluna de fora para nao alterar o estoque`,
         });
         continue;
       }
@@ -159,8 +177,9 @@ export class ImportService {
 
         await this.prisma.productVariant.upsert({
           where: { productId_color_size: { productId: product.id, color, size } },
-          create: { productId: product.id, color, size, stock: Number.isNaN(stock) ? 0 : stock },
-          update: { stock: Number.isNaN(stock) ? 0 : stock },
+          create: { productId: product.id, color, size, stock: stock ?? 0 },
+          // Sem estoque no arquivo, a variacao existente fica como esta.
+          update: stock === undefined ? {} : { stock },
         });
       } catch (err) {
         result.errors.push({ row: rowNumber, message: (err as Error).message });
