@@ -129,6 +129,8 @@ SALE_DEBITED_STATUSES = { 'concluida', 'conta_aberta' }
 **`conta_aberta` debita mesmo sem pagamento.** É a exceção à regra "estoque sai no pagamento": no fiado
 a peça saiu da loja. Não debitar faria a vitrine anunciar uma peça que não existe mais.
 
+> **Revisado no plano de implementação (07/11/2026): esta janela foi descartada.** Os pedidos precisaram dela porque pedidos antigos podiam estar em `aguardando_pagamento` *já debitados*. Venda rápida nunca teve esse estado: toda venda antiga é `concluida` ou `conta_aberta`, e as duas já debitaram na criação. Com a regra nova, cancelar uma venda antiga devolve peça que de fato saiu. Para não abrir buraco, `PATCH /sales/:id/status` **não aceita** `aguardando_pagamento` (só o sistema cria esse status). O texto abaixo fica como registro do raciocínio original.
+
 **Janela de retroatividade — obrigatória.** Toda venda rápida existente hoje debitou na criação. Se
 `holdsStock` passar a valer para elas, cancelar uma venda antiga **credita estoque que nunca saiu**.
 O lado dos pedidos já viveu isso e resolveu com uma constante de data
