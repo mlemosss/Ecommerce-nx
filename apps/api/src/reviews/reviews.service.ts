@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { apiBaseUrl } from '../common/request-context';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
+import { EmailService } from '../email/email.service';
 import { CreateReviewDto } from './dto/review.dto';
+import { isLowRating } from './review-moderation';
 
 
 /**
@@ -19,10 +21,34 @@ function urlDaFoto(base: string, tipo: 'avaliacao' | 'depoimento', id: string): 
 
 @Injectable()
 export class ReviewsService {
+  private readonly logger = new Logger(ReviewsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
-    private readonly uploads: UploadsService
+    private readonly uploads: UploadsService,
+    private readonly emailService: EmailService
   ) {}
+
+  /**
+   * Nota baixa avisa a equipe. A avaliação já fica fora do ar por padrão, como
+   * todas (`approved` nasce falso); o que faltava era alguém saber que ela chegou.
+   *
+   * Falha de e-mail não pode desfazer a avaliação: ela já está gravada.
+   */
+  private async avisarSeBaixa(review: {
+    rating: number;
+    customerName: string;
+    comment: string;
+    productName: string;
+    orderNumber: string | null;
+  }): Promise<void> {
+    if (!isLowRating(review.rating)) return;
+    try {
+      await this.emailService.sendLowRatingAlert(review);
+    } catch (err) {
+      this.logger.error(`Avaliação baixa gravada, mas o aviso à equipe falhou: ${err}`);
+    }
+  }
 
   /**
    * Valida a foto antes de gravar. O endpoint do link é público, então aceitar
@@ -149,7 +175,7 @@ export class ReviewsService {
     const product = await this.prisma.product.findUnique({ where: { id: dto.productId } });
     if (!product) throw new NotFoundException('Produto não encontrado');
 
-    return this.prisma.productReview.create({
+    const review = await this.prisma.productReview.create({
       data: {
         productId: dto.productId,
         customerId,
@@ -159,6 +185,14 @@ export class ReviewsService {
         photoUrl: this.validarFoto(dto.photoUrl),
       },
     });
+    await this.avisarSeBaixa({
+      rating: review.rating,
+      customerName,
+      comment: review.comment,
+      productName: product.name,
+      orderNumber: null,
+    });
+    return review;
   }
 
   /**
@@ -356,21 +390,31 @@ export class ReviewsService {
   async createFromToken(token: string, dto: CreateReviewDto) {
     const order = await this.prisma.order.findUnique({
       where: { reviewToken: token },
-      select: { id: true, customerId: true, customerName: true, items: { select: { productId: true } } },
+      select: {
+        id: true,
+        orderNumber: true,
+        customerId: true,
+        customerName: true,
+        items: { select: { productId: true, productName: true } },
+      },
     });
     if (!order) throw new NotFoundException('Link de avaliação inválido ou expirado.');
 
     // Só produtos que estão no pedido: o token não é permissão para avaliar o
     // catálogo inteiro.
-    if (!order.items.some((i) => i.productId === dto.productId)) {
+    const item = order.items.find((i) => i.productId === dto.productId);
+    if (!item) {
       throw new NotFoundException('Este produto não faz parte do pedido.');
     }
 
     const foto = this.validarFoto(dto.photoUrl);
 
-    return this.prisma.productReview.upsert({
+    const review = await this.prisma.productReview.upsert({
       where: { orderId_productId: { orderId: order.id, productId: dto.productId } },
-      update: { rating: dto.rating, comment: dto.comment, photoUrl: foto },
+      // Editar volta para a moderação. Sem isto, quem já tinha a avaliação
+      // aprovada podia trocar o 5 por um 1, ou a foto e o texto por outros, e
+      // o novo conteúdo ficava no ar sem que ninguém o visse.
+      update: { rating: dto.rating, comment: dto.comment, photoUrl: foto, approved: false },
       create: {
         productId: dto.productId,
         orderId: order.id,
@@ -381,6 +425,15 @@ export class ReviewsService {
         photoUrl: foto,
       },
     });
+
+    await this.avisarSeBaixa({
+      rating: review.rating,
+      customerName: order.customerName,
+      comment: review.comment,
+      productName: item.productName,
+      orderNumber: order.orderNumber,
+    });
+    return review;
   }
 
   async setApproved(id: string, approved: boolean) {

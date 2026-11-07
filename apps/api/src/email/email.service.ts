@@ -15,6 +15,7 @@ import {
   orderRefundedTemplate,
   paymentApprovedTemplate,
   reviewRequestTemplate,
+  lowRatingAlertTemplate,
   EmailTemplate,
 } from './email-templates';
 
@@ -227,6 +228,35 @@ export class EmailService {
       coupon,
     });
     await this.dispatch(data.email, template);
+  }
+
+  /**
+   * Avisa a equipe de uma avaliação baixa. Aviso interno, não etapa do fluxo da
+   * cliente: não passa por `sendIfEnabled`, porque desligar "pedido de avaliação"
+   * não pode silenciar o alerta de quem já avaliou mal.
+   *
+   * Vai para os mesmos endereços da cópia dos pedidos (`EMAIL_COPIA_PEDIDO`).
+   * Sem eles ninguém é avisado, e isso fica no log em vez de passar calado.
+   */
+  async sendLowRatingAlert(data: {
+    productName: string;
+    customerName: string;
+    orderNumber: string | null;
+    rating: number;
+    comment: string;
+  }): Promise<void> {
+    const equipe = this.copiaDoPedido();
+    if (equipe.length === 0) {
+      this.logger.warn(
+        'Avaliação baixa recebida, mas EMAIL_COPIA_PEDIDO não está definida: ninguém foi avisado.'
+      );
+      return;
+    }
+    const { storeName } = await this.getSender();
+    const template = lowRatingAlertTemplate(storeName, this.getStorefrontUrl(), data);
+    for (const destino of equipe) {
+      await this.dispatch(destino, template);
+    }
   }
 
   /**

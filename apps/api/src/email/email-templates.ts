@@ -524,3 +524,66 @@ export function abandonedCartTemplate(
     html: layout(storeName, 'Seu carrinho está te esperando', body, storefrontUrl),
   };
 }
+
+/**
+ * O texto da avaliação vem de um endpoint público: qualquer pessoa com um link
+ * de pedido escreve o que quiser. Num e-mail para a equipe, isso entra como HTML.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Aviso interno: uma avaliação baixa chegou e NÃO foi publicada.
+ *
+ * Quem escreve nota baixa quase sempre passou por algo com a peça ou com a
+ * entrega, e é a chance de resolver antes que vire reclamação pública. O e-mail
+ * já traz o necessário para agir: quem, qual pedido, o que escreveu.
+ */
+export function lowRatingAlertTemplate(
+  storeName: string,
+  storefrontUrl: string,
+  data: {
+    productName: string;
+    customerName: string;
+    orderNumber: string | null;
+    rating: number;
+    comment: string;
+  }
+): EmailTemplate {
+  const nota = Math.min(5, Math.max(0, Math.round(data.rating)));
+  const estrelas = '★'.repeat(nota) + '☆'.repeat(5 - nota);
+  const pedido = data.orderNumber ? ` · pedido ${escapeHtml(data.orderNumber)}` : '';
+  const comentario = escapeHtml(data.comment).replace(/\r?\n/g, '<br/>');
+
+  const body = `
+    <p style="color:#333;font-size:15px;line-height:1.6;">
+      Chegou uma avaliação baixa e ela <strong>não foi publicada</strong>. Vale falar com a
+      cliente e entender o que aconteceu antes de decidir qualquer coisa.
+    </p>
+    <div style="margin-top:16px;padding:16px;border:1px solid #eee;">
+      <div style="font-size:20px;letter-spacing:2px;color:#0b0b0d;">${estrelas}</div>
+      <div style="margin-top:6px;font-size:14px;color:#111;">
+        <strong>${escapeHtml(data.productName)}</strong>
+      </div>
+      <div style="margin-top:2px;font-size:12px;color:#777;">
+        ${escapeHtml(data.customerName)}${pedido}
+      </div>
+      <p style="margin:14px 0 0;font-size:14px;line-height:1.6;color:#111;">${comentario}</p>
+    </div>
+    <p style="margin-top:20px;">
+      <a href="${storefrontUrl}/admin/avaliacoes" style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:12px 18px;">
+        Abrir avaliações no painel
+      </a>
+    </p>`;
+
+  return {
+    subject: `Avaliação ${nota}/5 para conferir: ${data.productName.replace(/[\r\n]+/g, ' ')}`,
+    html: layout(storeName, 'Avaliação para conferir', body, storefrontUrl),
+  };
+}
