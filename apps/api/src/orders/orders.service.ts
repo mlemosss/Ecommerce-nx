@@ -1181,6 +1181,15 @@ export class OrdersService {
    * diferentes: as duas liam "aguardando_pagamento" e as duas baixavam
    * estoque. Com o update condicional, só a primeira encontra o pedido no
    * status anterior; a segunda vê `count === 0` e desiste sem efeito nenhum.
+   *
+   * A trava é por `DEBITED_STATUSES`, e não pelo status `pago` sozinho. No Pix
+   * os dois eventos chegam juntos e `pago` bastava; no cartão o
+   * `PAYMENT_RECEIVED` marca a liquidação do dinheiro, que cai ~30 dias depois
+   * (uma vez por parcela, no parcelado) — com a peça já enviada e entregue.
+   * Nesse ponto o pedido está em `enviado`, o `not: 'pago'` casava, e o evento
+   * antigo puxava o pedido de volta para `pago`, mandava "pagamento aprovado —
+   * entrou em preparação" para quem já tinha a peça em casa e repetia o
+   * Purchase na Meta fora da janela de deduplicação dela.
    */
   async markPaidByAsaasPaymentId(asaasPaymentId: string, externalReference?: string) {
     // `externalReference` é o id do pedido, que a loja manda ao criar a
@@ -1229,11 +1238,11 @@ export class OrdersService {
       return null;
     }
 
-    if (order.status === 'pago') return order;
+    if (DEBITED_STATUSES.has(order.status)) return order;
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const { count } = await tx.order.updateMany({
-        where: { id: order.id, status: { not: 'pago' } },
+        where: { id: order.id, status: { notIn: [...DEBITED_STATUSES] } },
         data: { status: 'pago' },
       });
       // Outro evento do mesmo pagamento chegou primeiro e já fez tudo.
