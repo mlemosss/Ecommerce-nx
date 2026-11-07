@@ -121,6 +121,26 @@ export class CouponsService {
     });
   }
 
+  /**
+   * Quantos usos contam contra o limite global do cupom.
+   *
+   * `usageCount` so sobe no pagamento. Contar so ele deixava o limite estourar:
+   * numa promocao de 50 usos, 200 clientes criavam pedido antes de o primeiro Pix
+   * cair, todos liam contador zero e todos ganhavam o desconto. O pedido que
+   * ainda aguarda pagamento segura o cupom - o mesmo criterio do limite por CPF
+   * acima.
+   *
+   * Custo assumido: quem cria pedidos sem pagar segura usos ate o Pix vencer
+   * (3 dias) e libera o cupom sozinho. Incomoda, mas nao custa dinheiro; o
+   * contrario custava. `max` preserva um `usageCount` ajustado na mao.
+   */
+  private async usosGlobais(coupon: { code: string; usageCount: number }): Promise<number> {
+    const reservados = await this.prisma.order.count({
+      where: { couponCode: coupon.code, status: { notIn: ['cancelado'] } },
+    });
+    return Math.max(coupon.usageCount, reservados);
+  }
+
   async validate(dto: ValidateCouponDto) {
     const code = dto.code.trim().toUpperCase();
     const coupon = await this.prisma.coupon.findUnique({ where: { code } });
@@ -155,7 +175,7 @@ export class CouponsService {
     if (coupon.expiresAt && now > coupon.expiresAt) {
       return { valid: false, message: 'Este cupom expirou.' };
     }
-    if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
+    if (coupon.usageLimit !== null && (await this.usosGlobais(coupon)) >= coupon.usageLimit) {
       return { valid: false, message: 'Este cupom atingiu o limite de usos.' };
     }
     if (

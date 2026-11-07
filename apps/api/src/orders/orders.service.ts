@@ -28,6 +28,12 @@ const BILLING_TYPE: Record<CreateOrderDto['paymentMethod'], 'PIX' | 'CREDIT_CARD
 const PAYMENT_DUE_DAYS = 3;
 
 /**
+ * Frete padrão quando nem as Configurações respondem. Espelha o `@default` de
+ * `StoreSettings.shippingFee`, que é o que a loja cobra sem cotação.
+ */
+const DEFAULT_STANDARD_SHIPPING = 19.9;
+
+/**
  * Deploy da versão que passou a movimentar estoque. Pedidos anteriores nunca
  * tiveram baixa, então devolver estoque ao cancelá-los inventaria peças que
  * nunca saíram: para eles não se movimenta nada.
@@ -367,8 +373,14 @@ export class OrdersService {
    * grátis, zero; senão, o valor só passa se bater com alguma opção cotada
    * agora — caso contrário vale a mais barata.
    *
-   * Se a cotação falhar (token vencido, transportadora fora do ar), aceita o que
-   * veio: serviço externo indisponível não pode impedir a venda.
+   * Se a cotação falhar (token vencido, transportadora fora do ar), vale o frete
+   * padrão das Configurações — o mesmo que o checkout já cobra e anuncia nessa
+   * situação ("Usaremos o frete padrão"). A venda continua possível; o que deixou
+   * de valer é o número que vem no corpo da requisição.
+   *
+   * Antes, sem cotação, o servidor aceitava o `shipping` do cliente. O token do
+   * Melhor Envio vence, e enquanto ele estava vencido `POST /orders` — público e
+   * sem limite de taxa — aceitava `shipping: 0` de qualquer um.
    */
   private async resolveShipping(
     dto: CreateOrderDto,
@@ -390,6 +402,7 @@ export class OrdersService {
 
     const settings = await this.settings.get().catch(() => null);
     if (settings && subtotal >= settings.freeShippingThreshold) return 0;
+    const standardFee = round2(settings?.shippingFee ?? DEFAULT_STANDARD_SHIPPING);
 
     try {
       const products = await this.prisma.product.findMany({
@@ -408,7 +421,27 @@ export class OrdersService {
         })),
       });
 
-      if (!quote.configured || quote.options.length === 0) return informed;
+      if (!quote.configured || quote.options.length === 0) {
+        this.logger.warn(
+          `Cotação de frete indisponível (informado: ${informed}); aplicando o frete padrão (${standardFee}).`
+        );
+        return standardFee;
+      }
+
+      // O serviço escolhido manda no preço. Bastava o valor bater com ALGUMA opção,
+      // então dava para pedir o SEDEX e pagar o preço do PAC: a etiqueta é comprada
+      // pelo serviço gravado no pedido, e a diferença saía do caixa da loja.
+      const chosen = dto.shippingServiceId
+        ? quote.options.find((option) => option.id === String(dto.shippingServiceId))
+        : undefined;
+      if (chosen) {
+        if (Math.abs(chosen.price - informed) >= 0.01) {
+          this.logger.warn(
+            `Frete informado (${informed}) difere do serviço escolhido (${chosen.price}); vale o do serviço.`
+          );
+        }
+        return round2(chosen.price);
+      }
 
       const matches = quote.options.some((option) => Math.abs(option.price - informed) < 0.01);
       if (matches) return informed;
@@ -419,7 +452,7 @@ export class OrdersService {
       );
       return round2(cheapest);
     } catch {
-      return informed;
+      return standardFee;
     }
   }
 
@@ -439,9 +472,11 @@ export class OrdersService {
    * aparecia como aplicado num pedido cujo desconto veio da faixa de peças, e
    * qualquer relatório de eficácia de cupom ficava inutilizável.
    *
-   * Não conta uso aqui. `POST /orders` é público: contar na criação deixava
-   * qualquer pessoa queimar o `usageLimit` criando pedidos que nunca pagaria.
-   * O uso é contado no pagamento, em `markPaidByAsaasPaymentId`.
+   * O contador `usageCount` não sobe aqui: sobe no pagamento, em
+   * `markPaidByAsaasPaymentId`. Já o LIMITE considera os pedidos que aguardam
+   * pagamento (ver `CouponsService.usosGlobais`) - contar só o pago deixava o
+   * limite estourar, e o trade-off inverso, alguém segurar usos sem pagar, dura
+   * no máximo os 3 dias até o Pix vencer.
    */
   private async resolveDiscount(
     code: string | undefined,
@@ -1263,11 +1298,34 @@ export class OrdersService {
     });
 
     if (!updated) return order;
-    await this.emailService.sendPaymentApproved(updated);
+
+    // DAQUI PARA BAIXO NADA PODE DERRUBAR O WEBHOOK.
+    //
+    // O pedido já está pago e a peça já saiu do estoque - está commitado. E-mail
+    // e Purchase são acessórios, e o `create` já os isola pelo mesmo motivo
+    // ("banco serverless pisca": `sendPaymentApproved` consulta o banco para
+    // achar o remetente). Aqui eles estavam soltos: uma falha subia como 500, o
+    // Asaas interrompe a fila de webhooks depois de falhas seguidas, e a partir
+    // dali NENHUM outro Pix era confirmado ate alguem reativar no painel. No
+    // reenvio o pedido ja esta pago e a trava acima desiste: e-mail e Purchase
+    // nunca saiam.
+    //
+    // Cada um no seu try: falhar o e-mail nao pode cancelar o Purchase.
+    try {
+      await this.emailService.sendPaymentApproved(updated);
+    } catch (err) {
+      this.logger.error(
+        `Pedido ${updated.orderNumber}: pago, mas o e-mail de pagamento aprovado falhou: ${err}`
+      );
+    }
     // A compra só vira Purchase quando o dinheiro entra. Pix que ninguém paga
     // não é venda, e contá-lo ensinaria a Meta a procurar mais gente parecida
     // com quem abandona o pagamento.
-    await this.metaCapi.sendPurchase(updated);
+    try {
+      await this.metaCapi.sendPurchase(updated);
+    } catch (err) {
+      this.logger.error(`Pedido ${updated.orderNumber}: pago, mas o Purchase da Meta falhou: ${err}`);
+    }
     return updated;
   }
 

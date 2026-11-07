@@ -109,6 +109,39 @@ describe('markPaidByAsaasPaymentId — evento de pagamento repetido', () => {
     expect(where.status.notIn).toEqual(expect.arrayContaining(['pago', 'enviado']));
   });
 
+  describe('falha nos acessorios depois do commit', () => {
+    // O pedido ja esta pago e a peca ja saiu do estoque. Uma excecao aqui subia
+    // como 500; o Asaas interrompe a fila de webhooks depois de falhas seguidas
+    // e nenhum outro Pix era confirmado ate reativarem no painel.
+    it('e-mail que falha nao derruba o webhook', async () => {
+      const t = montar('aguardando_pagamento');
+      t.emailService.sendPaymentApproved.mockRejectedValueOnce(new Error('banco piscou'));
+
+      const resultado = await t.service.markPaidByAsaasPaymentId('pay_123');
+
+      expect(resultado?.status).toBe('pago');
+    });
+
+    it('e-mail que falha nao impede o Purchase da Meta', async () => {
+      const t = montar('aguardando_pagamento');
+      t.emailService.sendPaymentApproved.mockRejectedValueOnce(new Error('banco piscou'));
+
+      await t.service.markPaidByAsaasPaymentId('pay_123');
+
+      expect(t.metaCapi.sendPurchase).toHaveBeenCalledTimes(1);
+    });
+
+    it('Purchase que falha nao derruba o webhook', async () => {
+      const t = montar('aguardando_pagamento');
+      t.metaCapi.sendPurchase.mockRejectedValueOnce(new Error('Graph API fora'));
+
+      const resultado = await t.service.markPaidByAsaasPaymentId('pay_123');
+
+      expect(resultado?.status).toBe('pago');
+      expect(t.emailService.sendPaymentApproved).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('desiste sem efeito quando outro evento venceu a corrida', async () => {
     // Os dois POSTs do Pix caem em instâncias serverless diferentes e leem o
     // mesmo status antigo; quem perde o `updateMany` condicional não faz nada.
