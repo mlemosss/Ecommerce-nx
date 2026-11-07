@@ -3,8 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
 import { EtiquetaService } from '../shipping/etiqueta.service';
 import { StockAlertsService } from '../stock-alerts/stock-alerts.service';
+import { isReviewRequestDue } from './review-eligibility';
 
-const REVIEW_REQUEST_DELAY_MS = 3 * 24 * 60 * 60 * 1000; // 3 dias após o envio
 const ABANDONED_CART_DELAY_MS = 2 * 60 * 60 * 1000; // 2 horas sem finalizar a compra
 const ABANDONED_CART_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // ignora carrinhos muito antigos
 
@@ -34,14 +34,21 @@ export class EmailSchedulerService {
       this.logger.error(`Varredura de postagens falhou: ${erro}`);
     });
 
-    const ordersForReview = await this.prisma.order.findMany({
-      where: {
-        status: 'enviado',
-        reviewRequestSentAt: null,
-        shippedAt: { lte: new Date(now.getTime() - REVIEW_REQUEST_DELAY_MS) },
-      },
+    // Pergunta à transportadora quais pacotes já chegaram. O pedido de avaliação
+    // conta da ENTREGA: contava 3 dias da postagem, e no PAC a cliente era
+    // perguntada o que achou da compra com a peça ainda no caminhão.
+    await this.etiqueta.varrerEntregas(now).catch((erro) => {
+      this.logger.error(`Varredura de entregas falhou: ${erro}`);
+    });
+
+    // O prazo depende do tipo de pedido, então a regra mora em `review-eligibility`
+    // e a consulta só traz os candidatos: enviados e ainda sem convite, uma lista
+    // curta por natureza.
+    const reviewCandidates = await this.prisma.order.findMany({
+      where: { status: 'enviado', reviewRequestSentAt: null, shippedAt: { not: null } },
       include: { items: true },
     });
+    const ordersForReview = reviewCandidates.filter((order) => isReviewRequestDue(order, now));
 
     for (const order of ordersForReview) {
       await this.emailService.sendReviewRequest(order);

@@ -331,6 +331,14 @@ model Order {
   asaasPaymentId    String?
   asaasInvoiceUrl   String?
   shippedAt           DateTime?
+  // Quando a transportadora confirmou a entrega. Nulo enquanto nao se sabe.
+  //
+  // O pedido de avaliacao contava 3 dias a partir de `shippedAt`, a postagem. PAC
+  // para fora de SP leva de 5 a 12 dias: a cliente era perguntada o que achou da
+  // compra com a peca ainda no caminhao. A data de entrega ja estava disponivel
+  // no rastreio do Melhor Envio e era descartada. Gravada na deteccao, entao tem
+  // a granularidade da varredura (meia hora), nao a hora exata da portaria.
+  deliveredAt         DateTime?
   trackingCode        String?
   reviewRequestSentAt DateTime?
   // Token do link de avaliação: noexcusenx.com.br/avaliar/<token>.

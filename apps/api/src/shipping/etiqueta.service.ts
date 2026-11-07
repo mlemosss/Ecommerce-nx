@@ -355,24 +355,8 @@ export class EtiquetaService {
     });
     if (pendentes.length === 0) return { verificados: 0, postados: 0 };
 
-    const settings = await this.settings.get().catch(() => null);
-    const contato =
-      settings?.emailFromAddress || settings?.contactEmail || 'vendas@noexcusenx.com.br';
-
-    let rastreios: Record<string, { status?: string; tracking?: string }> = {};
-    try {
-      const res = await fetch(`${this.baseUrl()}/api/v2/me/shipment/tracking`, {
-        method: 'POST',
-        headers: this.cabecalhos(contato),
-        body: JSON.stringify({ orders: pendentes.map((p) => p.shipmentId) }),
-      });
-      if (!res.ok) return { verificados: pendentes.length, postados: 0 };
-      rastreios = await res.json();
-    } catch {
-      // Melhor Envio fora do ar: tenta de novo na próxima passagem. Nada aqui
-      // pode falhar de um jeito que impeça a varredura de e-mails de rodar.
-      return { verificados: pendentes.length, postados: 0 };
-    }
+    const rastreios = await this.consultarRastreios(pendentes.map((p) => p.shipmentId as string));
+    if (!rastreios) return { verificados: pendentes.length, postados: 0 };
 
     let postados = 0;
     for (const pedido of pendentes) {
@@ -387,6 +371,8 @@ export class EtiquetaService {
         data: {
           status: 'enviado',
           shippedAt: new Date(),
+          // Pacote que ja chegou na primeira vez que o vemos: nao ha o que esperar.
+          ...(status === 'delivered' ? { deliveredAt: new Date() } : {}),
           ...(info?.tracking ? { trackingCode: info.tracking } : {}),
         },
       });
@@ -409,6 +395,82 @@ export class EtiquetaService {
       this.logger.log(`${postados} pedido(s) postados na transportadora e avisados por e-mail.`);
     }
     return { verificados: pendentes.length, postados };
+  }
+
+  /**
+   * Descobre quais pedidos ja chegaram.
+   *
+   * `varrerPostagens` so olha o que ainda esta "pago": depois que o pedido vira
+   * "enviado" ninguem mais perguntava a transportadora por ele, e a data de
+   * entrega, que o Melhor Envio devolve, se perdia. O pedido de avaliacao saia
+   * entao 3 dias depois da POSTAGEM - com a peca, no PAC, ainda no caminhao.
+   *
+   * Olha so o que ainda interessa: enviado, sem entrega confirmada, sem pedido de
+   * avaliacao ja enviado, e postado nos ultimos 60 dias. O recorte mantem a
+   * lista curta e deixa de fora o pacote perdido de meses atras.
+   *
+   * A data gravada e a da deteccao, nao a da portaria: tem a granularidade da
+   * varredura, meia hora, o que sobra para um prazo contado em dias.
+   */
+  async varrerEntregas(agora = new Date()): Promise<{ verificados: number; entregues: number }> {
+    if (!process.env.MELHOR_ENVIO_TOKEN) return { verificados: 0, entregues: 0 };
+
+    const pendentes = await this.prisma.order.findMany({
+      where: {
+        status: 'enviado',
+        shipmentId: { not: null },
+        deliveredAt: null,
+        reviewRequestSentAt: null,
+        shippedAt: { gte: new Date(agora.getTime() - 60 * 24 * 60 * 60 * 1000) },
+      },
+      select: { id: true, shipmentId: true },
+    });
+    if (pendentes.length === 0) return { verificados: 0, entregues: 0 };
+
+    const rastreios = await this.consultarRastreios(pendentes.map((p) => p.shipmentId as string));
+    if (!rastreios) return { verificados: pendentes.length, entregues: 0 };
+
+    let entregues = 0;
+    for (const pedido of pendentes) {
+      if (rastreios[pedido.shipmentId as string]?.status !== 'delivered') continue;
+
+      // Condicional: duas varreduras sobrepostas nao regravam a data.
+      const marcou = await this.prisma.order.updateMany({
+        where: { id: pedido.id, deliveredAt: null },
+        data: { deliveredAt: agora },
+      });
+      entregues += marcou.count;
+    }
+
+    if (entregues > 0) this.logger.log(`${entregues} pedido(s) com entrega confirmada.`);
+    return { verificados: pendentes.length, entregues };
+  }
+
+  /**
+   * Uma consulta so para todos os envios: a API aceita a lista inteira.
+   *
+   * Devolve `null` quando nao deu para consultar. Melhor Envio fora do ar nao
+   * pode impedir a varredura de e-mails de rodar; tenta de novo na proxima
+   * passagem.
+   */
+  private async consultarRastreios(
+    shipmentIds: string[]
+  ): Promise<Record<string, { status?: string; tracking?: string }> | null> {
+    const settings = await this.settings.get().catch(() => null);
+    const contato =
+      settings?.emailFromAddress || settings?.contactEmail || 'vendas@noexcusenx.com.br';
+
+    try {
+      const res = await fetch(`${this.baseUrl()}/api/v2/me/shipment/tracking`, {
+        method: 'POST',
+        headers: this.cabecalhos(contato),
+        body: JSON.stringify({ orders: shipmentIds }),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
   }
 
   /**
